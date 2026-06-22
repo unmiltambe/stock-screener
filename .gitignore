@@ -1,0 +1,40 @@
+# ── Secrets & credentials (never commit) ──────────────────────────────────────
+*.pem
+*.key
+.env
+.env.*
+!.env.example
+**/credentials.json
+**/*credentials*.json
+secrets/
+
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+dist/
+build/
+
+# ── Node / frontend ───────────────────────────────────────────────────────────
+node_modules/
+.pnpm-store/
+*.tsbuildinfo
+.vite/
+coverage/
+apps/*/dist/
+apps/*/build/
+
+# ── Infra / CDK ───────────────────────────────────────────────────────────────
+cdk.out/
+*.cdk.staging/
+
+# ── OS / editor ───────────────────────────────────────────────────────────────
+.DS_Store
+.idea/
+.vscode/
+*.swp
