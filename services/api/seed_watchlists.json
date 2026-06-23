@@ -1,0 +1,11 @@
+{
+  "Big Tech": ["AAPL", "MSFT", "GOOGL", "META", "AMZN", "NVDA", "TSLA", "NFLX",
+               "AMD", "AVGO", "MU", "MRVL", "QCOM", "NOW", "RDDT", "SPCX", "PLTR", "HOOD"],
+  "Quantum": ["RGTI", "QUBT", "QBTS", "IONQ", "WQTM", "QNT"],
+  "ETFs": ["UPRO", "SOXL", "TQQQ", "SMH", "SPY", "QQQ", "RVI", "VCX"],
+  "AI Adjacent": ["OUST", "DRAM", "MU", "MRVL", "NVDA", "SNDK", "VRT", "NBIS",
+                  "CRWV", "CORZ", "HLIT", "LITE", "CBRS"],
+  "Finance": ["V", "MA", "SOFI", "JPM", "WFC", "BAC"],
+  "Energy": ["GEV", "CEG", "BE", "OKLO", "RYCEY", "NXE", "CCJ", "DUK", "NUKZ", "NLR"],
+  "Photonics": ["GLW", "APH", "LITE", "CRDO", "CIEN", "VIAV", "FOTO"]
+}

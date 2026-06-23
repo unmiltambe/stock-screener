@@ -15,14 +15,29 @@ header (defaulting to a demo user); Phase 2 swaps in real Cognito JWT claims.
 from __future__ import annotations
 
 import functools
+import json
 import os
+import pathlib
 
 from fastapi import Header, HTTPException
-from typing import Optional
+from typing import Dict, List, Optional
 
 from .service import ScreenerService
 
 DEMO_USER = "local-dev"
+
+# Realistic demo watchlists live in data, not code, so they're easy to maintain
+# and replicate. Override with SEED_FILE (tests point at a small fixture).
+_DEFAULT_SEED_FILE = pathlib.Path(__file__).parent / "seed_watchlists.json"
+
+
+def _load_seed() -> Dict[str, Dict[str, List[str]]]:
+    path = os.getenv("SEED_FILE", str(_DEFAULT_SEED_FILE))
+    try:
+        with open(path) as f:
+            return {DEMO_USER: json.load(f)}
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {}
 
 
 @functools.lru_cache(maxsize=1)
@@ -47,13 +62,8 @@ def _build_service() -> ScreenerService:
     else:
         from adapters.memory import InMemoryCache, InMemoryWatchlistRepo
         cache = InMemoryCache()
-        # Seed a starter watchlist so local runs are non-empty (FR-2.4).
-        watchlists = InMemoryWatchlistRepo(seed={
-            DEMO_USER: {
-                "Big Tech": ["AAPL", "NVDA", "GOOGL"],
-                "Streaming": ["NFLX"],
-            }
-        })
+        # Seed from the watchlists JSON so local/demo runs are non-empty (FR-2.4).
+        watchlists = InMemoryWatchlistRepo(seed=_load_seed())
 
     return ScreenerService(market, cache, watchlists)
 
