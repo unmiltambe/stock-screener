@@ -31,14 +31,14 @@ def test_watchlist_page_renders_scores(client, monkeypatch):
     monkeypatch.delenv("BASIC_AUTH_PASS", raising=False)
     wid = next(w["id"] for w in client.get("/v1/watchlists").json()
             if w["name"] == "Big Tech")
-    r = client.get(f"/ui/w/{wid}")
+    r = client.get(f"/ui/watchlists/{wid}")
     assert r.status_code == 200
     assert "NVDA" in r.text and "<table" in r.text
 
 
 def test_unknown_watchlist_page_404(client, monkeypatch):
     monkeypatch.delenv("BASIC_AUTH_PASS", raising=False)
-    assert client.get("/ui/w/nope").status_code == 404
+    assert client.get("/ui/watchlists/nope").status_code == 404
 
 
 def test_basic_auth_enforced_when_configured(monkeypatch):
@@ -67,16 +67,16 @@ def test_create_watchlist_via_form(client, monkeypatch):
 def test_add_and_remove_ticker_via_form(client, monkeypatch):
     monkeypatch.delenv("BASIC_AUTH_PASS", raising=False)
     wid = _id_for(client, "Big Tech")
-    client.post(f"/ui/w/{wid}/add", data={"symbol": "msft"})
-    assert "MSFT" in client.get(f"/ui/w/{wid}").text
-    client.post(f"/ui/w/{wid}/remove", data={"symbol": "MSFT"})
-    assert "MSFT" not in client.get(f"/ui/w/{wid}").text
+    client.post(f"/ui/watchlists/{wid}/add", data={"symbol": "msft"})
+    assert "MSFT" in client.get(f"/ui/watchlists/{wid}").text
+    client.post(f"/ui/watchlists/{wid}/remove", data={"symbol": "MSFT"})
+    assert "MSFT" not in client.get(f"/ui/watchlists/{wid}").text
 
 
 def test_rename_via_form(client, monkeypatch):
     monkeypatch.delenv("BASIC_AUTH_PASS", raising=False)
     wid = _id_for(client, "Streaming")
-    r = client.post(f"/ui/w/{wid}/rename", data={"name": "Video"})
+    r = client.post(f"/ui/watchlists/{wid}/rename", data={"name": "Video"})
     assert r.status_code == 200 and "Video" in r.text
     assert {w["id"]: w["name"] for w in client.get("/v1/watchlists").json()}[wid] == "Video"
 
@@ -84,5 +84,5 @@ def test_rename_via_form(client, monkeypatch):
 def test_delete_watchlist_via_form(client, monkeypatch):
     monkeypatch.delenv("BASIC_AUTH_PASS", raising=False)
     wid = _id_for(client, "Streaming")
-    client.post(f"/ui/w/{wid}/delete")
+    client.post(f"/ui/watchlists/{wid}/delete")
     assert "Streaming" not in {w["name"] for w in client.get("/v1/watchlists").json()}

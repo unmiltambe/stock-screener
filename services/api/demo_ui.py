@@ -93,9 +93,9 @@ def index(svc: ScreenerService = Depends(get_service)):
     for w in lists:
         wid = html.escape(w["id"])
         cards += (
-            f'<div class="card"><a href="/ui/w/{wid}"><b>{html.escape(w["name"])}</b></a>'
+            f'<div class="card"><a href="/ui/watchlists/{wid}"><b>{html.escape(w["name"])}</b></a>'
             f'<br><span class="muted">{w["count"]} tickers</span><br>'
-            f'<form class="inline" method="post" action="/ui/w/{wid}/delete" '
+            f'<form class="inline" method="post" action="/ui/watchlists/{wid}/delete" '
             f'onsubmit="return confirm(\'Delete this watchlist?\')">'
             f'<button class="danger" style="margin-top:8px">Delete</button></form></div>'
         )
@@ -112,7 +112,7 @@ def index(svc: ScreenerService = Depends(get_service)):
     return _page("Watchlists", body)
 
 
-@router.get("/ui/w/{watchlist_id}", response_class=HTMLResponse)
+@router.get("/ui/watchlists/{watchlist_id}", response_class=HTMLResponse)
 def watchlist(watchlist_id: str, svc: ScreenerService = Depends(get_service)):
     meta = next((w for w in svc.list_watchlists(DEMO_USER) if w["id"] == watchlist_id), None)
     rows = svc.get_watchlist(DEMO_USER, watchlist_id)
@@ -125,12 +125,12 @@ def watchlist(watchlist_id: str, svc: ScreenerService = Depends(get_service)):
 
     controls = (
         f'<div class="bar">'
-        f'<form class="inline" method="post" action="/ui/w/{wid}/rename">'
+        f'<form class="inline" method="post" action="/ui/watchlists/{wid}/rename">'
         f'<input name="name" value="{name}" required><button>Rename</button></form>'
-        f'<form class="inline" method="post" action="/ui/w/{wid}/add">'
+        f'<form class="inline" method="post" action="/ui/watchlists/{wid}/add">'
         f'<input name="symbol" placeholder="Ticker symbol" required>'
         f'<button>Add ticker</button></form>'
-        f'<form class="inline" method="post" action="/ui/w/{wid}/delete" '
+        f'<form class="inline" method="post" action="/ui/watchlists/{wid}/delete" '
         f'onsubmit="return confirm(\'Delete this watchlist?\')">'
         f'<button class="danger">Delete list</button></form></div>'
     )
@@ -144,7 +144,7 @@ def watchlist(watchlist_id: str, svc: ScreenerService = Depends(get_service)):
         price = f'${r["price"]:.2f}' if r.get("price") else '<span class="muted">—</span>'
         peg = f'{m["peg"]:.2f}' if m.get("peg") is not None else '<span class="muted">—</span>'
         rsi = f'{m["rsi"]:.0f}' if m.get("rsi") is not None else '<span class="muted">—</span>'
-        remove = (f'<form class="inline" method="post" action="/ui/w/{wid}/remove">'
+        remove = (f'<form class="inline" method="post" action="/ui/watchlists/{wid}/remove">'
                   f'<input type="hidden" name="symbol" value="{sym}">'
                   f'<button class="x" title="Remove">✕</button></form>')
         trs.append(
@@ -170,36 +170,36 @@ def create(name: str = Form(...), svc: ScreenerService = Depends(get_service)):
     if not name:
         return _redirect("/ui")
     wl = svc.create_watchlist(DEMO_USER, name)
-    return _redirect(f"/ui/w/{wl['id']}")
+    return _redirect(f"/ui/watchlists/{wl['id']}")
 
 
-@router.post("/ui/w/{watchlist_id}/rename")
+@router.post("/ui/watchlists/{watchlist_id}/rename")
 def rename(watchlist_id: str, name: str = Form(...),
         svc: ScreenerService = Depends(get_service)):
     name = name.strip()
     if name:
         svc.rename_watchlist(DEMO_USER, watchlist_id, name)
-    return _redirect(f"/ui/w/{watchlist_id}")
+    return _redirect(f"/ui/watchlists/{watchlist_id}")
 
 
-@router.post("/ui/w/{watchlist_id}/delete")
+@router.post("/ui/watchlists/{watchlist_id}/delete")
 def delete(watchlist_id: str, svc: ScreenerService = Depends(get_service)):
     svc.delete_watchlist(DEMO_USER, watchlist_id)
     return _redirect("/ui")
 
 
-@router.post("/ui/w/{watchlist_id}/add")
+@router.post("/ui/watchlists/{watchlist_id}/add")
 def add(watchlist_id: str, symbol: str = Form(...),
         svc: ScreenerService = Depends(get_service)):
     symbol = symbol.strip()
     if symbol:
         svc.add_ticker(DEMO_USER, watchlist_id, symbol)
-    return _redirect(f"/ui/w/{watchlist_id}")
+    return _redirect(f"/ui/watchlists/{watchlist_id}")
 
 
-@router.post("/ui/w/{watchlist_id}/remove")
+@router.post("/ui/watchlists/{watchlist_id}/remove")
 def remove(watchlist_id: str, symbol: str = Form(...),
         svc: ScreenerService = Depends(get_service)):
     if symbol.strip():
         svc.remove_ticker(DEMO_USER, watchlist_id, symbol.strip())
-    return _redirect(f"/ui/w/{watchlist_id}")
+    return _redirect(f"/ui/watchlists/{watchlist_id}")
