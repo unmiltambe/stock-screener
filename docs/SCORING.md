@@ -38,11 +38,15 @@ sigmoid(x, k, midpoint) = 100 / (1 + e^(−k × (x − midpoint)))
 - At `x = midpoint`: score = 50 (market average). `k` controls steepness.
 - For lower-is-better metrics (PEG): negate `k` to invert.
 
-| Sub-score | Midpoint | k | Anchors |
-|-----------|----------|---|---------|
-| ROE | 20% | 0.08 | 0%→17, 20%→50, 35%→75, 60%→96 |
-| FCF Yield | 3.5% | 0.50 | 0%→17, 3.5%→50, 5%→68, 10%→96 |
-| PEG | 1.5 | 1.50 (inverted) | 0.3→88, 1.0→69, 1.5→50, 2.0→27 |
+| Sub-score | Midpoint | k | Anchors (illustrative) |
+|-----------|----------|---|------------------------|
+| ROE | 20% | 0.08 | 0%→17, 20%→50, 35%→77, 60%→96 |
+| FCF Yield | 3.5% | 0.50 | 0%→15, 3.5%→50, 5%→68, 10%→96 |
+| PEG | 1.5 | 1.50 (inverted) | 0.3→86, 1.0→68, 1.5→50, 2.0→32 |
+
+> Anchor numbers are illustrative (rounded to ~whole points) — the **formula** and
+> the worked composite examples below are authoritative. Tests validate against the
+> sigmoid directly, not these anchors.
 
 ### Combined formula
 

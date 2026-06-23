@@ -1,0 +1,34 @@
+[project]
+name = "stock-screener-services"
+version = "0.0.1"
+description = "Backend services: pure scoring core, adapters, API, discovery."
+requires-python = ">=3.9"
+# The pure core has NO runtime dependencies (stdlib only) — see services/core.
+# Adapter/API/runtime deps are declared in optional groups so the core stays light.
+dependencies = []
+
+[project.optional-dependencies]
+# Real adapters + HTTP API (Phase 1). Installed for local runs / Lambda bundling.
+runtime = [
+    "fastapi>=0.110",
+    "uvicorn>=0.29",
+    "mangum>=0.17",
+    "yfinance>=0.2.40",
+    "boto3>=1.34",
+]
+dev = [
+    "pytest>=8.0",
+    "httpx>=0.27",   # FastAPI TestClient
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["core", "adapters", "api"]
+addopts = "-q"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["core", "adapters"]
