@@ -1,0 +1,23 @@
+# Render blueprint for the interim demo site (ADR-0005).
+# Render builds the Dockerfile in services/ and runs it as a web service with a
+# public HTTPS URL. Create a free Render account, connect this repo, and Render
+# picks up this file. You'll be prompted to set the two BASIC_AUTH_* secrets.
+services:
+  - type: web
+    name: stock-screener-demo
+    runtime: docker
+    dockerfilePath: services/Dockerfile
+    dockerContext: services
+    branch: demo-site        # the branch Render builds & auto-deploys from
+    plan: free
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: DATA_BACKEND
+        value: yfinance
+      - key: STORE_BACKEND
+        value: memory
+      - key: BASIC_AUTH_USER
+        sync: false          # set in the Render dashboard
+      - key: BASIC_AUTH_PASS
+        sync: false          # set in the Render dashboard (required — gates the site)

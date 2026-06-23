@@ -27,6 +27,15 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
+    # Interim Basic Auth gate (ADR-0005) — protects the whole app except /health.
+    # No-op locally unless BASIC_AUTH_PASS is set; required on the hosted deploy.
+    from .auth import basic_auth_guard
+
+    @app.middleware("http")
+    async def _basic_auth(request, call_next):
+        denied = basic_auth_guard(request)
+        return denied if denied is not None else await call_next(request)
+
     @app.get("/health")
     def health():
         return {"status": "ok"}
@@ -109,6 +118,12 @@ def create_app() -> FastAPI:
         return result
 
     app.include_router(v1)
+
+    # Interim server-rendered demo UI (ADR-0005) — temporary sidecar at /ui, does
+    # not touch the /v1 JSON API. Removed when the React SPA lands.
+    from .demo_ui import router as demo_router
+    app.include_router(demo_router)
+
     return app
 
 

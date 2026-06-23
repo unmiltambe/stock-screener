@@ -76,7 +76,9 @@ Backend core + API are **built and tested locally** (80 tests, runnable via
 | 3 | React web frontend + shared packages | ⬜ |
 | 4 | Discovery / screener (scheduled batch) | ⬜ |
 | 5 | Larger universe, sector-aware scoring, mobile | ⬜ |
+| — | **Interim demo** — server-rendered `/ui` + Basic Auth, hosted on Render | ◑ built; deploy via [deploy-render.md](docs/deploy-render.md) ([ADR-0005](docs/decisions/0005-interim-demo-deployment.md)) |
 
 > The [design.md](docs/design.md) diagram shows the full **target** architecture;
 > the view above overlays current build status onto it. See [roadmap](docs/roadmap.md)
-> for per-phase detail.
+> for per-phase detail. The interim demo is a deliberate temporary stepping stone,
+> not part of the target — see [ADR-0005](docs/decisions/0005-interim-demo-deployment.md).

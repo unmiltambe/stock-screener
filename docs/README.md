@@ -15,8 +15,10 @@ Specification for stock-screener. Conventions: **EARS** for requirements, **ADR*
 | 6 | [decisions/0002-web-mobile-sharing.md](decisions/0002-web-mobile-sharing.md) | ADR: share non-UI layers, defer mobile. |
 | 7 | [decisions/0003-discovery-engine.md](decisions/0003-discovery-engine.md) | ADR: scheduled batch over a defined universe. |
 | 8 | [decisions/0004-stable-resource-ids.md](decisions/0004-stable-resource-ids.md) | ADR: stable watchlist ids + API versioning. |
-| 9 | [roadmap.md](roadmap.md) | Phased build sequence (0–5). |
+| 9 | [decisions/0005-interim-demo-deployment.md](decisions/0005-interim-demo-deployment.md) | ADR: interim server-rendered demo on Render (temporary). |
+| 10 | [roadmap.md](roadmap.md) | Phased build sequence (0–5). |
 | — | [local-dev.md](local-dev.md) | Run & test the backend locally. |
+| — | [deploy-render.md](deploy-render.md) | Deploy the interim demo to a public URL. |
 
 ## Status
 
