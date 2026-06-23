@@ -7,7 +7,7 @@ wholesale.
 
 ---
 
-## Phase 0 — Pure scoring core
+## Phase 0 — Pure scoring core  ✅ done
 
 **Goal:** portable, tested domain logic before any infra.
 
@@ -19,7 +19,7 @@ wholesale.
 
 **Exit:** scoring covered by tests; core has no IO/framework deps.
 
-## Phase 1 — Backend API
+## Phase 1 — Backend API  ◑ code + local run done; CDK deploy pending
 
 **Goal:** a real HTTP API serving the core.
 
@@ -29,7 +29,7 @@ wholesale.
   Temporary access lock (IP allowlist / API key) — **no public unauthenticated
   data**.
 
-**Exit:** `GET /watchlists/{name}` returns scored data from the deployed API; the
+**Exit:** `GET /v1/watchlists/{id}` returns scored data from the deployed API; the
 score cache demonstrably prevents repeat upstream fetches (FR-3.3).
 
 ## Phase 2 — Auth & multi-user data
@@ -40,7 +40,7 @@ score cache demonstrably prevents repeat upstream fetches (FR-3.3).
 - Derive `userId` from the token claim only ([P8](constitution.md), NFR-3.1).
 - Per-user DynamoDB model ([design §5](design.md#5-data-model-dynamodb)); seed a
   starter watchlist on first login (FR-2.4).
-- One-time import of the prototype owner's existing watchlists/comments.
+- One-time import of the prototype owner's existing watchlists.
 
 **Exit:** two test users cannot see each other's data.
 

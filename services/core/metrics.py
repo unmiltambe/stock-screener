@@ -18,6 +18,19 @@ def sma(values: List[float], window: int) -> Optional[float]:
     return sum(values[-window:]) / window
 
 
+def sma_series(values: List[float], window: int) -> List[Optional[float]]:
+    """Rolling SMA aligned to `values`; the first `window-1` points are None.
+    Used for chart overlays."""
+    out: List[Optional[float]] = []
+    running = 0.0
+    for i, v in enumerate(values):
+        running += v
+        if i >= window:
+            running -= values[i - window]
+        out.append(running / window if i >= window - 1 else None)
+    return out
+
+
 def rsi(closes: List[float], period: int = 14) -> Optional[float]:
     """Cutler's RSI over `period` daily deltas. None if insufficient data or no
     losses in the window (matching the prototype's guard against divide-by-zero)."""

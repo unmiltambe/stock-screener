@@ -41,12 +41,42 @@ infra            AWS CDK (TypeScript)
 
 ## Docs
 
-Start with [docs/README is the index] → [docs/constitution.md](docs/constitution.md)
-for the principles, then [docs/requirements.md](docs/requirements.md) and
-[docs/design.md](docs/design.md). The build sequence is in
-[docs/roadmap.md](docs/roadmap.md).
+Start with the [docs index](docs/README.md) → [constitution](docs/constitution.md)
+for the principles, then [requirements](docs/requirements.md) and
+[design](docs/design.md). The build sequence is in [roadmap](docs/roadmap.md);
+running the backend locally is in [local-dev](docs/local-dev.md).
 
-## Status
+## Build status
 
-📐 **Spec + skeleton.** No application code yet — this commit establishes the
-structure, principles, and plan. See the roadmap for what lands next.
+Backend core + API are **built and tested locally** (80 tests, runnable via
+`uvicorn`). Cloud deploy, auth, and the web frontend are next. Legend:
+`✅ done · ◑ partial · ⬜ not started`.
+
+```
+                 ⬜ React SPA ──JWT──► ⬜ API Gateway ──► ◑ Lambda (FastAPI)
+                 (apps/web,            (+ ⬜ Cognito JWT      ┌────────────────────┐
+                  packages/*)           authorizer)          │ ✅ core  (scoring) │
+                                                             │ ✅ adapters:       │
+                 ⬜ Cognito  ◄─auth─►  React SPA             │   ✅ memory (tests)│
+                                                             │   ✅ yfinance      │
+                                                             │   ✅ dynamo (code) │
+                 ◑ DynamoDB ◄──────────────────────────────►│ ✅ api  (/v1 REST) │
+                 (code ✅, table                             └────────────────────┘
+                  provisioning ⬜)                                    ▲
+                                                                     │ runs locally
+                 ⬜ EventBridge ──► ⬜ services/discovery (batch)   today via uvicorn
+                                     (universe screening)            (in-memory backend)
+```
+
+| Phase | Scope | Status |
+|-------|-------|--------|
+| 0 | Pure scoring core + adapter interfaces | ✅ done |
+| 1 | FastAPI backend (`/v1`), adapters, local run | ◑ code + local ✅; **CDK deploy pending** |
+| 2 | Cognito auth + multi-user data | ⬜ next |
+| 3 | React web frontend + shared packages | ⬜ |
+| 4 | Discovery / screener (scheduled batch) | ⬜ |
+| 5 | Larger universe, sector-aware scoring, mobile | ⬜ |
+
+> The [design.md](docs/design.md) diagram shows the full **target** architecture;
+> the view above overlays current build status onto it. See [roadmap](docs/roadmap.md)
+> for per-phase detail.

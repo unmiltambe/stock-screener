@@ -14,7 +14,9 @@ Specification for stock-screener. Conventions: **EARS** for requirements, **ADR*
 | 5 | [decisions/0001-backend-and-stack.md](decisions/0001-backend-and-stack.md) | ADR: React + Lambda over the alternatives. |
 | 6 | [decisions/0002-web-mobile-sharing.md](decisions/0002-web-mobile-sharing.md) | ADR: share non-UI layers, defer mobile. |
 | 7 | [decisions/0003-discovery-engine.md](decisions/0003-discovery-engine.md) | ADR: scheduled batch over a defined universe. |
-| 8 | [roadmap.md](roadmap.md) | Phased build sequence (0–5). |
+| 8 | [decisions/0004-stable-resource-ids.md](decisions/0004-stable-resource-ids.md) | ADR: stable watchlist ids + API versioning. |
+| 9 | [roadmap.md](roadmap.md) | Phased build sequence (0–5). |
+| — | [local-dev.md](local-dev.md) | Run & test the backend locally. |
 
 ## Status
 

@@ -1,5 +1,5 @@
 """Pure scoring core — no IO, no framework. See docs/SCORING.md."""
-from .metrics import compute_tech_metrics, rsi, sma
+from .metrics import compute_tech_metrics, rsi, sma, sma_series
 from .models import (
     Fundamentals,
     MarketSnapshot,
@@ -29,6 +29,7 @@ __all__ = [
     "compute_tech_metrics",
     "rsi",
     "sma",
+    "sma_series",
     "combined_score",
     "fund_score",
     "score_metrics",

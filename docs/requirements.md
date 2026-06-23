@@ -24,7 +24,7 @@ design doc and tasks.
 
 ## 2. Watchlists
 
-- **FR-2.1** The system shall let a user create, rename, and delete named watchlists.
+- **FR-2.1** The system shall let a user create, rename, and delete named watchlists, each addressed by a stable opaque id whose URL is unchanged by rename ([ADR-0004](decisions/0004-stable-resource-ids.md)).
 - **FR-2.2** The system shall let a user add and remove tickers within a watchlist.
 - **FR-2.3** A watchlist and its tickers shall be private to the owning user.
 - **FR-2.4** WHEN a new user first signs in with no watchlists, the system shall seed a starter watchlist so the experience is non-empty.
@@ -39,10 +39,11 @@ design doc and tasks.
 - **FR-3.5** IF an upstream fetch fails, THEN the system shall return that ticker in a clearly marked error state rather than failing the entire response.
 - **FR-3.6** The system shall return per-ticker chart data (price, SMA-50, SMA-200) for a requested lookback window.
 
-## 4. Comments
+## 4. Comments  *(removed — deferred; see Out of scope)*
 
-- **FR-4.1** The system shall let a user attach and edit a free-text comment per ticker.
-- **FR-4.2** A comment shall be private to the owning user.
+Per-ticker user notes existed in the prototype but are not used. Dropped from this
+iteration to keep the surface minimal; may return later as a private, user-scoped
+resource.
 
 ## 5. Leaderboards
 
@@ -102,3 +103,4 @@ design doc and tasks.
 - Real-time streaming quotes (15-min cached / daily-batch data is sufficient).
 - Social/sharing features between users.
 - News-sentiment scoring (a documented future enhancement, not built now).
+- Per-ticker comments/notes (in the prototype; unused, deferred).
