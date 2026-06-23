@@ -1,5 +1,6 @@
 # Production runtime deps for the hosted container (no test tooling).
 fastapi>=0.110
 uvicorn[standard]>=0.29
+python-multipart>=0.0.9
 yfinance>=0.2.40
 boto3>=1.34

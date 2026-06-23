@@ -49,3 +49,40 @@ def test_basic_auth_enforced_when_configured(monkeypatch):
     assert c.get("/ui").status_code == 401
     assert c.get("/ui", auth=("admin", "wrong")).status_code == 401
     assert c.get("/ui", auth=("admin", "secret")).status_code == 200
+
+
+# ── CRUD via the UI forms ─────────────────────────────────────────────────────
+
+def _id_for(client, name):
+    return next(w["id"] for w in client.get("/v1/watchlists").json() if w["name"] == name)
+
+
+def test_create_watchlist_via_form(client, monkeypatch):
+    monkeypatch.delenv("BASIC_AUTH_PASS", raising=False)
+    r = client.post("/ui/create", data={"name": "Energy"})  # follows 303 → page
+    assert r.status_code == 200 and "Energy" in r.text
+    assert "Energy" in {w["name"] for w in client.get("/v1/watchlists").json()}
+
+
+def test_add_and_remove_ticker_via_form(client, monkeypatch):
+    monkeypatch.delenv("BASIC_AUTH_PASS", raising=False)
+    wid = _id_for(client, "Big Tech")
+    client.post(f"/ui/w/{wid}/add", data={"symbol": "msft"})
+    assert "MSFT" in client.get(f"/ui/w/{wid}").text
+    client.post(f"/ui/w/{wid}/remove", data={"symbol": "MSFT"})
+    assert "MSFT" not in client.get(f"/ui/w/{wid}").text
+
+
+def test_rename_via_form(client, monkeypatch):
+    monkeypatch.delenv("BASIC_AUTH_PASS", raising=False)
+    wid = _id_for(client, "Streaming")
+    r = client.post(f"/ui/w/{wid}/rename", data={"name": "Video"})
+    assert r.status_code == 200 and "Video" in r.text
+    assert {w["id"]: w["name"] for w in client.get("/v1/watchlists").json()}[wid] == "Video"
+
+
+def test_delete_watchlist_via_form(client, monkeypatch):
+    monkeypatch.delenv("BASIC_AUTH_PASS", raising=False)
+    wid = _id_for(client, "Streaming")
+    client.post(f"/ui/w/{wid}/delete")
+    assert "Streaming" not in {w["name"] for w in client.get("/v1/watchlists").json()}
