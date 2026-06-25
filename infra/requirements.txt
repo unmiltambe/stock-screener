@@ -1,0 +1,5 @@
+# AWS CDK (Python) for the infrastructure. Install into a venv in infra/:
+#   cd infra && python3 -m venv .venv && source .venv/bin/activate
+#   pip install -r requirements.txt
+aws-cdk-lib>=2.150.0,<3.0.0
+constructs>=10.3.0,<11.0.0

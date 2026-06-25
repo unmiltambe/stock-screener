@@ -1,0 +1,97 @@
+"""Phase 1 infrastructure: DynamoDB + Lambda (container) + API Gateway HTTP API.
+
+Realizes docs/infra.md. Frontend (S3/CloudFront, Phase 3), Cognito (Phase 2), and
+the discovery batch (Phase 4) are intentionally NOT here.
+
+Interim auth: the app's Basic-Auth middleware gates everything (env-configured).
+The password is passed at deploy time via context (`-c basic_auth_pass=...`) so it
+is never committed. Phase 2 replaces Basic Auth with a Cognito JWT authorizer and
+this env var goes away — so we deliberately don't over-invest in a secrets store
+for a soon-to-be-removed password.
+"""
+import os
+import platform as _platform
+
+from aws_cdk import (
+    CfnOutput,
+    Duration,
+    RemovalPolicy,
+    Stack,
+)
+from aws_cdk import aws_apigatewayv2 as apigwv2
+from aws_cdk import aws_apigatewayv2_integrations as integrations
+from aws_cdk import aws_dynamodb as dynamodb
+from aws_cdk import aws_ecr_assets as ecr_assets
+from aws_cdk import aws_lambda as lambda_
+from constructs import Construct
+
+# services/ lives next to infra/ — this file is infra/stacks/<this>.py
+_SERVICES_DIR = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..", "..", "services")
+)
+
+# Match the Lambda architecture to the build host so the image builds natively
+# (no slow emulation): arm64 (Apple Silicon / Graviton) or x86_64.
+_HOST_ARM = _platform.machine().lower() in ("arm64", "aarch64")
+
+
+class StockScreenerStack(Stack):
+    def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
+        super().__init__(scope, construct_id, **kwargs)
+
+        basic_auth_user = self.node.try_get_context("basic_auth_user") or "admin"
+        basic_auth_pass = self.node.try_get_context("basic_auth_pass") or ""
+
+        # ── DynamoDB: single-table store (design.md §5) ───────────────────────
+        table = dynamodb.Table(
+            self,
+            "Table",
+            partition_key=dynamodb.Attribute(
+                name="PK", type=dynamodb.AttributeType.STRING),
+            sort_key=dynamodb.Attribute(
+                name="SK", type=dynamodb.AttributeType.STRING),
+            billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,  # scale-to-zero (P7)
+            time_to_live_attribute="ttl",                       # 15-min score cache
+            point_in_time_recovery_specification=dynamodb.PointInTimeRecoverySpecification(
+                point_in_time_recovery_enabled=True),
+            removal_policy=RemovalPolicy.DESTROY,  # dev: tear down cleanly. prod → RETAIN.
+        )
+
+        # ── Lambda: the FastAPI app as a container image (Mangum handler) ──────
+        fn = lambda_.DockerImageFunction(
+            self,
+            "Api",
+            code=lambda_.DockerImageCode.from_image_asset(
+                _SERVICES_DIR,
+                file="Dockerfile.lambda",
+                platform=(ecr_assets.Platform.LINUX_ARM64 if _HOST_ARM
+                        else ecr_assets.Platform.LINUX_AMD64),
+            ),
+            architecture=(lambda_.Architecture.ARM_64 if _HOST_ARM
+                        else lambda_.Architecture.X86_64),
+            memory_size=1024,                 # pandas/numpy + headroom
+            timeout=Duration.seconds(30),     # matches API Gateway's max integration timeout
+            environment={
+                "DATA_BACKEND": "yfinance",
+                "STORE_BACKEND": "dynamo",
+                "DDB_TABLE": table.table_name,
+                "AUTH_MODE": "header",        # Cognito JWT replaces this in Phase 2
+                "BASIC_AUTH_USER": basic_auth_user,
+                "BASIC_AUTH_PASS": basic_auth_pass,
+            },
+        )
+
+        # Least privilege: the Lambda can touch only this one table.
+        table.grant_read_write_data(fn)
+
+        # ── API Gateway HTTP API: proxy every path/method to the Lambda ───────
+        http_api = apigwv2.HttpApi(
+            self,
+            "HttpApi",
+            default_integration=integrations.HttpLambdaIntegration("Integration", fn),
+        )
+
+        CfnOutput(self, "ApiUrl", value=http_api.api_endpoint,
+                description="Base URL of the deployed API")
+        CfnOutput(self, "TableName", value=table.table_name,
+                description="DynamoDB table (pass as DDB_TABLE to the seed script)")

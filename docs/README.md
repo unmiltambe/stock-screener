@@ -16,7 +16,9 @@ Specification for stock-screener. Conventions: **EARS** for requirements, **ADR*
 | 7 | [decisions/0003-discovery-engine.md](decisions/0003-discovery-engine.md) | ADR: scheduled batch over a defined universe. |
 | 8 | [decisions/0004-stable-resource-ids.md](decisions/0004-stable-resource-ids.md) | ADR: stable watchlist ids + API versioning. |
 | 9 | [decisions/0005-interim-demo-deployment.md](decisions/0005-interim-demo-deployment.md) | ADR: interim server-rendered demo on Render (temporary). |
-| 10 | [roadmap.md](roadmap.md) | Phased build sequence (0–5). |
+| 10 | [decisions/0006-cdk-python-container-lambda.md](decisions/0006-cdk-python-container-lambda.md) | ADR: Python CDK + container-image Lambda. |
+| 11 | [roadmap.md](roadmap.md) | Phased build sequence (0–5). |
+| — | [infra.md](infra.md) | Phase 1 AWS architecture, control flows, deploy steps. |
 | — | [local-dev.md](local-dev.md) | Run & test the backend locally. |
 | — | [deploy-render.md](deploy-render.md) | Deploy the interim demo to a public URL. |
 

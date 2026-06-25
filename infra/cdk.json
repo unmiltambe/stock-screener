@@ -1,0 +1,11 @@
+{
+  "app": "python3 app.py",
+  "watch": {
+    "include": ["**"],
+    "exclude": [".venv", "**/__pycache__"]
+  },
+  "context": {
+    "region": "us-east-1",
+    "basic_auth_user": "admin"
+  }
+}

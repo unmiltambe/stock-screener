@@ -1,0 +1,7 @@
+# Runtime deps for the AWS Lambda container image (no uvicorn — Mangum runs the
+# ASGI app directly; no test tooling).
+fastapi>=0.110
+mangum>=0.17
+python-multipart>=0.0.9
+yfinance>=0.2.40
+boto3>=1.34
