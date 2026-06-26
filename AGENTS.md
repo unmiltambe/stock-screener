@@ -8,7 +8,7 @@ and [docs/design.md](docs/design.md).
 
 A multi-user stock **dashboard + watchlists + discovery engine**. Backend is
 Python; the scoring math is in [docs/SCORING.md](docs/SCORING.md) and is **frozen**
-— do not alter it as a side effect of infra/feature work.
+— do not alter it as a side effect of infrastructure or feature work.
 
 **Out of scope:** portfolio tracking, brokerage integration, automated trading.
 Don't add them without an explicit decision (they were intentionally excluded).
@@ -18,7 +18,7 @@ Don't add them without an explicit decision (they were intentionally excluded).
 1. **Never leak presentation into the API** ([P1](docs/constitution.md)). Backend
    returns data; no colors, no HTML, no display strings. Hex codes in a Lambda
    response = stop.
-2. **Keep the domain core pure** ([P3](docs/constitution.md)). `services/core`
+2. **Keep the domain core pure** ([P3](docs/constitution.md)). `services/app/core`
    imports no web framework and does no IO. Network/cache/persistence are adapters
    around it. The discovery batch reuses this same core — don't fork the logic.
 3. **No UI imports in `packages/*`** ([P4](docs/constitution.md), [ADR-0002](docs/decisions/0002-web-mobile-sharing.md)).

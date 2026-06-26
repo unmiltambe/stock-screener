@@ -35,7 +35,7 @@ Ship an **interim demo**:
 - **P7 (scale-to-zero):** an always-on container costs more at idle than Lambda.
   *Mitigation:* Render's free tier (sleeps when idle); the **domain code is
   unchanged**, so this is throwaway *hosting*, not throwaway code. The Lambda path
-  ([handler.py](../../services/api/handler.py)) still exists for the real deploy.
+  ([handler.py](../../services/app/api/handler.py)) still exists for the real deploy.
 - **P8 (security):** Basic Auth is weaker than Cognito. *Mitigation:* it still
   gates the site; real auth arrives in Phase 2. The password is required in the
   hosted env (the Render blueprint marks it `sync: false`).

@@ -71,7 +71,7 @@ React curve proves too costly and rich charting can be simplified.
 - The owner takes on a frontend learning curve (JS/TS, React, CSS, AWS frontend
   toolchain). Mitigated by TypeScript (familiar type discipline) and Cognito Hosted
   UI (avoids hand-building auth screens).
-- The pure scoring logic becomes `/services/core` — the most stable part of the
+- The pure scoring logic becomes `/services/app/core` — the most stable part of the
   system, reused by both the request path and the discovery batch.
 - We accept Lambda cold-start latency and higher part-count for near-zero idle cost
   and managed operations.

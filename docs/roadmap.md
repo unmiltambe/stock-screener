@@ -12,10 +12,10 @@ wholesale.
 **Goal:** portable, tested domain logic before any infra.
 
 - Port `fund_score`, `tech_score`, `signal`, combined-score from the prototype into
-  `/services/core` with **zero framework imports** ([P3](constitution.md)).
+  `/services/app/core` with **zero framework imports** ([P3](constitution.md)).
 - Unit tests covering the worked examples in [SCORING.md](SCORING.md).
 - Define market-data, cache, and repository **adapter interfaces** in
-  `/services/adapters` (in-memory impls first).
+  `/services/app/adapters` (in-memory impls first).
 
 **Exit:** scoring covered by tests; core has no IO/framework deps.
 
@@ -60,8 +60,8 @@ score cache demonstrably prevents repeat upstream fetches (FR-3.3).
 
 **Goal:** find & suggest stocks beyond watchlists ([ADR-0003](decisions/0003-discovery-engine.md)).
 
-- `/services/discovery`: define the initial universe (**S&P 500**), batch entrypoint
-  reusing `/services/core`.
+- `/services/app/discovery`: define the initial universe (**S&P 500**), batch entrypoint
+  reusing `/services/app/core`.
 - EventBridge daily schedule → batch Lambda → `UNIVERSE#<asOf>` rankings + `LATEST`
   pointer.
 - `/screen` and `/suggestions` endpoints reading the latest snapshot.

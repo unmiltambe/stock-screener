@@ -15,9 +15,10 @@ python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements-dev.txt   # FastAPI, uvicorn, yfinance, boto3, pytest, httpx
 ```
 
-Run tests and the API from this `services/` directory — `core`, `adapters`, and
-`api` import via the working directory, so no install of the local project is
-needed.
+Run everything from this `services/` directory. The app packages live under
+`app/` and import as top-level packages (`core`, `adapters`, `api`) via the path:
+`pytest` picks it up from `pyproject.toml`; for the app, prefix `PYTHONPATH=app`.
+No install of the local project is needed.
 
 > Prefer an editable install (`pip install -e ".[runtime,dev]"`)? That needs
 > **pip ≥ 21.3** for `pyproject.toml`-only projects — upgrade first with
@@ -30,8 +31,8 @@ The pure core + adapters + API all have offline tests (deterministic, no network
 
 ```bash
 cd services
-pytest                  # ~78 tests
-pytest core             # just the scoring core
+pytest                  # 89 tests
+pytest app/core         # just the scoring core
 ```
 
 ## 2. Run the API locally (offline, in-memory)
@@ -41,7 +42,7 @@ for a demo user — so there's data to see immediately.
 
 ```bash
 cd services
-python -m api           # or: uvicorn api.app:app --reload --port 8000
+PYTHONPATH=app python -m api    # or: uvicorn api.app:app --reload --app-dir app --port 8000
 ```
 
 Then:
@@ -82,7 +83,7 @@ Swap the market-data adapter to yfinance (still in-memory store):
 
 ```bash
 cd services
-DATA_BACKEND=yfinance python -m api
+DATA_BACKEND=yfinance PYTHONPATH=app python -m api
 # now /scores?tickers=AAPL,TSLA returns real fundamentals & prices
 ```
 
@@ -106,7 +107,7 @@ aws dynamodb create-table --endpoint-url http://localhost:8001 \
 STORE_BACKEND=dynamo DDB_TABLE=stock-screener \
   AWS_ACCESS_KEY_ID=x AWS_SECRET_ACCESS_KEY=x AWS_REGION=us-east-1 \
   AWS_ENDPOINT_URL_DYNAMODB=http://localhost:8001 \
-  python -m api
+  PYTHONPATH=app python -m api
 ```
 
 ## Environment variables
@@ -122,6 +123,6 @@ STORE_BACKEND=dynamo DDB_TABLE=stock-screener \
 ## What's not here yet
 
 - **CDK deploy** (the cloud half of roadmap Phase 1) — Lambda + API Gateway +
-  DynamoDB provisioning lands in `infra/`. The Lambda entrypoint
+  DynamoDB provisioning lands in `services/deploy/aws/cdk/`. The Lambda entrypoint
   (`api/handler.py`, Mangum) is ready for it.
 - **Cognito auth** (Phase 2) and the **web frontend** (Phase 3).

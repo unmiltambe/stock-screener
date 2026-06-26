@@ -1,6 +1,6 @@
 """Phase 1 infrastructure: DynamoDB + Lambda (container) + API Gateway HTTP API.
 
-Realizes docs/infra.md. Frontend (S3/CloudFront, Phase 3), Cognito (Phase 2), and
+Realizes docs/deploy-aws.md. Frontend (S3/CloudFront, Phase 3), Cognito (Phase 2), and
 the discovery batch (Phase 4) are intentionally NOT here.
 
 Interim auth: the app's Basic-Auth middleware gates everything (env-configured).
@@ -25,9 +25,12 @@ from aws_cdk import aws_ecr_assets as ecr_assets
 from aws_cdk import aws_lambda as lambda_
 from constructs import Construct
 
-# services/ lives next to infra/ — this file is infra/stacks/<this>.py
+# Docker build context = services/ (so the Dockerfile can COPY app/... and
+# deploy/aws/requirements.txt). This file is at:
+#   services/deploy/aws/cdk/stacks/stock_screener_stack.py
+# → services/ is four levels up.
 _SERVICES_DIR = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "..", "..", "services")
+    os.path.join(os.path.dirname(__file__), "..", "..", "..", "..")
 )
 
 # Match the Lambda architecture to the build host so the image builds natively
@@ -63,7 +66,7 @@ class StockScreenerStack(Stack):
             "Api",
             code=lambda_.DockerImageCode.from_image_asset(
                 _SERVICES_DIR,
-                file="Dockerfile.lambda",
+                file="deploy/aws/Dockerfile",
                 platform=(ecr_assets.Platform.LINUX_ARM64 if _HOST_ARM
                         else ecr_assets.Platform.LINUX_AMD64),
             ),

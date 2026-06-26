@@ -8,7 +8,7 @@ Deploy:
     cdk bootstrap                              # one-time per account/region
     cdk deploy -c basic_auth_pass='YOUR_PASS'  # password not committed
 
-See ../docs/infra.md for the architecture and full step-by-step.
+See ../../../../docs/deploy-aws.md for the architecture and full step-by-step.
 """
 import aws_cdk as cdk
 

@@ -1,13 +1,25 @@
-# Render blueprint for the interim demo site (ADR-0005).
-# Render builds the Dockerfile in services/ and runs it as a web service with a
-# public HTTPS URL. Create a free Render account, connect this repo, and Render
-# picks up this file. You'll be prompted to set the two BASIC_AUTH_* secrets.
+# ─────────────────────────────────────────────────────────────────────────────
+# WHAT:  Render "Blueprint" — declarative config for the Render deployment of this
+#        app (the interim demo, ADR-0005). One web service running the FastAPI app
+#        via uvicorn in a container.
+#
+# WHERE IT'S USED:  Render reads this file automatically when you create a
+#        Blueprint from the repo. It is the Render counterpart to the AWS CDK app
+#        in services/deploy/aws/cdk/.
+#
+# WHY IT MUST STAY AT THE REPO ROOT:  Render only discovers a Blueprint named
+#        `render.yaml` at the **repository root** — it cannot live under
+#        services/deploy/render/. So the Render *config* sits here while the things
+#        it references (Dockerfile, build context) live under services/. The AWS
+#        side has no such constraint, which is why its CDK app lives neatly under
+#        services/deploy/aws/cdk/.
+# ─────────────────────────────────────────────────────────────────────────────
 services:
   - type: web
     name: stock-screener-demo
     runtime: docker
-    dockerfilePath: services/Dockerfile
-    dockerContext: services
+    dockerfilePath: services/deploy/render/Dockerfile   # the Render image
+    dockerContext: services                             # so it can COPY app/...
     branch: demo-site        # the branch Render builds & auto-deploys from
     plan: free
     healthCheckPath: /health

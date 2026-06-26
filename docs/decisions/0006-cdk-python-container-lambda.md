@@ -3,7 +3,7 @@
 - **Status:** Accepted
 - **Date:** 2026-06-25
 - **Deciders:** Project owner
-- **Relates to:** [ADR-0001](0001-backend-and-stack.md), [infra.md](../infra.md), [design.md](../design.md)
+- **Relates to:** [ADR-0001](0001-backend-and-stack.md), [deploy-aws.md](../deploy-aws.md), [design.md](../design.md)
 
 ## Context
 
@@ -37,11 +37,11 @@ that with the owner's context in mind.
 
 ## Consequences
 
-- `infra/` is a Python CDK app; contributors need Python (already required) rather
+- `services/deploy/aws/cdk/` is a Python CDK app; contributors need Python (already required) rather
   than TS for infra.
-- The Lambda image is built from `services/Dockerfile.lambda` (distinct from the
+- The Lambda image is built from `services/deploy/aws/Dockerfile` (distinct from the
   Render `Dockerfile`, which runs uvicorn).
 - Cold starts are slightly higher than a minimal zip; acceptable for a cached
-  personal tool (see [infra.md](../infra.md) § Known limitations).
+  personal tool (see [deploy-aws.md](../deploy-aws.md) § Known limitations).
 - If the team later standardizes infra on TypeScript, this is a contained rewrite
-  of `infra/` only — no backend impact.
+  of `services/deploy/aws/cdk/` only — no backend impact.

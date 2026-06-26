@@ -31,13 +31,21 @@ Full detail in [docs/design.md](docs/design.md); rationale in
 [docs/decisions/0001-backend-and-stack.md](docs/decisions/0001-backend-and-stack.md).
 
 ```
-apps/web         React + Vite + TypeScript (the frontend)
-packages/*       shared, framework-agnostic: types, api-client, view-logic
-services/api     FastAPI + Lambda handler
-services/core    pure scoring logic (no IO, no framework)
-services/adapters  market-data + cache + persistence adapters
-infra            AWS CDK (TypeScript)
+apps/web                  React + Vite + TypeScript (frontend — Phase 3)
+packages/*                shared TS: types, api-client, view-logic (Phase 3)
+services/
+  app/                    hosting-agnostic backend (core, adapters, api)
+    core/                 pure scoring logic (no IO, no framework)
+    adapters/             market-data + cache + persistence (memory, dynamo, yfinance)
+    api/                  FastAPI app + Mangum handler
+  deploy/
+    render/               Render container (Dockerfile + requirements)
+    aws/                  Lambda image + cdk/ (DynamoDB + Lambda + API Gateway)
+render.yaml               Render blueprint (must live at repo root)
 ```
+
+The same app runs on either host; only `deploy/<platform>` config and a couple of
+env vars (`STORE_BACKEND`, the entrypoint) differ — see [docs/design.md](docs/design.md).
 
 ## Docs
 
@@ -48,35 +56,30 @@ running the backend locally is in [local-dev](docs/local-dev.md).
 
 ## Build status
 
-Backend core + API are **built and tested locally** (80 tests, runnable via
-`uvicorn`). Cloud deploy, auth, and the web frontend are next. Legend:
+The backend is **live on AWS** (Lambda + API Gateway + DynamoDB, deployed via CDK)
+with 89 passing tests. Auth and the web frontend are next. Legend:
 `✅ done · ◑ partial · ⬜ not started`.
 
 ```
-                 ⬜ React SPA ──JWT──► ⬜ API Gateway ──► ◑ Lambda (FastAPI)
-                 (apps/web,            (+ ⬜ Cognito JWT      ┌────────────────────┐
-                  packages/*)           authorizer)          │ ✅ core  (scoring) │
-                                                             │ ✅ adapters:       │
-                 ⬜ Cognito  ◄─auth─►  React SPA             │   ✅ memory (tests)│
-                                                             │   ✅ yfinance      │
-                                                             │   ✅ dynamo (code) │
-                 ◑ DynamoDB ◄──────────────────────────────►│ ✅ api  (/v1 REST) │
-                 (code ✅, table                             └────────────────────┘
-                  provisioning ⬜)                                    ▲
-                                                                     │ runs locally
-                 ⬜ EventBridge ──► ⬜ services/discovery (batch)   today via uvicorn
-                                     (universe screening)            (in-memory backend)
+   ⬜ React SPA ──JWT──► API Gateway ✅ ──► Lambda (FastAPI/Mangum) ✅
+   (Phase 3)            (+ ⬜ Cognito JWT      ┌────────────────────┐
+                          authorizer, P2)      │ ✅ core  (scoring) │
+                                               │ ✅ adapters        │
+   ⬜ Cognito (P2)                             │ ✅ api  (/v1 + /ui)│
+                                               └────────────────────┘
+   DynamoDB ✅ ◄───────────────────────────────────────┘  durable store
+   ⬜ EventBridge → discovery batch (Phase 4)
 ```
 
 | Phase | Scope | Status |
 |-------|-------|--------|
 | 0 | Pure scoring core + adapter interfaces | ✅ done |
-| 1 | FastAPI backend (`/v1`), adapters, local run | ◑ code + local ✅; **CDK deploy pending** |
+| 1 | FastAPI backend + Lambda + API Gateway + DynamoDB | ✅ **deployed on AWS** |
 | 2 | Cognito auth + multi-user data | ⬜ next |
 | 3 | React web frontend + shared packages | ⬜ |
 | 4 | Discovery / screener (scheduled batch) | ⬜ |
 | 5 | Larger universe, sector-aware scoring, mobile | ⬜ |
-| — | **Interim demo** — server-rendered `/ui` + Basic Auth, hosted on Render | ◑ built; deploy via [deploy-render.md](docs/deploy-render.md) ([ADR-0005](docs/decisions/0005-interim-demo-deployment.md)) |
+| — | Interim `/ui` (server-rendered + Basic Auth) — runs on AWS; optional Render mirror | ✅ ([ADR-0005](docs/decisions/0005-interim-demo-deployment.md)) |
 
 > The [design.md](docs/design.md) diagram shows the full **target** architecture;
 > the view above overlays current build status onto it. See [roadmap](docs/roadmap.md)

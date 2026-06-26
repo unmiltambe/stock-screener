@@ -28,7 +28,7 @@ Implemented by [`../infra`](../infra) (AWS CDK, Python). Decisions:
   cdk deploy  → CloudFormation creates/updates, in dependency order:
                   1. DynamoDB table     (PK/SK, on-demand, TTL on `ttl`)
                   2. IAM role           (Lambda → read/write THAT table only)
-                  3. Lambda (container) (services/ image built from Dockerfile.lambda)
+                  3. Lambda (container) (image built from deploy/aws/Dockerfile)
                   4. API Gateway HTTP API (routes all paths → the Lambda)
                 → Outputs: ApiUrl, TableName
 ```
@@ -86,7 +86,7 @@ it.
 1. Create the AWS account; an admin IAM Identity Center user (or IAM user).
 2. **Set a Billing Budget alert (~$5)** — before anything else.
 3. Install Node, the AWS CDK CLI (`npm i -g aws-cdk`), and configure AWS creds.
-4. `cd infra && python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt`
+4. `cd services/deploy/aws/cdk && python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt`
 5. `cdk bootstrap` (one-time per account/region).
 
 **B. Deploy**

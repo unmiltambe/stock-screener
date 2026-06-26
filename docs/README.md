@@ -9,7 +9,7 @@ Specification for stock-screener. Conventions: **EARS** for requirements, **ADR*
 |---|-----|---------|
 | 1 | [constitution.md](constitution.md) | Non-negotiable design principles (P1–P8). The north star. |
 | 2 | [requirements.md](requirements.md) | What the system must do, testable, in EARS form. |
-| 3 | [SCORING.md](SCORING.md) | The scoring model (carried over, frozen). Canonical reference for `services/core`. |
+| 3 | [SCORING.md](SCORING.md) | The scoring model (carried over, frozen). Canonical reference for `services/app/core`. |
 | 4 | [design.md](design.md) | Target architecture: layers, API, auth, data model, caching, discovery batch, monorepo. |
 | 5 | [decisions/0001-backend-and-stack.md](decisions/0001-backend-and-stack.md) | ADR: React + Lambda over the alternatives. |
 | 6 | [decisions/0002-web-mobile-sharing.md](decisions/0002-web-mobile-sharing.md) | ADR: share non-UI layers, defer mobile. |
@@ -18,7 +18,7 @@ Specification for stock-screener. Conventions: **EARS** for requirements, **ADR*
 | 9 | [decisions/0005-interim-demo-deployment.md](decisions/0005-interim-demo-deployment.md) | ADR: interim server-rendered demo on Render (temporary). |
 | 10 | [decisions/0006-cdk-python-container-lambda.md](decisions/0006-cdk-python-container-lambda.md) | ADR: Python CDK + container-image Lambda. |
 | 11 | [roadmap.md](roadmap.md) | Phased build sequence (0–5). |
-| — | [infra.md](infra.md) | Phase 1 AWS architecture, control flows, deploy steps. |
+| — | [deploy-aws.md](deploy-aws.md) | Phase 1 AWS architecture, control flows, deploy steps. |
 | — | [local-dev.md](local-dev.md) | Run & test the backend locally. |
 | — | [deploy-render.md](deploy-render.md) | Deploy the interim demo to a public URL. |
 

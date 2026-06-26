@@ -1,24 +1,30 @@
 """Seed the deployed DynamoDB table with the demo watchlists.
 
-Run once after `cdk deploy`, from the services/ directory, with AWS credentials
-configured and DDB_TABLE set to the deployed table name (a stack output):
+Run once after `cdk deploy`, with AWS credentials configured and DDB_TABLE set to
+the deployed table name (a stack output):
 
     DDB_TABLE=StockScreenerStack-TableXXedited AWS_REGION=us-east-1 \
-        python seed_dynamo.py
+        python services/deploy/aws/seed_dynamo.py
 
 Idempotent: watchlists that already exist (by name) are skipped. Seeds under the
 app's default user (AUTH_MODE=header → DEMO_USER), so the deployed site shows them.
+Self-bootstraps the import path to services/app so it can be run from anywhere.
 """
 from __future__ import annotations
 
 import json
 import os
 import pathlib
+import sys
 
-from adapters.dynamo import DynamoWatchlistRepo
+# This file: services/deploy/aws/seed_dynamo.py → app/ is three levels up + /app
+_APP_DIR = pathlib.Path(__file__).resolve().parents[2] / "app"
+sys.path.insert(0, str(_APP_DIR))
+
+from adapters.dynamo import DynamoWatchlistRepo  # noqa: E402  (after sys.path setup)
 
 DEMO_USER = "local-dev"  # must match api.deps.DEMO_USER
-SEED_FILE = pathlib.Path(__file__).parent / "api" / "seed_watchlists.json"
+SEED_FILE = _APP_DIR / "api" / "seed_watchlists.json"
 
 
 def main() -> None:

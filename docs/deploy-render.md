@@ -20,8 +20,8 @@ HTTP Basic Auth, serves:
 
 ## Steps
 
-1. **Push the code.** Ensure `render.yaml`, `services/Dockerfile`, and
-   `services/requirements.txt` are on the branch you'll deploy.
+1. **Push the code.** Ensure `render.yaml`, `services/deploy/render/Dockerfile`, and
+   `services/deploy/render/requirements.txt` are on the branch you'll deploy.
 
 2. **Create the service from the blueprint.**
    - Render dashboard → **New → Blueprint**.
@@ -49,7 +49,7 @@ HTTP Basic Auth, serves:
   DynamoDB path (a later step).
 - **Data is live** (`DATA_BACKEND=yfinance`), cached 15 min.
 - To change the seeded watchlists, edit the seed in
-  [`services/api/deps.py`](../services/api/deps.py) and redeploy.
+  [`services/app/api/deps.py`](../services/app/api/deps.py) and redeploy.
 
 ## Local parity
 

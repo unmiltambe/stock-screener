@@ -1,7 +1,7 @@
 # Scoring Model
 
 The scoring model carried over from the Bellwether prototype, unchanged. This is
-the canonical reference for `services/core`. It must not be altered as a side
+the canonical reference for `services/app/core`. It must not be altered as a side
 effect of infrastructure or migration work — changes here are deliberate,
 reviewed decisions.
 

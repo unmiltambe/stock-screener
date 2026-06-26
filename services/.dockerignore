@@ -1,3 +1,4 @@
+# Build context is services/ for both images; keep it lean and deterministic.
 .venv/
 venv/
 __pycache__/
@@ -6,3 +7,7 @@ __pycache__/
 .mypy_cache/
 .ruff_cache/
 **/tests/
+**/cdk.out/
+deploy/aws/cdk/        # CDK app is not needed inside the runtime images
+pyproject.toml
+requirements-dev.txt

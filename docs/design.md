@@ -168,13 +168,19 @@ cache entries automatically; old universe partitions are pruned by the batch job
   /view-logic     pure formatting + red→yellow→green thresholds + sort/rank
 
 /services
-  /api            FastAPI app + Lambda handler (Mangum)
-  /core           pure Python scoring (SCORING.md)
-  /adapters       market-data, dynamo-cache, dynamo-repo
-  /discovery      batch job: universe definition + scheduled scoring
-
-/infra            AWS CDK (TypeScript): Cognito, API GW, Lambda(s), Dynamo,
+  /app            ← hosting-agnostic backend (imported as top-level packages)
+    /core         pure Python scoring (SCORING.md)
+    /adapters     market-data, dynamo-cache, dynamo-repo
+    /api          FastAPI app + Lambda handler (Mangum)
+    /discovery    batch job: universe definition + scheduled scoring
+  /deploy
+    /render       Dockerfile + requirements (uvicorn container)
+    /aws          Dockerfile + requirements (Lambda image) + seed_dynamo.py
+      /cdk        AWS CDK (Python): Cognito, API GW, Lambda(s), Dynamo,
                   EventBridge schedule, S3, CloudFront
+  pyproject.toml  requirements-dev.txt   ← shared dev/test tooling
+
+/render.yaml      Render blueprint — must live at the repo root (Render finds it there)
 ```
 
 Shared web↔mobile = `/packages/*` only (types, client, view logic) — **not**

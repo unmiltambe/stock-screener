@@ -33,7 +33,7 @@ A scheduled job (EventBridge → Lambda) scores the whole universe periodically
 - ➕ User requests are fast and independent of universe size (NFR-2.3).
 - ➕ Respects provider limits — one throttled batch instead of N user-driven storms ([P5](../constitution.md)).
 - ➕ Scales to zero — the batch is periodic and cheap ([P7](../constitution.md)).
-- ➕ Reuses the **same** `/services/core` scoring as the request path; no duplicate logic.
+- ➕ Reuses the **same** `/services/app/core` scoring as the request path; no duplicate logic.
 - ➖ Rankings are as fresh as the last batch (daily) — acceptable; this is not a day-trading tool.
 - ➖ Introduces a new component (scheduler + batch Lambda) and a universe-snapshot data model.
 
@@ -62,8 +62,8 @@ from the latest snapshot (see [design §5–6](../design.md)).
 
 ## Consequences
 
-- A new `/services/discovery` module owns the **universe definition** and the batch
-  entrypoint; it depends on `/services/core` + adapters, nothing UI.
+- A new `/services/app/discovery` module owns the **universe definition** and the batch
+  entrypoint; it depends on `/services/app/core` + adapters, nothing UI.
 - The data model gains `UNIVERSE#<asOf>` ranking items and a `UNIVERSE/LATEST`
   pointer ([design §5](../design.md)).
 - "Suggestions" (FR-6.4) is a cheap query: latest universe ranking **minus** the
