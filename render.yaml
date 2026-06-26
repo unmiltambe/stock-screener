@@ -20,7 +20,7 @@ services:
     runtime: docker
     dockerfilePath: services/deploy/render/Dockerfile   # the Render image
     dockerContext: services                             # so it can COPY app/...
-    branch: demo-site        # the branch Render builds & auto-deploys from
+    branch: main             # the branch Render builds & auto-deploys from
     plan: free
     healthCheckPath: /health
     autoDeploy: true
