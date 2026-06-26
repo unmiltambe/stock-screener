@@ -18,8 +18,9 @@ Specification for stock-screener. Conventions: **EARS** for requirements, **ADR*
 | 9 | [decisions/0005-interim-demo-deployment.md](decisions/0005-interim-demo-deployment.md) | ADR: interim server-rendered `/ui` (UI temporary; Render path kept per 0007). |
 | 10 | [decisions/0006-cdk-python-container-lambda.md](decisions/0006-cdk-python-container-lambda.md) | ADR: Python CDK + container-image Lambda. |
 | 11 | [decisions/0007-dual-deploy-portability.md](decisions/0007-dual-deploy-portability.md) | ADR: keep AWS + Render as a portability forcing function. |
-| 12 | [structure.md](structure.md) | Canonical project tree + how the two deploys are selected. |
-| 13 | [roadmap.md](roadmap.md) | Phased build sequence (0–5). |
+| 12 | [decisions/0008-app-level-cognito-jwt.md](decisions/0008-app-level-cognito-jwt.md) | ADR: app-level Cognito JWT validation + Hosted UI. |
+| 13 | [structure.md](structure.md) | Canonical project tree + how the two deploys are selected. |
+| 14 | [roadmap.md](roadmap.md) | Phased build sequence (0–5). |
 | — | [deploy-aws.md](deploy-aws.md) | Phase 1 AWS architecture, control flows, deploy steps. |
 | — | [local-dev.md](local-dev.md) | Run & test the backend locally. |
 | — | [deploy-render.md](deploy-render.md) | Deploy the interim demo to a public URL. |

@@ -72,13 +72,29 @@ def get_service() -> ScreenerService:
     return _build_service()
 
 
-def get_user_id(x_user_id: Optional[str] = Header(default=None)) -> str:
-    """Resolve the authenticated user (P8). Header mode for local dev; Phase 2
-    replaces this with Cognito JWT claim extraction behind the API Gateway
-    authorizer."""
+def get_user_id(
+    x_user_id: Optional[str] = Header(default=None),
+    authorization: Optional[str] = Header(default=None),
+) -> str:
+    """Resolve the authenticated user from a trusted source (P8).
+
+    - `jwt` (deployed): validate the Cognito Bearer token in-app (ADR-0008) and
+      return the verified `sub`.
+    - `header` (local/tests): use `X-User-Id`, defaulting to the demo user.
+    """
     mode = os.getenv("AUTH_MODE", "header").lower()
     if mode == "jwt":
-        # Placeholder: in prod the API Gateway JWT authorizer validates the token
-        # and passes the verified `sub` claim through the request context.
-        raise HTTPException(status_code=501, detail="JWT auth lands in Phase 2")
+        from .auth import verify_cognito_jwt  # imported lazily (PyJWT only needed in jwt mode)
+
+        if not authorization or not authorization.lower().startswith("bearer "):
+            raise HTTPException(
+                status_code=401, detail="Missing bearer token",
+                headers={"WWW-Authenticate": "Bearer"})
+        try:
+            claims = verify_cognito_jwt(authorization.split(" ", 1)[1].strip())
+        except Exception:
+            raise HTTPException(
+                status_code=401, detail="Invalid token",
+                headers={"WWW-Authenticate": "Bearer"})
+        return claims["sub"]
     return x_user_id or DEMO_USER

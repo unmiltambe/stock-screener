@@ -11,7 +11,7 @@ Implemented by [`../infra`](../infra) (AWS CDK, Python). Decisions:
    FULL TARGET (design.md)                    PHASE 1 (this)
    ─────────────────────────                  ──────────────────────
    CloudFront + S3 (React SPA)   ─ Phase 3 ─  ✗  no frontend yet
-   Cognito (auth)                ─ Phase 2 ─  ✗  interim: Basic Auth
+   Cognito (auth)                ─ Phase 2 ─  ◑  app-level JWT (ADR-0008); /ui keeps Basic Auth
    API Gateway (HTTP API)                     ✅
    Lambda (FastAPI via Mangum)                ✅  handler.py already exists
    DynamoDB (single table)                    ✅  real, durable persistence
@@ -30,7 +30,8 @@ Implemented by [`../infra`](../infra) (AWS CDK, Python). Decisions:
                   2. IAM role           (Lambda → read/write THAT table only)
                   3. Lambda (container) (image built from deploy/aws/Dockerfile)
                   4. API Gateway HTTP API (routes all paths → the Lambda)
-                → Outputs: ApiUrl, TableName
+                  5. Cognito user pool + app client + Hosted-UI domain
+                → Outputs: ApiUrl, TableName, UserPoolId, UserPoolClientId, HostedUiBaseUrl
 ```
 
 CDK is the single source of truth (P6): one command builds it, one tears it down,
@@ -46,8 +47,9 @@ all reviewable in git. No console click-ops.
       │  Lambda proxy integration (whole request passed through)
       ▼
   Lambda  →  Mangum  →  FastAPI app
-      │        ① Basic-Auth middleware    (interim gate; Cognito replaces in P2)
-      │        ② ScreenerService
+      │        ① verify Cognito JWT (app-level: JWKS sig/iss/aud/exp) — ADR-0008
+      │        ② userId = verified `sub`  (deps.get_user_id)
+      │        ③ ScreenerService
       │              ├─ cache check ───────────►  DynamoDB  CACHE#<sym> (15-min TTL)
       │              ├─ on miss: yfinance ─────►  Yahoo Finance
       │              └─ watchlist read/write ──►  DynamoDB  USER#<id> / WL#<id>
@@ -58,18 +60,20 @@ all reviewable in git. No console click-ops.
 The Lambda is stateless (P2); all state is in DynamoDB. Idle = nothing runs,
 nothing bills (P7).
 
-## Control flow 3 — interim auth vs target
+## Control flow 3 — auth (Phase 2: app-level Cognito JWT, ADR-0008)
 
 ```
-  PHASE 1 (now):  request → API Gateway → Lambda → Basic-Auth middleware ✓ → app
-                  (one password, set at deploy via context; the same gate as the demo)
-
-  PHASE 2 (next): request → API Gateway → Cognito JWT authorizer ✓ → Lambda → app
-                  (token validated at the edge BEFORE Lambda; userId = verified `sub`)
+  login:    user → Cognito Hosted UI → verify email → login → JWT
+  request:  client ─Bearer JWT─► API Gateway → Lambda → FastAPI
+                                  validates JWT in-app (works on AWS *and* Render)
+            userId = verified `sub`
+  /ui demo: still gated by interim Basic Auth (retired with the React app, Phase 3)
+  /health:  open
 ```
 
-Reusing Basic Auth as the Phase 1 lock = zero throwaway; Cognito cleanly supersedes
-it.
+JWT is validated **in the app**, not at the API Gateway edge — so the same auth
+holds on Render too ([ADR-0007](decisions/0007-dual-deploy-portability.md) /
+[ADR-0008](decisions/0008-app-level-cognito-jwt.md)).
 
 ## Data model (DynamoDB single table — design.md §5)
 
@@ -90,19 +94,28 @@ it.
 5. `cdk bootstrap` (one-time per account/region).
 
 **B. Deploy**
-6. `cdk deploy -c basic_auth_pass='YOUR_PASS'` → note the `ApiUrl` + `TableName` outputs.
-7. Seed: `cd ../services && DDB_TABLE='<TableName>' AWS_REGION=us-east-1 python seed_dynamo.py`
+6. `cdk deploy -c basic_auth_pass='YOUR_PASS'` → note the outputs: `ApiUrl`,
+   `TableName`, `UserPoolId`, `UserPoolClientId`, `HostedUiBaseUrl`.
 
-**C. Verify**
+**C. Create a test user + get a JWT** (Phase 2 — `/v1` requires a Cognito token)
+7. Sign up via the Hosted UI (`<HostedUiBaseUrl>/login?client_id=<UserPoolClientId>&response_type=token&scope=openid+email&redirect_uri=http://localhost:3000/callback`) and confirm the email — or, fastest for a quick check, via CLI:
+   ```bash
+   aws cognito-idp sign-up --client-id <UserPoolClientId> --username you@example.com --password 'Passw0rd!' --user-attributes Name=email,Value=you@example.com
+   aws cognito-idp admin-confirm-sign-up --user-pool-id <UserPoolId> --username you@example.com
+   TOKEN=$(aws cognito-idp initiate-auth --client-id <UserPoolClientId> --auth-flow USER_PASSWORD_AUTH \
+     --auth-parameters USERNAME=you@example.com,PASSWORD='Passw0rd!' --query AuthenticationResult.IdToken --output text)
+   ```
+
+**D. Verify**
 8. `curl <ApiUrl>/health` → `{"status":"ok"}` (open).
-9. `curl -u admin:YOUR_PASS <ApiUrl>/v1/watchlists` → your 7 lists from DynamoDB.
-10. Hit a watchlist twice → second call fast (served from the score cache, no upstream fetch).
-11. Browser: `<ApiUrl>/ui` → the demo UI, now backed by **durable** DynamoDB.
+9. `curl <ApiUrl>/v1/watchlists` → `401` (no token); `curl -H "Authorization: Bearer $TOKEN" <ApiUrl>/v1/watchlists` → your seeded starter list.
+10. Hit a watchlist twice → second call fast (score cache, no upstream fetch).
+11. Browser: `<ApiUrl>/ui` → the demo UI (still gated by Basic Auth), backed by **durable** DynamoDB.
 
 ## Defaults chosen
 
 - **CDK language:** Python · **Lambda packaging:** container image — see [ADR-0006](decisions/0006-cdk-python-container-lambda.md).
-- **Interim auth:** existing Basic-Auth middleware (password via deploy-time context, never committed).
+- **Auth:** Cognito + app-level JWT for `/v1` (ADR-0008); Basic Auth still gates the interim `/ui` (password via deploy-time context, never committed).
 - **Region:** `us-east-1`. **Billing:** on-demand DynamoDB + per-request Lambda.
 
 ## Cost (personal scale)
@@ -119,7 +132,7 @@ See the cost breakdown discussion; set the budget alert regardless.
   fine.
 - **Cold starts:** container Lambda cold start adds ~1–2s occasionally; acceptable
   for a cached personal tool.
-- **Interim auth only:** Basic Auth, single shared password. Real per-user auth is
-  Phase 2 (Cognito).
+- **Auth:** `/v1` uses real Cognito JWT (Phase 2, app-level — ADR-0008); the
+  interim `/ui` demo still uses Basic Auth until the React app (Phase 3).
 - **`RemovalPolicy.DESTROY`** on the table for easy dev teardown — switch to
   `RETAIN` before storing anything you can't re-seed.

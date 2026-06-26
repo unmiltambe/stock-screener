@@ -1,11 +1,14 @@
-"""HTTP Basic Auth for the interim demo deployment (ADR-0005).
+"""Authentication for the API.
 
-Applied as middleware so it gates the **whole** app (UI + JSON API + docs),
-leaving only `/health` open for the platform health check. Credentials come from
-env (`BASIC_AUTH_USER` / `BASIC_AUTH_PASS`); if no password is set the gate is
-**open** — fine for local runs, but the hosted deployment MUST set them (the
-Render blueprint marks `BASIC_AUTH_PASS` required). This is a stopgap, not the
-real auth path (Cognito, Phase 2).
+Two mechanisms, by design (ADR-0008):
+
+- **Cognito JWT** (`verify_cognito_jwt`) — the real per-user auth for `/v1`,
+  validated in-app (works on AWS *and* Render, ADR-0007). Used when AUTH_MODE=jwt.
+- **HTTP Basic Auth** (`basic_auth_guard`) — interim gate for the server-rendered
+  `/ui` demo only (ADR-0005), retired with the React frontend in Phase 3.
+
+Locally (AUTH_MODE=header) neither is required: `/v1` resolves a demo user and
+Basic Auth is open unless BASIC_AUTH_PASS is set.
 """
 from __future__ import annotations
 
@@ -14,11 +17,53 @@ import os
 import secrets
 from typing import Optional
 
+import jwt
+from jwt import PyJWKClient
 from starlette.requests import Request
 from starlette.responses import Response
 
-OPEN_PATHS = {"/health"}
 
+# ── Cognito JWT (app-level validation) ────────────────────────────────────────
+
+_jwks_client: Optional[PyJWKClient] = None
+
+
+def _issuer() -> str:
+    region = os.environ["COGNITO_REGION"]
+    pool_id = os.environ["COGNITO_POOL_ID"]
+    return f"https://cognito-idp.{region}.amazonaws.com/{pool_id}"
+
+
+def _client() -> PyJWKClient:
+    """Cached JWKS client (reused across warm Lambda invocations)."""
+    global _jwks_client
+    if _jwks_client is None:
+        _jwks_client = PyJWKClient(f"{_issuer()}/.well-known/jwks.json")
+    return _jwks_client
+
+
+def verify_cognito_jwt(token: str) -> dict:
+    """Validate a Cognito JWT (signature, issuer, expiry) and the app client id.
+
+    Accepts both ID and access tokens: access tokens carry the client id in
+    `client_id`, ID tokens in `aud`. Raises jwt.InvalidTokenError on any failure.
+    Returns the decoded claims (including `sub`).
+    """
+    expected_client = os.environ["COGNITO_CLIENT_ID"]
+    signing_key = _client().get_signing_key_from_jwt(token)
+    claims = jwt.decode(
+        token,
+        signing_key.key,
+        algorithms=["RS256"],
+        issuer=_issuer(),
+        options={"verify_aud": False},   # aud only present on ID tokens; checked below
+    )
+    if claims.get("aud") != expected_client and claims.get("client_id") != expected_client:
+        raise jwt.InvalidTokenError("token client id does not match this app client")
+    return claims
+
+
+# ── Interim Basic Auth — gates the /ui demo only ──────────────────────────────
 
 def _unauthorized() -> Response:
     return Response(
@@ -29,13 +74,17 @@ def _unauthorized() -> Response:
 
 
 def basic_auth_guard(request: Request) -> Optional[Response]:
-    """Return a 401 Response if the request should be blocked, else None."""
-    if request.url.path in OPEN_PATHS:
+    """Return a 401 Response if a `/ui` request should be blocked, else None.
+
+    Only the server-rendered demo (`/ui`) is gated here; `/v1` is JWT-gated via the
+    per-route dependency, and `/health` is open. No-op unless BASIC_AUTH_PASS is set.
+    """
+    if not request.url.path.startswith("/ui"):
         return None
 
     expected_pass = os.getenv("BASIC_AUTH_PASS")
     if not expected_pass:
-        return None  # auth not configured → open (local dev only)
+        return None  # not configured → open (local dev only)
 
     expected_user = os.getenv("BASIC_AUTH_USER", "admin")
     header = request.headers.get("Authorization", "")

@@ -120,13 +120,21 @@ GET    /v1/suggestions                     → top universe names not in user's 
 
 ## 4. Authentication flow
 
+JWTs are validated **in the app** (not at the API Gateway edge) so auth works
+identically on both deploy targets — see [ADR-0008](decisions/0008-app-level-cognito-jwt.md).
+
 ```
-1. User signs up / logs in via Cognito (Hosted UI or Amplify Auth SDK).
+1. User signs up / logs in via Cognito (Hosted UI to start; Amplify SDK later).
 2. Cognito returns a JWT to the SPA.
 3. SPA sends it as `Authorization: Bearer` on every API call.
-4. API Gateway's JWT authorizer validates signature/expiry/audience BEFORE Lambda.
-5. Lambda reads the verified `sub` claim as userId — never from path/body.
+4. The FastAPI app validates the JWT against the pool's JWKS (signature, issuer,
+   audience/client-id, expiry) — `app/api/auth.py`, cached JWKS.
+5. The verified `sub` becomes userId (`deps.get_user_id`) — never from path/body.
 ```
+
+Local/tests use `AUTH_MODE=header` (an `X-User-Id` header, default demo user) so no
+real tokens are needed offline. The interim `/ui` demo keeps Basic Auth until the
+React frontend replaces it (Phase 3).
 
 ## 5. Data model (DynamoDB, single table)
 

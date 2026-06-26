@@ -6,6 +6,7 @@ pure data. No scoring and no IO live here. Data routes are versioned under /v1
 """
 from __future__ import annotations
 
+import os
 from typing import List
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query
@@ -47,6 +48,10 @@ def create_app() -> FastAPI:
     @v1.get("/watchlists", response_model=List[schemas.WatchlistSummary])
     def list_watchlists(svc: ScreenerService = Depends(get_service),
                         user_id: str = Depends(get_user_id)):
+        # Seed a starter for brand-new authenticated users (FR-2.4). Only in jwt
+        # mode so offline/header-mode tests keep their explicit fixtures.
+        if os.getenv("AUTH_MODE", "header").lower() == "jwt":
+            svc.ensure_seeded(user_id)
         return svc.list_watchlists(user_id)
 
     @v1.post("/watchlists", status_code=201, response_model=schemas.WatchlistOut)

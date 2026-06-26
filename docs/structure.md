@@ -24,7 +24,8 @@ stock-screener/
 │   │   ├── adapters/             IO boundary: ports + impls
 │   │   │                           memory (offline/tests), dynamo (AWS), yfinance
 │   │   ├── api/                  FastAPI app, service, deps, schemas, handler (Mangum),
-│   │   │                           demo_ui + auth (interim /ui), seed_watchlists.json
+│   │   │                           auth (Cognito JWT + interim Basic-Auth), demo_ui,
+│   │   │                           seed_watchlists.json
 │   │   └── discovery/            Phase 4 batch (placeholder)
 │   │
 │   ├── deploy/                   ★ HOSTING-SPECIFIC config (one app, two targets)

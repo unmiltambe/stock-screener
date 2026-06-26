@@ -32,7 +32,7 @@ wholesale.
 **Exit:** `GET /v1/watchlists/{id}` returns scored data from the deployed API; the
 score cache demonstrably prevents repeat upstream fetches (FR-3.3).
 
-## Phase 2 — Auth & multi-user data
+## Phase 2 — Auth & multi-user data  ◑ built (Cognito + app-level JWT); deploy pending
 
 **Goal:** real users, isolated data.
 

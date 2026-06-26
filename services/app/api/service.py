@@ -14,6 +14,10 @@ from . import schemas
 
 SCORE_TTL_SECONDS = 900  # 15 minutes (FR-3.3/3.4)
 
+# Starter content for a brand-new user, so the first experience isn't empty
+# (FR-2.4). Generic — distinct from the owner's demo seed (seed_watchlists.json).
+STARTER_WATCHLISTS = {"My Watchlist": ["AAPL", "MSFT", "NVDA"]}
+
 
 class ScreenerService:
     def __init__(
@@ -56,6 +60,16 @@ class ScreenerService:
         return [rows[s] for s in symbols]
 
     # ── watchlists (keyed by stable id — ADR-0004) ────────────────────────────
+
+    def ensure_seeded(self, user_id: str) -> None:
+        """Seed starter watchlists for a user who has none (FR-2.4). Idempotent
+        while the user keeps at least one list."""
+        if self._watchlists.list_all(user_id):
+            return
+        for name, tickers in STARTER_WATCHLISTS.items():
+            wl = self._watchlists.create(user_id, name)
+            for t in tickers:
+                self._watchlists.add_ticker(user_id, wl.id, t)
 
     def list_watchlists(self, user_id: str) -> List[Dict]:
         lists = sorted(self._watchlists.list_all(user_id), key=lambda w: w.name)

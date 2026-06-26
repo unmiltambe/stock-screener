@@ -76,7 +76,7 @@ with 89 passing tests. Auth and the web frontend are next. Legend:
 |-------|-------|--------|
 | 0 | Pure scoring core + adapter interfaces | ✅ done |
 | 1 | FastAPI backend + Lambda + API Gateway + DynamoDB | ✅ **deployed on AWS** |
-| 2 | Cognito auth + multi-user data | ⬜ next |
+| 2 | Cognito auth + multi-user data | ◑ built (app-level JWT); deploy pending |
 | 3 | React web frontend + shared packages | ⬜ |
 | 4 | Discovery / screener (scheduled batch) | ⬜ |
 | 5 | Larger universe, sector-aware scoring, mobile | ⬜ |
