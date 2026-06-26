@@ -45,7 +45,8 @@ render.yaml               Render blueprint (must live at repo root)
 ```
 
 The same app runs on either host; only `deploy/<platform>` config and a couple of
-env vars (`STORE_BACKEND`, the entrypoint) differ — see [docs/design.md](docs/design.md).
+env vars (`STORE_BACKEND`, the entrypoint) differ. Full annotated tree + how the
+two deploys are selected: [docs/structure.md](docs/structure.md).
 
 ## Docs
 

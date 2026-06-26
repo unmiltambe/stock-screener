@@ -19,7 +19,7 @@ wholesale.
 
 **Exit:** scoring covered by tests; core has no IO/framework deps.
 
-## Phase 1 — Backend API  ◑ code + local run done; CDK deploy pending
+## Phase 1 — Backend API  ✅ deployed on AWS (Lambda + API Gateway + DynamoDB)
 
 **Goal:** a real HTTP API serving the core.
 

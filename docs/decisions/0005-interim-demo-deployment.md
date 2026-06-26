@@ -1,9 +1,13 @@
 # ADR-0005 — Interim demo deployment (server-rendered UI on a PaaS)
 
-- **Status:** Accepted (explicitly temporary)
+- **Status:** Accepted; **partially superseded by [ADR-0007](0007-dual-deploy-portability.md)**
 - **Date:** 2026-06-23
 - **Deciders:** Project owner
-- **Relates to:** [constitution P1/P7](../constitution.md), [roadmap](../roadmap.md), [ADR-0001](0001-backend-and-stack.md)
+- **Relates to:** [constitution P1/P7](../constitution.md), [roadmap](../roadmap.md), [ADR-0001](0001-backend-and-stack.md), [ADR-0007](0007-dual-deploy-portability.md)
+
+> **Update (ADR-0007):** the *Render deployment path* is no longer throwaway — it
+> is kept as a deliberate portability forcing function. What remains temporary is
+> the *server-rendered `/ui`* itself, which the React SPA replaces in Phase 3.
 
 ## Context
 

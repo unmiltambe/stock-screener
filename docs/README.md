@@ -15,9 +15,11 @@ Specification for stock-screener. Conventions: **EARS** for requirements, **ADR*
 | 6 | [decisions/0002-web-mobile-sharing.md](decisions/0002-web-mobile-sharing.md) | ADR: share non-UI layers, defer mobile. |
 | 7 | [decisions/0003-discovery-engine.md](decisions/0003-discovery-engine.md) | ADR: scheduled batch over a defined universe. |
 | 8 | [decisions/0004-stable-resource-ids.md](decisions/0004-stable-resource-ids.md) | ADR: stable watchlist ids + API versioning. |
-| 9 | [decisions/0005-interim-demo-deployment.md](decisions/0005-interim-demo-deployment.md) | ADR: interim server-rendered demo on Render (temporary). |
+| 9 | [decisions/0005-interim-demo-deployment.md](decisions/0005-interim-demo-deployment.md) | ADR: interim server-rendered `/ui` (UI temporary; Render path kept per 0007). |
 | 10 | [decisions/0006-cdk-python-container-lambda.md](decisions/0006-cdk-python-container-lambda.md) | ADR: Python CDK + container-image Lambda. |
-| 11 | [roadmap.md](roadmap.md) | Phased build sequence (0–5). |
+| 11 | [decisions/0007-dual-deploy-portability.md](decisions/0007-dual-deploy-portability.md) | ADR: keep AWS + Render as a portability forcing function. |
+| 12 | [structure.md](structure.md) | Canonical project tree + how the two deploys are selected. |
+| 13 | [roadmap.md](roadmap.md) | Phased build sequence (0–5). |
 | — | [deploy-aws.md](deploy-aws.md) | Phase 1 AWS architecture, control flows, deploy steps. |
 | — | [local-dev.md](local-dev.md) | Run & test the backend locally. |
 | — | [deploy-render.md](deploy-render.md) | Deploy the interim demo to a public URL. |
