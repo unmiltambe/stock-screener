@@ -29,7 +29,20 @@ services:
         value: yfinance
       - key: STORE_BACKEND
         value: memory
+      # Same Cognito pool as AWS — one login works on both hosts, and this
+      # exercises app-level JWT on a non-AWS runtime (ADR-0007/0008). These are
+      # PUBLIC identifiers (public SPA client id; pool id is in the JWT issuer/JWKS
+      # URLs) — NOT secrets. Update if the AWS Cognito pool is ever recreated.
+      - key: AUTH_MODE
+        value: jwt
+      - key: COGNITO_REGION
+        value: us-east-1
+      - key: COGNITO_POOL_ID
+        value: us-east-1_OYipjDV7H
+      - key: COGNITO_CLIENT_ID
+        value: 5i48e2uso248joouud6qi84jr9
+      # Still gates the interim /ui demo only (retired with the React app, Phase 3).
       - key: BASIC_AUTH_USER
         sync: false          # set in the Render dashboard
       - key: BASIC_AUTH_PASS
-        sync: false          # set in the Render dashboard (required — gates the site)
+        sync: false          # set in the Render dashboard (gates /ui)
