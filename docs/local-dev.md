@@ -42,7 +42,8 @@ for a demo user — so there's data to see immediately.
 
 ```bash
 cd services
-PYTHONPATH=app python -m api    # or: uvicorn api.app:app --reload --app-dir app --port 8000
+source .venv/bin/activate       # so `uvicorn`/`python` resolve (macOS: it's python3)
+DATA_BACKEND=yfinance uvicorn api.app:app --app-dir app --reload --port 8000
 ```
 
 Then:
@@ -83,7 +84,7 @@ Swap the market-data adapter to yfinance (still in-memory store):
 
 ```bash
 cd services
-DATA_BACKEND=yfinance PYTHONPATH=app python -m api
+DATA_BACKEND=yfinance uvicorn api.app:app --app-dir app --reload --port 8000
 # now /scores?tickers=AAPL,TSLA returns real fundamentals & prices
 ```
 
@@ -107,7 +108,7 @@ aws dynamodb create-table --endpoint-url http://localhost:8001 \
 STORE_BACKEND=dynamo DDB_TABLE=stock-screener \
   AWS_ACCESS_KEY_ID=x AWS_SECRET_ACCESS_KEY=x AWS_REGION=us-east-1 \
   AWS_ENDPOINT_URL_DYNAMODB=http://localhost:8001 \
-  PYTHONPATH=app python -m api
+  uvicorn api.app:app --app-dir app --reload --port 8000
 ```
 
 ## Environment variables

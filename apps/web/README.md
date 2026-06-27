@@ -5,12 +5,18 @@ the `/v1` API; design is driven by swappable tokens (see `src/index.css` `@theme
 
 ## Run locally
 ```bash
-# 1. Backend (header mode → no token needed for dev), from repo root:
-cd services && PYTHONPATH=app DATA_BACKEND=yfinance python -m api   # serves :8000
+# 1. Backend (header mode → no token needed for dev):
+cd services
+python3 -m venv .venv && source .venv/bin/activate    # first time only
+pip install -r requirements-dev.txt                   # first time only
+DATA_BACKEND=yfinance uvicorn api.app:app --app-dir app --reload --port 8000
 
 # 2. This app, in another terminal:
-cd apps/web && npm install && npm run dev                            # serves :5173
+cd apps/web && npm install && npm run dev             # serves :5173
 ```
+
+Note: on macOS the interpreter is `python3`; after `source .venv/bin/activate`
+both `python` and `uvicorn` are on PATH.
 Open http://localhost:5173 — the SPA calls the backend at `VITE_API_URL`
 (default `http://localhost:8000`). Point it at the deployed AWS API by copying
 `.env.example` → `.env` (that path needs a Cognito token — the auth step).
