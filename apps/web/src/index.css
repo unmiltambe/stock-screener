@@ -1,0 +1,27 @@
+@import "tailwindcss";
+
+/* Design tokens — the whole look is driven from here, so the theme is swappable
+   without touching components. Tailwind v4 turns these into utilities:
+   --color-panel → bg-panel / text-panel / border-panel, --font-mono → font-mono. */
+@theme {
+  --color-bg: #0f1420;
+  --color-panel: #161d2b;
+  --color-line: #222b3a;
+  --color-ink: #e6e6e6;
+  --color-dim: #8a93a6;
+  --color-pos: #2ecc71;
+  --color-warn: #f39c12;
+  --color-neg: #e74c3c;
+  --color-accent: #6ab0f5;
+
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+html, body, #root {
+  height: 100%;
+}
+body {
+  background-color: var(--color-bg);
+  color: var(--color-ink);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
