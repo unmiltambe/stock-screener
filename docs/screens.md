@@ -144,38 +144,47 @@ Rank  Ticker  Company        Fund  Tech  Combined  Signal  Lists
 
 ---
 
-## S5 — Login / auth gate
+## S5 — Auth (sign-in nudge, not a gate)
 
 **Route:** handled in App shell (no separate URL)  
-**Status:** ⬜ not built
+**Status:** ⬜ not built  
+**Decision:** [ADR-0009](decisions/0009-guest-session-before-login.md)
 
-**Job:** gate the whole SPA behind Cognito. Unauthenticated users see a login
-prompt, not the watchlists.
+**Job:** let guests use the full app immediately. Offer sign-in persistently but
+non-intrusively; migrate their data when they do sign in.
 
-**Flow:**
-1. App loads → check for stored Cognito token (local storage or cookie)
-2. No token → show "Sign in" button → redirect to Cognito Hosted UI
-3. Hosted UI redirects back with `?code=...` → exchange for tokens → store
-4. All API calls include `Authorization: Bearer <id_token>`
-5. Token refresh via refresh token in background
+**Guest flow:**
+1. First visit → auto-generate `guestId` UUID in `sessionStorage`
+2. All API calls send `X-Guest-Id: <uuid>` (no Authorization header)
+3. Backend assigns identity `GUEST#<uuid>`, stores with 7-day TTL
+4. User gets full CRUD — create watchlists, add tickers, see scores
 
-**Layout (unauthenticated state):**
+**Sign-in flow (when user chooses to):**
+1. Click "Sign in" → redirect to Cognito Hosted UI
+2. Hosted UI redirects back with `?code=...` → exchange for tokens → store in `sessionStorage`
+3. Call `POST /v1/auth/migrate-guest` with `{ guest_id }` → watchlists copied to Cognito account
+4. Clear `guestId` from sessionStorage; all future calls use `Bearer <id_token>`
+
+**Layout — header (unauthenticated):**
 ```
-┌─────────────────────────────────────┐
-│  Bellwether                         │
-│                                     │
-│  Score and track the stocks         │
-│  you follow.                        │
-│                                     │
-│        [Sign in with Google]        │
-│                                     │
-└─────────────────────────────────────┘
+Bellwether  stock screener                    [Sign in to save]
 ```
 
-**Implementation note:** use Amazon Cognito Hosted UI (OAuth2 redirect) rather
-than embedding Amplify UI components — keeps the bundle small and the auth
-surface minimal. Store tokens in `sessionStorage` (cleared on tab close) rather
-than `localStorage` to reduce XSS exposure.
+**Layout — header (authenticated):**
+```
+Bellwether  stock screener                    ●  unmiltambe  [Sign out]
+```
+
+**Nudge on watchlists page (after user creates something):**
+```
+💡 Sign in to keep your lists permanently — they'll be here on any device.  [Sign in]  [×]
+```
+Shown once; dismissed with [×]; not shown again this session.
+
+**Implementation notes:**
+- Use Cognito Hosted UI (OAuth2 redirect) — no Amplify UI bundle
+- Tokens in `sessionStorage` only (cleared on tab close, reduces XSS surface)
+- `migrate-guest` is idempotent — safe to call on each login in case of retry
 
 ---
 
@@ -203,11 +212,12 @@ Rank  Ticker  Sector      Fund  Tech  Combined  Signal
 
 ## Build order
 
-| # | Screen | Depends on | Priority |
-|---|--------|-----------|----------|
-| 1 | S1 actions (new/rename/delete WL) | S1 built | High — core CRUD |
+| # | Screen/feature | Depends on | Priority |
+|---|----------------|-----------|----------|
+| 1 | S1 actions (new/rename/delete watchlist) | S1 built | High — core CRUD |
 | 2 | S2 actions (add/remove ticker) | S2 built | High — core CRUD |
-| 3 | S5 auth gate (Cognito login) | — | High — needed for deployed API |
-| 4 | S4 leaderboard | backend `/v1/leaderboard` exists | Medium |
-| 5 | S3 ticker detail + chart | backend `/v1/tickers/:s/chart` exists | Medium |
-| 6 | S6 discovery | Phase 4 batch job | Low — Phase 4 |
+| 3 | S5 guest session + `X-Guest-Id` backend path | — | High — needed for zero-friction onboarding |
+| 4 | S5 Cognito sign-in + `migrate-guest` | guest session | High — needed for deployed API |
+| 5 | S4 leaderboard | backend `/v1/leaderboard` exists | Medium |
+| 6 | S3 ticker detail + chart | backend `/v1/tickers/:s/chart` exists | Medium |
+| 7 | S6 discovery | Phase 4 batch job | Low — Phase 4 |
