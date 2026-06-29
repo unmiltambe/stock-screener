@@ -1,27 +1,142 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { useWatchlists } from "../../api/watchlists";
+import {
+  useCreateWatchlist,
+  useDeleteWatchlist,
+  useRenameWatchlist,
+  useWatchlists,
+} from "../../api/watchlists";
 
 export default function WatchlistsPage() {
   const { data, isLoading, error } = useWatchlists();
+  const createWL = useCreateWatchlist();
+  const renameWL = useRenameWatchlist();
+  const deleteWL = useDeleteWatchlist();
+
+  const [showNew, setShowNew] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
+
+  function submitNew(e: React.FormEvent) {
+    e.preventDefault();
+    const name = newName.trim();
+    if (!name) return;
+    createWL.mutate(name, {
+      onSuccess: () => { setNewName(""); setShowNew(false); },
+    });
+  }
+
+  function startRename(id: string, currentName: string) {
+    setEditingId(id);
+    setEditName(currentName);
+  }
+
+  function submitRename(id: string, e: React.FormEvent) {
+    e.preventDefault();
+    const name = editName.trim();
+    if (name) renameWL.mutate({ id, name }, { onSuccess: () => setEditingId(null) });
+    else setEditingId(null);
+  }
+
+  function handleDelete(id: string, name: string) {
+    if (window.confirm(`Delete "${name}"? This cannot be undone.`)) {
+      deleteWL.mutate(id);
+    }
+  }
 
   if (isLoading) return <p className="text-dim">Loading…</p>;
   if (error) return <p className="text-neg">Failed to load: {String(error)}</p>;
 
   return (
     <div>
-      <h1 className="text-lg font-semibold mb-4">Watchlists</h1>
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-lg font-semibold">Watchlists</h1>
+        <button
+          onClick={() => setShowNew(true)}
+          className="text-sm px-3 py-1.5 rounded border border-line hover:border-accent text-accent transition-colors"
+        >
+          + New watchlist
+        </button>
+      </div>
+
       <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
         {data!.map((w) => (
-          <Link
+          <div
             key={w.id}
-            to={`/watchlists/${w.id}`}
-            className="block rounded-lg border border-line bg-panel p-4 hover:border-accent transition-colors"
+            className="group rounded-lg border border-line bg-panel p-4 hover:border-accent/50 transition-colors"
           >
-            <div className="font-medium">{w.name}</div>
-            <div className="text-dim text-sm">{w.count} tickers</div>
-          </Link>
+            {editingId === w.id ? (
+              <form onSubmit={(e) => submitRename(w.id, e)} className="flex gap-2 items-center">
+                <input
+                  autoFocus
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  onBlur={() => setEditingId(null)}
+                  className="flex-1 bg-transparent border-b border-accent outline-none text-sm font-medium py-0.5"
+                />
+                <button type="submit" className="text-accent text-xs shrink-0">Save</button>
+              </form>
+            ) : (
+              <Link to={`/watchlists/${w.id}`} className="block">
+                <div className="font-medium">{w.name}</div>
+                <div className="text-dim text-sm mt-0.5">{w.count} tickers</div>
+              </Link>
+            )}
+            <div className="mt-3 flex gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+              <button
+                onClick={() => startRename(w.id, w.name)}
+                className="text-xs text-dim hover:text-ink transition-colors"
+              >
+                Rename
+              </button>
+              <button
+                onClick={() => handleDelete(w.id, w.name)}
+                className="text-xs text-dim hover:text-neg transition-colors"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
         ))}
       </div>
+
+      {showNew && (
+        <div
+          className="fixed inset-0 bg-bg/80 backdrop-blur-sm flex items-center justify-center z-50"
+          onClick={(e) => e.target === e.currentTarget && setShowNew(false)}
+        >
+          <form
+            onSubmit={submitNew}
+            className="bg-panel border border-line rounded-lg p-6 w-80 shadow-2xl"
+          >
+            <h2 className="font-semibold mb-4">New watchlist</h2>
+            <input
+              autoFocus
+              placeholder="Name…"
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              className="w-full bg-bg border border-line rounded px-3 py-2 text-sm outline-none focus:border-accent transition-colors"
+            />
+            <div className="flex justify-end gap-2 mt-4">
+              <button
+                type="button"
+                onClick={() => { setShowNew(false); setNewName(""); }}
+                className="text-sm text-dim hover:text-ink px-3 py-1.5 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={createWL.isPending || !newName.trim()}
+                className="text-sm px-3 py-1.5 rounded bg-accent text-bg font-medium disabled:opacity-40 transition-opacity"
+              >
+                {createWL.isPending ? "Creating…" : "Create"}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 }

@@ -7,6 +7,11 @@ export interface WatchlistSummary {
   count: number;
 }
 
+export interface WatchlistOut {
+  id: string;
+  name: string;
+}
+
 export interface Scores {
   fund: number | null;
   tech: number | null;
