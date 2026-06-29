@@ -159,7 +159,7 @@ export default function WatchlistDetailPage() {
   if (error) return <p className="text-neg">Failed to load: {String(error)}</p>;
 
   return (
-    <div>
+    <div className="max-w-[1400px] mx-auto">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2 text-sm">
           <Link to="/" className="text-accent">← watchlists</Link>
