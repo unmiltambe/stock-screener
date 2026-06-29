@@ -6,7 +6,137 @@ import {
   useWatchlist,
   useWatchlists,
 } from "../../api/watchlists";
-import { fmtNum, fmtPrice, scoreColor, signalColor } from "../../lib/format";
+import type { TickerRow } from "../../api/types";
+import {
+  fcfYieldColor,
+  fmtMarketCap,
+  fmtNum,
+  fmtPct,
+  fmtPctAbs,
+  fmtPrice,
+  pegColor,
+  rangeColor,
+  roeColor,
+  rsiColor,
+  scoreColor,
+  signalColor,
+  sma200Color,
+  sma50Color,
+} from "../../lib/format";
+
+// Column header with native browser tooltip (hover to read).
+function Th({
+  children,
+  tip,
+  className = "",
+}: {
+  children: React.ReactNode;
+  tip: string;
+  className?: string;
+}) {
+  return (
+    <th title={tip} className={`py-2 cursor-help select-none ${className}`}>
+      {children}
+    </th>
+  );
+}
+
+// Compact range bar — shows position in 52W range visually.
+function RangeBar({ pos }: { pos: number | null }) {
+  if (pos == null) return <span className="text-dim">—</span>;
+  const pct = Math.max(0, Math.min(100, pos));
+  const barColor =
+    pct < 10
+      ? "bg-warn"
+      : pct <= 45
+      ? "bg-pos"
+      : pct <= 65
+      ? "bg-dim"
+      : pct <= 80
+      ? "bg-warn"
+      : "bg-neg";
+  return (
+    <div className="flex items-center gap-1.5 min-w-[80px]">
+      <div className="h-1 w-14 bg-line rounded-full overflow-hidden shrink-0">
+        <div
+          className={`h-full ${barColor} rounded-full`}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+      <span className={`text-xs font-mono ${rangeColor(pos)}`}>
+        {pct.toFixed(0)}%
+      </span>
+    </div>
+  );
+}
+
+// Tooltip text — ported verbatim from the prototype (signal_dashboard_app.py).
+const TIPS = {
+  ticker:   "Stock ticker symbol.",
+  company:  "Full company name.",
+  price:    "Current market price.",
+  mktCap:   "Market capitalisation.\n\nLarger = more established.\nSmaller = more growth potential but higher risk.",
+  pe:       "Trailing P/E — price vs last 12 months of actual earnings.\n\nFor reference only. Fwd P/E is more useful for growth companies.\n\n< 15 cheap  |  15–25 fair  |  > 25 expensive",
+  fwdPe:   "Price vs next 12 months of expected earnings.\n\nMore useful than trailing P/E for growth companies.\n\n< 15 cheap  |  15–25 fair  |  > 25 expensive",
+  peg:      "Adjusts P/E for growth — are you paying a fair price for the growth you're getting?\n\n< 1  getting more growth than you're paying for\n1–2  fair\n> 2  expensive relative to growth",
+  fcfYield: "Free cash flow as % of market cap.\n\nHow much real cash the business generates vs what you're paying. Catches companies where earnings look good but cash conversion is weak.\n\n< 0%  burning cash\n~4%  S&P 500 average\n> 8%  very strong",
+  roe:      "Return on equity — net income ÷ shareholders' equity.\n\nMeasures how efficiently management turns capital into profit. High ROE sustained over time signals a competitive moat.\n\n< 10%  weak\n15–25%  solid\n> 30%  strong moat",
+  rsi:      "14-day momentum oscillator — has the stock been pushed too far in one direction?\n\n< 30  oversold — potential entry\n30–70  neutral\n> 70  overbought — stretched",
+  sma200:   "Distance from the 200-day moving average — is the long-term trend healthy?\n\nPositive = above (uptrend)  |  Negative = below (downtrend)\n\n0–15% above is the ideal entry zone: confirmed uptrend, not yet stretched.",
+  sma50:    "Distance from the 50-day moving average — short-term trend health.\n\nPulling back toward SMA-50 while above SMA-200 is often a good entry point.",
+  range:    "Where the current price sits within its 52-week high/low range.\n\nLower in the range = potential discount entry.\nNear the top = be cautious chasing.\n\nSweet spot: 10–45% of range.",
+  fund:     "Composite quality + valuation score (0–100). Higher = better.\n\n> 60  Undervalued\n35–60  Fair\n< 35  Overvalued\n\nInputs: ROE (35%), FCF Yield (35%), PEG (30%)\nNormalised via sigmoid — no hard caps.",
+  tech:     "Composite momentum score (0–100). Higher = more bullish setup.\n\n> 60  Bullish\n40–60  Neutral\n< 40  Bearish\n\nInputs: RSI (30%), SMA-200 (30%), 52W range (30%), SMA-50 (10%)",
+  combined: "Overall score combining valuation and momentum (0–100).\n\n= Fundamental × 70% + Technical × 30%\n\n≥ 65  strong buy candidate\n35–65  neutral\n< 35  avoid",
+  signal:   "Action signal derived from Fundamental + Technical scores.\n\nBuy = undervalued with a constructive technical setup.\nTrim = overvalued — consider rotating out.\nNeutral = no strong conviction either way.",
+};
+
+function TickerTableRow({
+  r,
+  onRemove,
+}: {
+  r: TickerRow;
+  onRemove: (ticker: string) => void;
+}) {
+  const m = r.metrics;
+  return (
+    <tr className="group border-b border-line/50 hover:bg-panel">
+      <td className="py-2 pr-3 font-medium font-mono whitespace-nowrap">{r.ticker}</td>
+      <td className="pr-4 text-dim whitespace-nowrap">{(r.name ?? "").slice(0, 26)}</td>
+      <td className="pr-4 text-right font-mono whitespace-nowrap">{fmtPrice(r.price)}</td>
+      <td className="pr-4 text-right font-mono text-dim whitespace-nowrap">{fmtMarketCap(m.marketCap)}</td>
+
+      {/* Fundamental inputs */}
+      <td className="pr-3 text-right font-mono text-dim whitespace-nowrap">{fmtNum(m.pe, 1)}</td>
+      <td className="pr-3 text-right font-mono text-dim whitespace-nowrap">{fmtNum(m.fwdPe, 1)}</td>
+      <td className={`pr-3 text-right font-mono whitespace-nowrap ${pegColor(m.peg)}`}>{fmtNum(m.peg, 2)}</td>
+      <td className={`pr-3 text-right font-mono whitespace-nowrap ${fcfYieldColor(m.fcfYield)}`}>{fmtPctAbs(m.fcfYield)}</td>
+      <td className={`pr-4 text-right font-mono whitespace-nowrap ${roeColor(m.roe)}`}>{fmtPctAbs(m.roe)}</td>
+
+      {/* Technical inputs */}
+      <td className={`pr-3 text-right font-mono whitespace-nowrap ${rsiColor(m.rsi)}`}>{fmtNum(m.rsi, 0)}</td>
+      <td className={`pr-3 text-right font-mono whitespace-nowrap ${sma200Color(m.vsSma200)}`}>{fmtPct(m.vsSma200)}</td>
+      <td className={`pr-4 text-right font-mono whitespace-nowrap ${sma50Color(m.vsSma50)}`}>{fmtPct(m.vsSma50)}</td>
+      <td className="pr-4 whitespace-nowrap"><RangeBar pos={m.rangePos} /></td>
+
+      {/* Scores */}
+      <td className={`pr-3 text-right font-mono whitespace-nowrap ${scoreColor(r.scores.fund)}`}>{fmtNum(r.scores.fund, 0)}</td>
+      <td className={`pr-3 text-right font-mono whitespace-nowrap ${scoreColor(r.scores.tech)}`}>{fmtNum(r.scores.tech, 0)}</td>
+      <td className={`pr-4 text-right font-mono whitespace-nowrap ${scoreColor(r.scores.combined)}`}>{fmtNum(r.scores.combined, 0)}</td>
+      <td className={`pr-3 font-medium whitespace-nowrap ${signalColor(r.signal)}`}>{r.signal ?? "—"}</td>
+
+      <td className="pl-1">
+        <button
+          onClick={() => onRemove(r.ticker)}
+          title={`Remove ${r.ticker}`}
+          className="opacity-0 group-hover:opacity-100 text-dim hover:text-neg transition-opacity text-lg leading-none"
+        >
+          ×
+        </button>
+      </td>
+    </tr>
+  );
+}
 
 export default function WatchlistDetailPage() {
   const { id = "" } = useParams();
@@ -59,48 +189,47 @@ export default function WatchlistDetailPage() {
           No tickers yet — add one above.
         </p>
       ) : (
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="text-dim text-left border-b border-line">
-              <th className="py-2">Ticker</th>
-              <th>Company</th>
-              <th className="text-right">Price</th>
-              <th className="text-right">Fund</th>
-              <th className="text-right">Tech</th>
-              <th className="text-right">Combined</th>
-              <th>Signal</th>
-              <th className="w-6"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {data!.map((r) => (
-              <tr key={r.ticker} className="group border-b border-line/50 hover:bg-panel">
-                <td className="py-2 font-medium font-mono">{r.ticker}</td>
-                <td className="text-dim">{(r.name ?? "").slice(0, 28)}</td>
-                <td className="text-right font-mono">{fmtPrice(r.price)}</td>
-                <td className={`text-right font-mono ${scoreColor(r.scores.fund)}`}>
-                  {fmtNum(r.scores.fund, 0)}
-                </td>
-                <td className={`text-right font-mono ${scoreColor(r.scores.tech)}`}>
-                  {fmtNum(r.scores.tech, 0)}
-                </td>
-                <td className={`text-right font-mono ${scoreColor(r.scores.combined)}`}>
-                  {fmtNum(r.scores.combined, 0)}
-                </td>
-                <td className={signalColor(r.signal)}>{r.signal ?? "—"}</td>
-                <td className="pl-2">
-                  <button
-                    onClick={() => removeTicker.mutate(r.ticker)}
-                    title={`Remove ${r.ticker}`}
-                    className="opacity-0 group-hover:opacity-100 text-dim hover:text-neg transition-opacity text-lg leading-none"
-                  >
-                    ×
-                  </button>
-                </td>
+        <div className="overflow-x-auto">
+          <table className="text-sm w-max min-w-full">
+            <thead>
+              <tr className="text-dim text-left border-b border-line text-xs">
+                <Th tip={TIPS.ticker}  className="pr-3">Ticker</Th>
+                <Th tip={TIPS.company} className="pr-4">Company</Th>
+                <Th tip={TIPS.price}   className="pr-4 text-right">Price</Th>
+                <Th tip={TIPS.mktCap}  className="pr-4 text-right">Mkt Cap</Th>
+
+                {/* Fundamental inputs group */}
+                <Th tip={TIPS.pe}       className="pr-3 text-right">P/E</Th>
+                <Th tip={TIPS.fwdPe}   className="pr-3 text-right">Fwd P/E</Th>
+                <Th tip={TIPS.peg}      className="pr-3 text-right">PEG</Th>
+                <Th tip={TIPS.fcfYield} className="pr-3 text-right">FCF<br/>Yield</Th>
+                <Th tip={TIPS.roe}      className="pr-4 text-right">ROE</Th>
+
+                {/* Technical inputs group */}
+                <Th tip={TIPS.rsi}    className="pr-3 text-right">RSI</Th>
+                <Th tip={TIPS.sma200} className="pr-3 text-right">vs<br/>200d</Th>
+                <Th tip={TIPS.sma50}  className="pr-4 text-right">vs<br/>50d</Th>
+                <Th tip={TIPS.range}  className="pr-4">52W Range</Th>
+
+                {/* Scores */}
+                <Th tip={TIPS.fund}     className="pr-3 text-right">Fundamental<br/>Score</Th>
+                <Th tip={TIPS.tech}     className="pr-3 text-right">Technical<br/>Score</Th>
+                <Th tip={TIPS.combined} className="pr-4 text-right">Combined<br/>Score</Th>
+                <Th tip={TIPS.signal}   className="pr-3">Signal</Th>
+                <th className="w-6"></th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {data!.map((r) => (
+                <TickerTableRow
+                  key={r.ticker}
+                  r={r}
+                  onRemove={(t) => removeTicker.mutate(t)}
+                />
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );

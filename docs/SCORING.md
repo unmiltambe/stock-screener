@@ -5,6 +5,9 @@ the canonical reference for `services/app/core`. It must not be altered as a sid
 effect of infrastructure or migration work — changes here are deliberate,
 reviewed decisions.
 
+> **See also:** [docs/ui-columns.md](ui-columns.md) for how each metric is
+> displayed in the UI (column definitions, color thresholds, tooltip text).
+
 Every score is 0–100 (higher = better) and degrades gracefully: a sub-score is
 dropped and weights re-normalize if an input is missing; the score shows `—` if
 fewer than 2 inputs are available.
