@@ -247,6 +247,27 @@ SCORING.md §3 for the full decision table.
 
 ---
 
+## Sorting
+
+Click any column header to sort the table by that column. Click again to reverse direction. The active sort column is highlighted in blue with a ↑ / ↓ indicator. Null values always sink to the bottom regardless of direction.
+
+**Recommended sort patterns:**
+
+| Goal | Sort column | Direction |
+|------|-------------|-----------|
+| Best overall picks | Combined Score | ↓ Descending |
+| Best value (cheapest quality) | Fundamental Score | ↓ Descending |
+| Best entry timing | Technical Score | ↓ Descending |
+| Show Buy signals first | Signal | ↑ Ascending (Buy < Neutral < Trim alphabetically) |
+| Most oversold (RSI) | RSI | ↑ Ascending |
+| Lowest in 52W range | 52W Range | ↑ Ascending |
+
+> **Note on Signal sort:** Signal sorts alphabetically (Buy → Neutral → Trim ascending).
+> For a "best picks first" view, sorting by Combined Score descending is usually
+> more useful than sorting by Signal directly.
+
+---
+
 ## Stale data flag
 
 When a TickerRow has `stale: true`, the score was served from the 15-minute
