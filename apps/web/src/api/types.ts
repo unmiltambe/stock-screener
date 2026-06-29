@@ -32,6 +32,18 @@ export interface Metrics {
   marketCap: number | null;
 }
 
+export interface ChartPoint {
+  t: string;
+  price: number;
+  sma50: number | null;
+  sma200: number | null;
+}
+
+export interface ChartOut {
+  ticker: string;
+  points: ChartPoint[];
+}
+
 export interface TickerRow {
   ticker: string;
   name: string;

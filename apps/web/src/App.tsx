@@ -1,6 +1,7 @@
 import { Routes, Route, Link } from 'react-router-dom'
 import WatchlistsPage from './features/watchlists/WatchlistsPage'
 import WatchlistDetailPage from './features/watchlists/WatchlistDetailPage'
+import TickerDetailPage from './features/tickers/TickerDetailPage'
 
 export default function App() {
   return (
@@ -13,6 +14,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<WatchlistsPage />} />
           <Route path="/watchlists/:id" element={<WatchlistDetailPage />} />
+          <Route path="/tickers/:symbol" element={<TickerDetailPage />} />
         </Routes>
       </main>
     </div>

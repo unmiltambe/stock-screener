@@ -144,11 +144,24 @@ const TIPS = {
 
 // ── Row ───────────────────────────────────────────────────────────────────────
 
-function TickerTableRow({ r, onRemove }: { r: TickerRow; onRemove: (t: string) => void }) {
+function TickerTableRow({ r, onRemove, watchlistId, watchlistName }: {
+  r: TickerRow;
+  onRemove: (t: string) => void;
+  watchlistId: string;
+  watchlistName: string;
+}) {
   const m = r.metrics;
   return (
     <tr className="group border-b border-line/50 hover:bg-panel">
-      <td className="py-2 pr-3 font-medium font-mono whitespace-nowrap">{r.ticker}</td>
+      <td className="py-2 pr-3 font-medium font-mono whitespace-nowrap">
+        <Link
+          to={`/tickers/${r.ticker}`}
+          state={{ from: watchlistId, fromName: watchlistName }}
+          className="hover:text-accent transition-colors"
+        >
+          {r.ticker}
+        </Link>
+      </td>
       <td className="pr-4 text-dim whitespace-nowrap">{(r.name ?? "").slice(0, 26)}</td>
       <td className="pr-4 text-right font-mono whitespace-nowrap">{fmtPrice(r.price)}</td>
       <td className="pr-4 text-right font-mono text-dim whitespace-nowrap">{fmtMarketCap(m.marketCap)}</td>
@@ -265,7 +278,13 @@ export default function WatchlistDetailPage() {
             </thead>
             <tbody>
               {rows.map((r) => (
-                <TickerTableRow key={r.ticker} r={r} onRemove={(t) => removeTicker.mutate(t)} />
+                <TickerTableRow
+                  key={r.ticker}
+                  r={r}
+                  onRemove={(t) => removeTicker.mutate(t)}
+                  watchlistId={id}
+                  watchlistName={watchlistName}
+                />
               ))}
             </tbody>
           </table>
