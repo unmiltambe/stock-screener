@@ -49,7 +49,7 @@ export default function WatchlistsPage() {
   if (error) return <p className="text-neg">Failed to load: {String(error)}</p>;
 
   return (
-    <div>
+    <div className="max-w-5xl mx-auto">
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-lg font-semibold">Watchlists</h1>
         <button

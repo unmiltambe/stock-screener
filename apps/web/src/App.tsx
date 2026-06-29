@@ -9,7 +9,7 @@ export default function App() {
         <Link to="/" className="font-semibold">Bellwether</Link>
         <span className="text-dim text-sm">stock screener</span>
       </header>
-      <main className="max-w-5xl mx-auto p-6">
+      <main className="px-6 py-6">
         <Routes>
           <Route path="/" element={<WatchlistsPage />} />
           <Route path="/watchlists/:id" element={<WatchlistDetailPage />} />

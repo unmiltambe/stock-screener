@@ -190,7 +190,7 @@ export default function WatchlistDetailPage() {
         </p>
       ) : (
         <div className="overflow-x-auto">
-          <table className="text-sm w-max min-w-full">
+          <table className="text-sm w-full">
             <thead>
               <tr className="text-dim text-left border-b border-line text-xs">
                 <Th tip={TIPS.ticker}  className="pr-3">Ticker</Th>
