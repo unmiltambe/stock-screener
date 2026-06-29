@@ -145,7 +145,7 @@ const TIPS = {
   signal:   "Action signal derived from Fundamental + Technical scores.\n\nBuy = undervalued with a constructive technical setup.\nTrim = overvalued — consider rotating out.\nNeutral = no strong conviction either way.",
 };
 
-// ── Inline chart panel ────────────────────────────────────────────────────────
+// ── Chart panel (full-width, stacked above table) ─────────────────────────────
 
 const CHART_C = {
   accent:  "#6ab0f5",
@@ -204,134 +204,134 @@ function ChartPanel({ ticker, watchlistId, onClose }: {
   const { data: row, isLoading: rowLoading } = useTickerScores(ticker);
 
   const points = chartData ? filterPoints(chartData.points, period) : [];
-  const tickInterval = Math.max(1, Math.floor(points.length / 5));
+  const tickInterval = Math.max(1, Math.floor(points.length / 8));
+  const isLoading = chartLoading || rowLoading;
 
   return (
-    <div className="w-[400px] shrink-0 sticky top-6 self-start">
-      <div className="bg-panel border border-line rounded-xl overflow-hidden">
-        {/* Panel header */}
-        <div className="flex items-start justify-between p-4 border-b border-line">
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
-              <span className="font-mono font-semibold text-lg">{ticker}</span>
-              {row && (
-                <span className={`text-sm font-semibold ${signalColor(row.signal)}`}>
-                  {row.signal ?? "—"}
-                </span>
-              )}
+    <div className="bg-panel border border-line rounded-xl mb-4 overflow-hidden">
+      <div className="flex h-[280px]">
+        {/* Left column: ticker info + key metrics */}
+        <div className="w-52 shrink-0 border-r border-line flex flex-col justify-between p-4">
+          <div>
+            {/* Ticker + close */}
+            <div className="flex items-start justify-between gap-1 mb-1">
+              <span className="font-mono font-semibold text-xl leading-tight">{ticker}</span>
+              <div className="flex items-center gap-2 shrink-0 mt-0.5">
+                <Link
+                  to={`/tickers/${ticker}`}
+                  state={{ from: watchlistId }}
+                  title="Full detail page"
+                  className="text-dim hover:text-accent text-xs transition-colors"
+                >↗</Link>
+                <button onClick={onClose} className="text-dim hover:text-ink transition-colors text-lg leading-none">×</button>
+              </div>
             </div>
             {row && (
               <>
-                <p className="text-dim text-xs mt-0.5 truncate">{row.name}</p>
-                <div className="flex items-center gap-3 mt-2">
-                  <span className="font-mono font-medium">{fmtPrice(row.price)}</span>
-                  <span className={`text-xs ${scoreColor(row.scores.fund)}`}>F {fmtNum(row.scores.fund, 0)}</span>
-                  <span className={`text-xs ${scoreColor(row.scores.tech)}`}>T {fmtNum(row.scores.tech, 0)}</span>
-                  <span className={`text-xs ${scoreColor(row.scores.combined)}`}>C {fmtNum(row.scores.combined, 0)}</span>
+                <p className="text-dim text-xs leading-snug mb-3">{row.name}</p>
+                <div className="font-mono font-semibold text-2xl mb-2">{fmtPrice(row.price)}</div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className={`text-xs font-medium px-1.5 py-0.5 rounded bg-line ${scoreColor(row.scores.fund)}`}>
+                    F {fmtNum(row.scores.fund, 0)}
+                  </span>
+                  <span className={`text-xs font-medium px-1.5 py-0.5 rounded bg-line ${scoreColor(row.scores.tech)}`}>
+                    T {fmtNum(row.scores.tech, 0)}
+                  </span>
+                  <span className={`text-xs font-medium px-1.5 py-0.5 rounded bg-line ${scoreColor(row.scores.combined)}`}>
+                    C {fmtNum(row.scores.combined, 0)}
+                  </span>
+                  <span className={`text-xs font-semibold ${signalColor(row.signal)}`}>{row.signal ?? "—"}</span>
                 </div>
               </>
             )}
+            {isLoading && <p className="text-dim text-xs mt-2">Loading…</p>}
           </div>
-          <div className="flex items-center gap-2 ml-2 shrink-0">
-            <Link
-              to={`/tickers/${ticker}`}
-              state={{ from: watchlistId, fromName: row?.name }}
-              title="Full detail page"
-              className="text-dim hover:text-accent text-xs transition-colors"
-            >
-              ↗
-            </Link>
-            <button
-              onClick={onClose}
-              className="text-dim hover:text-ink transition-colors text-lg leading-none"
-            >
-              ×
-            </button>
-          </div>
-        </div>
 
-        {/* Period toggle */}
-        <div className="flex items-center justify-between px-4 pt-3 pb-1">
-          <div className="flex items-center gap-2 text-[10px] text-dim">
-            <span style={{ color: CHART_C.accent }}>— Price</span>
-            <span style={{ color: CHART_C.warn }}>-- SMA 50</span>
-            <span style={{ color: CHART_C.pos }}>· · SMA 200</span>
-          </div>
-          <div className="flex gap-1">
-            {PERIODS.map((p) => (
-              <button
-                key={p}
-                onClick={() => setPeriod(p)}
-                className={[
-                  "px-2 py-0.5 rounded text-xs transition-colors",
-                  period === p
-                    ? "bg-accent/20 text-accent border border-accent/40"
-                    : "text-dim hover:text-ink border border-transparent",
-                ].join(" ")}
-              >
-                {p}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Chart */}
-        <div className="px-2 pb-3">
-          {(chartLoading || rowLoading) && (
-            <div className="h-48 flex items-center justify-center text-dim text-sm">Loading…</div>
-          )}
-          {!chartLoading && points.length > 0 && (
-            <ResponsiveContainer width="100%" height={200}>
-              <ComposedChart data={points} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke={CHART_C.line} vertical={false} />
-                <XAxis
-                  dataKey="t"
-                  tickFormatter={makeTickFmt(period)}
-                  interval={tickInterval}
-                  tick={{ fill: CHART_C.dim, fontSize: 10 }}
-                  axisLine={{ stroke: CHART_C.line }}
-                  tickLine={false}
-                />
-                <YAxis
-                  domain={[(min: number) => min * 0.98, (max: number) => max * 1.02]}
-                  tickFormatter={(v) => `$${v.toFixed(0)}`}
-                  tick={{ fill: CHART_C.dim, fontSize: 10 }}
-                  axisLine={false}
-                  tickLine={false}
-                  width={48}
-                />
-                <Tooltip
-                  content={<PanelTooltip />}
-                  cursor={{ stroke: CHART_C.dim, strokeWidth: 1, strokeDasharray: "4 4" }}
-                />
-                <Area type="monotone" dataKey="price" name="Price" stroke={CHART_C.accent}
-                  strokeWidth={1.5} fill={CHART_C.accentA} dot={false}
-                  activeDot={{ r: 3, fill: CHART_C.accent }} />
-                <Line type="monotone" dataKey="sma50" name="SMA 50" stroke={CHART_C.warn}
-                  strokeWidth={1} strokeDasharray="5 3" dot={false} activeDot={false} />
-                <Line type="monotone" dataKey="sma200" name="SMA 200" stroke={CHART_C.pos}
-                  strokeWidth={1} strokeDasharray="2 4" dot={false} activeDot={false} />
-              </ComposedChart>
-            </ResponsiveContainer>
+          {/* Key metrics at the bottom */}
+          {row && (
+            <div className="grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
+              {[
+                { label: "RSI", value: fmtNum(row.metrics.rsi, 0), color: rsiColor(row.metrics.rsi) },
+                { label: "vs 200d", value: fmtPct(row.metrics.vsSma200), color: sma200Color(row.metrics.vsSma200) },
+                { label: "PEG", value: fmtNum(row.metrics.peg, 2), color: pegColor(row.metrics.peg) },
+                { label: "FCF Yield", value: fmtPctAbs(row.metrics.fcfYield), color: fcfYieldColor(row.metrics.fcfYield) },
+              ].map(({ label, value, color }) => (
+                <div key={label}>
+                  <div className="text-dim text-[10px]">{label}</div>
+                  <div className={`font-mono font-medium ${color}`}>{value}</div>
+                </div>
+              ))}
+            </div>
           )}
         </div>
 
-        {/* Key metrics strip */}
-        {row && (
-          <div className="border-t border-line grid grid-cols-4 divide-x divide-line text-center">
-            {[
-              { label: "RSI", value: fmtNum(row.metrics.rsi, 0), color: rsiColor(row.metrics.rsi) },
-              { label: "vs 200d", value: fmtPct(row.metrics.vsSma200), color: sma200Color(row.metrics.vsSma200) },
-              { label: "PEG", value: fmtNum(row.metrics.peg, 2), color: pegColor(row.metrics.peg) },
-              { label: "FCF Yld", value: fmtPctAbs(row.metrics.fcfYield), color: fcfYieldColor(row.metrics.fcfYield) },
-            ].map(({ label, value, color }) => (
-              <div key={label} className="py-2 px-1">
-                <div className="text-dim text-[10px]">{label}</div>
-                <div className={`font-mono text-xs font-medium ${color}`}>{value}</div>
-              </div>
-            ))}
+        {/* Right column: period toggle + chart */}
+        <div className="flex-1 flex flex-col min-w-0 px-3 pt-3 pb-2">
+          <div className="flex items-center justify-between mb-2 shrink-0">
+            <div className="flex items-center gap-3 text-[10px] text-dim">
+              <span style={{ color: CHART_C.accent }}>— Price</span>
+              <span style={{ color: CHART_C.warn }}>-- SMA 50</span>
+              <span style={{ color: CHART_C.pos }}>· · SMA 200</span>
+            </div>
+            <div className="flex gap-1">
+              {PERIODS.map((p) => (
+                <button
+                  key={p}
+                  onClick={() => setPeriod(p)}
+                  className={[
+                    "px-2 py-0.5 rounded text-xs transition-colors",
+                    period === p
+                      ? "bg-accent/20 text-accent border border-accent/40"
+                      : "text-dim hover:text-ink border border-transparent",
+                  ].join(" ")}
+                >
+                  {p}
+                </button>
+              ))}
+            </div>
           </div>
-        )}
+
+          {/* Chart fills remaining height */}
+          <div className="flex-1 min-h-0">
+            {chartLoading && (
+              <div className="h-full flex items-center justify-center text-dim text-sm">Loading…</div>
+            )}
+            {!chartLoading && points.length > 0 && (
+              <ResponsiveContainer width="100%" height="100%">
+                <ComposedChart data={points} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={CHART_C.line} vertical={false} />
+                  <XAxis
+                    dataKey="t"
+                    tickFormatter={makeTickFmt(period)}
+                    interval={tickInterval}
+                    tick={{ fill: CHART_C.dim, fontSize: 10 }}
+                    axisLine={{ stroke: CHART_C.line }}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    domain={[(min: number) => min * 0.98, (max: number) => max * 1.02]}
+                    tickFormatter={(v) => `$${v.toFixed(0)}`}
+                    tick={{ fill: CHART_C.dim, fontSize: 10 }}
+                    axisLine={false}
+                    tickLine={false}
+                    width={52}
+                  />
+                  <Tooltip
+                    content={<PanelTooltip />}
+                    cursor={{ stroke: CHART_C.dim, strokeWidth: 1, strokeDasharray: "4 4" }}
+                  />
+                  <Area type="monotone" dataKey="price" name="Price" stroke={CHART_C.accent}
+                    strokeWidth={1.5} fill={CHART_C.accentA} dot={false}
+                    activeDot={{ r: 3, fill: CHART_C.accent }} />
+                  <Line type="monotone" dataKey="sma50" name="SMA 50" stroke={CHART_C.warn}
+                    strokeWidth={1} strokeDasharray="5 3" dot={false} activeDot={false} />
+                  <Line type="monotone" dataKey="sma200" name="SMA 200" stroke={CHART_C.pos}
+                    strokeWidth={1} strokeDasharray="2 4" dot={false} activeDot={false} />
+                </ComposedChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -360,16 +360,19 @@ function TickerTableRow({ r, isSelected, onClick, onRemove }: {
       <td className="pr-4 text-dim whitespace-nowrap">{(r.name ?? "").slice(0, 26)}</td>
       <td className="pr-4 text-right font-mono whitespace-nowrap">{fmtPrice(r.price)}</td>
       <td className="pr-4 text-right font-mono text-dim whitespace-nowrap">{fmtMarketCap(m.marketCap)}</td>
-      <td className="pr-3 text-right font-mono text-dim whitespace-nowrap">{fmtNum(m.pe, 1)}</td>
+      {/* Fundamental group */}
+      <td className="pr-3 text-right font-mono text-dim whitespace-nowrap border-l border-line/40 pl-3">{fmtNum(m.pe, 1)}</td>
       <td className="pr-3 text-right font-mono text-dim whitespace-nowrap">{fmtNum(m.fwdPe, 1)}</td>
       <td className={`pr-3 text-right font-mono whitespace-nowrap ${pegColor(m.peg)}`}>{fmtNum(m.peg, 2)}</td>
       <td className={`pr-3 text-right font-mono whitespace-nowrap ${fcfYieldColor(m.fcfYield)}`}>{fmtPctAbs(m.fcfYield)}</td>
       <td className={`pr-4 text-right font-mono whitespace-nowrap ${roeColor(m.roe)}`}>{fmtPctAbs(m.roe)}</td>
-      <td className={`pr-3 text-right font-mono whitespace-nowrap ${rsiColor(m.rsi)}`}>{fmtNum(m.rsi, 0)}</td>
+      {/* Technical group */}
+      <td className={`pr-3 text-right font-mono whitespace-nowrap border-l border-line/40 pl-3 ${rsiColor(m.rsi)}`}>{fmtNum(m.rsi, 0)}</td>
       <td className={`pr-3 text-right font-mono whitespace-nowrap ${sma200Color(m.vsSma200)}`}>{fmtPct(m.vsSma200)}</td>
       <td className={`pr-4 text-right font-mono whitespace-nowrap ${sma50Color(m.vsSma50)}`}>{fmtPct(m.vsSma50)}</td>
       <td className="pr-4 whitespace-nowrap"><RangeBar pos={m.rangePos} /></td>
-      <td className={`pr-3 text-right font-mono whitespace-nowrap ${scoreColor(r.scores.fund)}`}>{fmtNum(r.scores.fund, 0)}</td>
+      {/* Scores group */}
+      <td className={`pr-3 text-right font-mono whitespace-nowrap border-l border-line/40 pl-3 ${scoreColor(r.scores.fund)}`}>{fmtNum(r.scores.fund, 0)}</td>
       <td className={`pr-3 text-right font-mono whitespace-nowrap ${scoreColor(r.scores.tech)}`}>{fmtNum(r.scores.tech, 0)}</td>
       <td className={`pr-4 text-right font-mono whitespace-nowrap ${scoreColor(r.scores.combined)}`}>{fmtNum(r.scores.combined, 0)}</td>
       <td className={`pr-3 font-medium whitespace-nowrap ${signalColor(r.signal)}`}>{r.signal ?? "—"}</td>
@@ -425,7 +428,7 @@ export default function WatchlistDetailPage() {
 
   return (
     <div className="max-w-[1400px] mx-auto">
-      {/* Header */}
+      {/* Page header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2 text-sm">
           <Link to="/" className="text-accent">← watchlists</Link>
@@ -453,30 +456,75 @@ export default function WatchlistDetailPage() {
       {data!.length === 0 ? (
         <p className="text-dim text-sm mt-8 text-center">No tickers yet — add one above.</p>
       ) : (
-        <div className="flex gap-4 items-start">
-          {/* Table */}
-          <div className="flex-1 min-w-0 overflow-x-auto">
+        <>
+          {/* Chart panel — full width, above table */}
+          {selectedTicker && (
+            <ChartPanel
+              ticker={selectedTicker}
+              watchlistId={id}
+              onClose={() => setSelectedTicker(null)}
+            />
+          )}
+
+          {/* Table — never compressed */}
+          <div className="overflow-x-auto">
             <table className="text-sm w-full">
               <thead>
+                {/* Group header row */}
+                <tr className="text-[10px] uppercase tracking-wider border-b border-line/40">
+                  {/* Info columns — no label, just spacer */}
+                  <th colSpan={4} className="pb-1" />
+                  {/* Fundamental Metrics group */}
+                  <th
+                    colSpan={5}
+                    className="pb-1 text-center border-l border-line/40 pl-3 pr-4"
+                    style={{ color: "#2ecc71" }}
+                  >
+                    Fundamental Metrics
+                  </th>
+                  {/* Technical Metrics group */}
+                  <th
+                    colSpan={4}
+                    className="pb-1 text-center border-l border-line/40 pl-3 pr-4"
+                    style={{ color: "#6ab0f5" }}
+                  >
+                    Technical Metrics
+                  </th>
+                  {/* Scores group */}
+                  <th
+                    colSpan={4}
+                    className="pb-1 text-center border-l border-line/40 pl-3"
+                    style={{ color: "#8a93a6" }}
+                  >
+                    Scores
+                  </th>
+                  {/* Remove button column */}
+                  <th className="pb-1 w-6" />
+                </tr>
+
+                {/* Individual column headers */}
                 <tr className="text-dim text-left border-b border-line text-xs">
-                  <Th tip={TIPS.ticker}   sortK="ticker"    {...thProps} className="pr-3">Ticker</Th>
-                  <Th tip={TIPS.company}  sortK="company"   {...thProps} className="pr-4">Company</Th>
-                  <Th tip={TIPS.price}    sortK="price"     {...thProps} className="pr-4 text-right">Price</Th>
-                  <Th tip={TIPS.mktCap}   sortK="marketCap" {...thProps} className="pr-4 text-right">Mkt Cap</Th>
-                  <Th tip={TIPS.pe}       sortK="pe"        {...thProps} className="pr-3 text-right">P/E</Th>
-                  <Th tip={TIPS.fwdPe}    sortK="fwdPe"     {...thProps} className="pr-3 text-right">Fwd P/E</Th>
-                  <Th tip={TIPS.peg}      sortK="peg"       {...thProps} className="pr-3 text-right">PEG</Th>
-                  <Th tip={TIPS.fcfYield} sortK="fcfYield"  {...thProps} className="pr-3 text-right">FCF<br/>Yield</Th>
-                  <Th tip={TIPS.roe}      sortK="roe"       {...thProps} className="pr-4 text-right">ROE</Th>
-                  <Th tip={TIPS.rsi}      sortK="rsi"       {...thProps} className="pr-3 text-right">RSI</Th>
-                  <Th tip={TIPS.sma200}   sortK="vsSma200"  {...thProps} className="pr-3 text-right">vs<br/>200d</Th>
-                  <Th tip={TIPS.sma50}    sortK="vsSma50"   {...thProps} className="pr-4 text-right">vs<br/>50d</Th>
-                  <Th tip={TIPS.range}    sortK="rangePos"  {...thProps} className="pr-4">52W Range</Th>
-                  <Th tip={TIPS.fund}     sortK="fund"      {...thProps} className="pr-3 text-right">Fundamental<br/>Score</Th>
-                  <Th tip={TIPS.tech}     sortK="tech"      {...thProps} className="pr-3 text-right">Technical<br/>Score</Th>
-                  <Th tip={TIPS.combined} sortK="combined"  {...thProps} className="pr-4 text-right">Combined<br/>Score</Th>
-                  <Th tip={TIPS.signal}   sortK="signal"    {...thProps} className="pr-3">Signal</Th>
-                  <th className="w-6"></th>
+                  <Th tip={TIPS.ticker}   sortK="ticker"    {...thProps} className="pr-3 pt-1">Ticker</Th>
+                  <Th tip={TIPS.company}  sortK="company"   {...thProps} className="pr-4 pt-1">Company</Th>
+                  <Th tip={TIPS.price}    sortK="price"     {...thProps} className="pr-4 pt-1 text-right">Price</Th>
+                  <Th tip={TIPS.mktCap}   sortK="marketCap" {...thProps} className="pr-4 pt-1 text-right">Mkt Cap</Th>
+                  {/* Fundamental */}
+                  <Th tip={TIPS.pe}       sortK="pe"        {...thProps} className="pr-3 pt-1 text-right border-l border-line/40 pl-3">P/E</Th>
+                  <Th tip={TIPS.fwdPe}    sortK="fwdPe"     {...thProps} className="pr-3 pt-1 text-right">Fwd P/E</Th>
+                  <Th tip={TIPS.peg}      sortK="peg"       {...thProps} className="pr-3 pt-1 text-right">PEG</Th>
+                  <Th tip={TIPS.fcfYield} sortK="fcfYield"  {...thProps} className="pr-3 pt-1 text-right">FCF<br/>Yield</Th>
+                  <Th tip={TIPS.roe}      sortK="roe"       {...thProps} className="pr-4 pt-1 text-right">ROE</Th>
+                  {/* Technical */}
+                  <Th tip={TIPS.rsi}      sortK="rsi"       {...thProps} className="pr-3 pt-1 text-right border-l border-line/40 pl-3">RSI</Th>
+                  <Th tip={TIPS.sma200}   sortK="vsSma200"  {...thProps} className="pr-3 pt-1 text-right">vs<br/>200d</Th>
+                  <Th tip={TIPS.sma50}    sortK="vsSma50"   {...thProps} className="pr-4 pt-1 text-right">vs<br/>50d</Th>
+                  <Th tip={TIPS.range}    sortK="rangePos"  {...thProps} className="pr-4 pt-1">52W Range</Th>
+                  {/* Scores */}
+                  <Th tip={TIPS.fund}     sortK="fund"      {...thProps} className="pr-3 pt-1 text-right border-l border-line/40 pl-3">Fund<br/>Score</Th>
+                  <Th tip={TIPS.tech}     sortK="tech"      {...thProps} className="pr-3 pt-1 text-right">Tech<br/>Score</Th>
+                  <Th tip={TIPS.combined} sortK="combined"  {...thProps} className="pr-4 pt-1 text-right">Combined<br/>Score</Th>
+                  <Th tip={TIPS.signal}   sortK="signal"    {...thProps} className="pr-3 pt-1">Signal</Th>
+                  <th className="w-6 pt-1" />
                 </tr>
               </thead>
               <tbody>
@@ -492,16 +540,7 @@ export default function WatchlistDetailPage() {
               </tbody>
             </table>
           </div>
-
-          {/* Chart panel */}
-          {selectedTicker && (
-            <ChartPanel
-              ticker={selectedTicker}
-              watchlistId={id}
-              onClose={() => setSelectedTicker(null)}
-            />
-          )}
-        </div>
+        </>
       )}
     </div>
   );
