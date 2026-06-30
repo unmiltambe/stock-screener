@@ -10,6 +10,16 @@ from typing import Any, Dict, List, Optional, Protocol, Sequence, runtime_checka
 
 from core.models import MarketSnapshot, Watchlist
 
+# Identity namespace for unauthenticated guest sessions (ADR-0009). A guest user
+# id is `GUEST#<uuid>`; authenticated users are the bare Cognito `sub`. Defined
+# here (shared) so the auth layer that mints it and the store that applies a TTL
+# to guest items agree on one prefix.
+GUEST_PREFIX = "GUEST#"
+
+
+def is_guest(user_id: str) -> bool:
+    return user_id.startswith(GUEST_PREFIX)
+
 
 @runtime_checkable
 class MarketDataPort(Protocol):

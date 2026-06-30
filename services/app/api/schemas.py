@@ -72,6 +72,11 @@ class WatchlistNameIn(BaseModel):
     name: str
 
 
+class MigrateGuestIn(BaseModel):
+    """Body for POST /v1/auth/migrate-guest — the guest UUID to absorb (ADR-0009)."""
+    guest_id: str
+
+
 def row_from_scored(
     scored: ScoredTicker,
     lists: Optional[List[str]] = None,

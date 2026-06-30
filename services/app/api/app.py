@@ -12,6 +12,8 @@ from typing import List
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
+from adapters.ports import is_guest
+
 from . import schemas
 from .deps import get_service, get_user_id
 from .service import ScreenerService
@@ -96,6 +98,18 @@ def create_app() -> FastAPI:
                     user_id: str = Depends(get_user_id)):
         if not svc.remove_ticker(user_id, watchlist_id, symbol):
             raise HTTPException(status_code=404, detail="Watchlist not found")
+
+    # ── auth: migrate a guest session into the signed-in account (ADR-0009) ────
+
+    @v1.post("/auth/migrate-guest")
+    def migrate_guest(body: schemas.MigrateGuestIn,
+                      svc: ScreenerService = Depends(get_service),
+                      user_id: str = Depends(get_user_id)):
+        """Move the caller's guest watchlists into their authenticated account.
+        Requires a real (non-guest) identity — call right after Cognito sign-in."""
+        if is_guest(user_id):
+            raise HTTPException(status_code=401, detail="Sign in before migrating guest data")
+        return {"migrated": svc.migrate_guest(user_id, body.guest_id)}
 
     # ── leaderboard, scores, chart ────────────────────────────────────────────
 

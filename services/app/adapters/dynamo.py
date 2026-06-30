@@ -19,9 +19,23 @@ from boto3.dynamodb.conditions import Key
 
 from core.models import Watchlist
 
+from .ports import is_guest
+
+# Abandoned guest sessions self-expire so storage doesn't accumulate (ADR-0009).
+# Authenticated users' items carry no TTL. The window refreshes on every write,
+# so an actively-used guest session won't vanish mid-use.
+_GUEST_TTL_SECONDS = 7 * 24 * 3600  # 7 days
+
 
 def _table(name: str):
     return boto3.resource("dynamodb").Table(name)
+
+
+def _guest_ttl(user_id: str) -> Optional[int]:
+    """Epoch expiry for a guest's items, or None for authenticated users."""
+    if is_guest(user_id):
+        return int(time.time()) + _GUEST_TTL_SECONDS
+    return None
 
 
 class DynamoCache:
@@ -71,16 +85,28 @@ class DynamoWatchlistRepo:
 
     def create(self, user_id: str, name: str) -> Watchlist:
         wid = uuid.uuid4().hex
-        self._t.put_item(Item={"PK": f"USER#{user_id}", "SK": f"WL#{wid}",
-                              "name": name, "tickers": []})
+        item = {"PK": f"USER#{user_id}", "SK": f"WL#{wid}",
+                "name": name, "tickers": []}
+        ttl = _guest_ttl(user_id)
+        if ttl is not None:
+            item["ttl"] = ttl
+        self._t.put_item(Item=item)
         return Watchlist(id=wid, name=name, tickers=[])
 
     def rename(self, user_id: str, watchlist_id: str, new_name: str) -> None:
+        names = {"#n": "name"}
+        values = {":name": new_name}
+        expr = "SET #n = :name"
+        ttl = _guest_ttl(user_id)
+        if ttl is not None:
+            expr += ", #ttl = :ttl"
+            names["#ttl"] = "ttl"
+            values[":ttl"] = ttl
         self._t.update_item(
             Key={"PK": f"USER#{user_id}", "SK": f"WL#{watchlist_id}"},
-            UpdateExpression="SET #n = :name",
-            ExpressionAttributeNames={"#n": "name"},
-            ExpressionAttributeValues={":name": new_name},
+            UpdateExpression=expr,
+            ExpressionAttributeNames=names,
+            ExpressionAttributeValues=values,
             ConditionExpression="attribute_exists(SK)",
         )
 
@@ -88,12 +114,23 @@ class DynamoWatchlistRepo:
         self._t.delete_item(Key={"PK": f"USER#{user_id}", "SK": f"WL#{watchlist_id}"})
 
     def _save_tickers(self, user_id: str, watchlist_id: str, tickers: List[str]) -> None:
-        self._t.update_item(
+        names = None
+        values = {":t": tickers}
+        expr = "SET tickers = :t"
+        ttl = _guest_ttl(user_id)
+        if ttl is not None:
+            expr += ", #ttl = :ttl"
+            names = {"#ttl": "ttl"}
+            values[":ttl"] = ttl
+        kwargs = dict(
             Key={"PK": f"USER#{user_id}", "SK": f"WL#{watchlist_id}"},
-            UpdateExpression="SET tickers = :t",
-            ExpressionAttributeValues={":t": tickers},
+            UpdateExpression=expr,
+            ExpressionAttributeValues=values,
             ConditionExpression="attribute_exists(SK)",
         )
+        if names:
+            kwargs["ExpressionAttributeNames"] = names
+        self._t.update_item(**kwargs)
 
     def add_ticker(self, user_id: str, watchlist_id: str, symbol: str) -> None:
         wl = self.get(user_id, watchlist_id)

@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import Dict, List, Optional, Sequence
 
-from adapters.ports import CachePort, MarketDataPort, WatchlistRepo
+from adapters.ports import GUEST_PREFIX, CachePort, MarketDataPort, WatchlistRepo
 from core import score_snapshot, sma_series
 
 from . import schemas
@@ -111,6 +111,27 @@ class ScreenerService:
             return False
         self._watchlists.remove_ticker(user_id, watchlist_id, symbol)
         return True
+
+    def migrate_guest(self, user_id: str, guest_id: str) -> int:
+        """Copy a guest's watchlists into the authenticated user's account, then
+        delete the guest's (ADR-0009, the conversion moment). Returns the number
+        of lists migrated. Idempotent: once moved the guest has no lists, so a
+        repeat call is a no-op — safe to call on every sign-in.
+
+        Call this *before* the first watchlist fetch so the migrated lists count
+        as the user's content and `ensure_seeded` doesn't add a duplicate starter.
+        """
+        guest_user = f"{GUEST_PREFIX}{guest_id}"
+        if guest_user == user_id:
+            return 0
+        migrated = 0
+        for wl in self._watchlists.list_all(guest_user):
+            new = self._watchlists.create(user_id, wl.name)
+            for t in wl.tickers:
+                self._watchlists.add_ticker(user_id, new.id, t)
+            self._watchlists.delete(guest_user, wl.id)
+            migrated += 1
+        return migrated
 
     # ── leaderboard ───────────────────────────────────────────────────────────
 
