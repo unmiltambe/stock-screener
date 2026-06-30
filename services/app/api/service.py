@@ -54,7 +54,12 @@ class ScreenerService:
                     rows[sym] = schemas.error_row(sym)
                     continue  # don't cache transient failures
                 row = schemas.row_from_scored(score_snapshot(sym, snap))
-                self._cache.set(self._key(sym), row, SCORE_TTL_SECONDS)
+                # Only cache when fundamentals succeeded (price present).
+                # price=None means .info failed (rate-limited / timeout); an ETF
+                # with no P/E still has a price.  Caching partial fundamentals
+                # would serve stale empty rows for the full 15-min TTL.
+                if snap.fundamentals.price is not None:
+                    self._cache.set(self._key(sym), row, SCORE_TTL_SECONDS)
                 rows[sym] = row
 
         return [rows[s] for s in symbols]
