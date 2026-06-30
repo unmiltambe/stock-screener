@@ -4,6 +4,23 @@ A multi-user stock **dashboard, watchlist, and discovery engine**. Score the
 companies you follow, and surface new ones you don't — ranked by fundamentals,
 technicals, and the factors you care about.
 
+## ▶ Try it live
+
+### **https://d29r5u77l543g9.cloudfront.net**
+
+**No signup, no install.** You're in instantly as a guest with your own private
+watchlists. A starter list is created for you automatically.
+
+Three things to try in 30 seconds:
+1. Open **All Symbols** — a scored table across every watchlist, sortable by fundamentals, technicals, or combined score.
+2. Click any row → an interactive **price + moving-average chart** (1W → 10Y).
+3. Hit **+ New watchlist**, add a ticker like `AAPL` or `NVDA`, and watch it get scored.
+
+> Guest data is private to your browser session. One-click sign-in to save it
+> permanently across devices is coming next.
+
+---
+
 > Greenfield rewrite of an earlier single-user Streamlit prototype ("Bellwether").
 > This repo carries forward the **scoring model** ([docs/SCORING.md](docs/SCORING.md))
 > and starts clean on a multi-user, scale-to-zero cloud architecture.
@@ -50,27 +67,31 @@ The same Python app runs on AWS Lambda (via Mangum) with DynamoDB + Cognito in
 production — the adapter swap is env-var driven. See [docs/local-dev.md](docs/local-dev.md)
 for full options (offline fixture data, DynamoDB Local, etc.).
 
-## What it is (this iteration)
+## What it does
 
-- **Watchlists** — create lists, add/remove tickers, see each scored.
-- **Leaderboards** — aggregate your lists into ranked views (best value, best
-  momentum, buy the dip, …).
-- **Discovery / screener** *(the new direction)* — find and suggest stocks beyond
-  your watchlists, ranked across a broad universe by configurable factors. See
-  [ADR-0003](docs/decisions/0003-discovery-engine.md).
+**Available now (live):**
+- **Watchlists** — create lists, add/remove tickers, each scored on fundamentals + technicals.
+- **All Symbols** — a built-in consolidated view across every watchlist, sortable by any metric or score.
+- **Interactive charts** — price with SMA-50/200 overlays, 1W → 10Y, on every ticker.
+- **Guest sessions** — full use with zero friction; your data is yours, no login required ([ADR-0009](docs/decisions/0009-guest-session-before-login.md)).
 
-## What it is **not** (yet)
+**Planned next:**
+- **Sign in & save** — Cognito login + one-click migration of your guest data to a permanent account.
+- **Leaderboards** — ranked cross-watchlist views (best value, best momentum, buy the dip). API exists; UI pending.
+- **Discovery / screener** *(the new direction)* — surface stocks beyond your watchlists, ranked across a broad universe by configurable factors ([ADR-0003](docs/decisions/0003-discovery-engine.md)).
 
-- No portfolio tracking, brokerage integration, or automated trading. The earlier
-  prototype's Alpaca/leveraged-ETF trading is intentionally **out of scope** and
-  may be added later as a separate concern.
+**Out of scope (for now):** no portfolio tracking, brokerage integration, or
+automated trading. The earlier prototype's Alpaca/leveraged-ETF trading is
+intentionally set aside and may return later as a separate concern.
 
 ## Architecture at a glance
 
-API-first Python backend (FastAPI on AWS Lambda) + React/TypeScript SPA, behind
-API Gateway with Cognito auth and DynamoDB storage. Scale-to-zero by design.
-Full detail in [docs/design.md](docs/design.md); rationale in
-[docs/decisions/0001-backend-and-stack.md](docs/decisions/0001-backend-and-stack.md).
+API-first Python backend (FastAPI on AWS Lambda) + React/TypeScript SPA. In
+production, **CloudFront serves the SPA and proxies the API on one origin** (no
+CORS), backed by API Gateway → Lambda → DynamoDB, with Cognito JWT + guest auth.
+Scale-to-zero by design. Full detail in [docs/design.md](docs/design.md); every
+running environment is mapped in [docs/deployments.md](docs/deployments.md);
+rationale in [docs/decisions/0001-backend-and-stack.md](docs/decisions/0001-backend-and-stack.md).
 
 ```
 apps/web                  React + Vite + TypeScript (frontend — Phase 3)
@@ -82,7 +103,7 @@ services/
     api/                  FastAPI app + Mangum handler
   deploy/
     render/               Render container (Dockerfile + requirements)
-    aws/                  Lambda image + cdk/ (DynamoDB + Lambda + API Gateway)
+    aws/                  Lambda image + cdk/ (DynamoDB + Lambda + API Gateway + S3/CloudFront)
 render.yaml               Render blueprint (must live at repo root)
 ```
 
@@ -99,25 +120,28 @@ running the backend locally is in [local-dev](docs/local-dev.md).
 
 ## Live deployments
 
-| Environment | URL | Notes |
-|------------|-----|-------|
-| AWS (API + Lambda) | https://7x1e7unmh5.execute-api.us-east-1.amazonaws.com/ui | Backend + Swagger UI |
-| Render (demo) | https://stock-screener-demo.onrender.com/ui | Full-stack demo (may spin down on idle) |
+| Environment | URL | Role |
+|------------|-----|------|
+| **AWS CloudFront** | **https://d29r5u77l543g9.cloudfront.net** | **The app** — SPA + API on one origin (canonical) |
+| AWS API Gateway | https://7x1e7unmh5.execute-api.us-east-1.amazonaws.com | Backend API direct (`/ui` Swagger, Basic-Auth) |
+| Render | https://stock-screener-demo.onrender.com | Portability mirror / interim demo (spins down on idle) |
 
-See [docs/deploy-aws.md](docs/deploy-aws.md) and [docs/deploy-render.md](docs/deploy-render.md) for deploy instructions.
+Full environment map, configs, and safe-retirement plan for the interim surfaces:
+[docs/deployments.md](docs/deployments.md). Deploy steps:
+[docs/deploy-aws.md](docs/deploy-aws.md) · [docs/deploy-render.md](docs/deploy-render.md).
 
 ## Build status
 
 `✅ done · ◑ in progress · ⬜ not started`
 
 ```
-   ◑ React SPA ──JWT──► API Gateway ✅ ──► Lambda (FastAPI/Mangum) ✅
-   (Phase 3)            (+ ✅ Cognito JWT     ┌────────────────────┐
-                          app-level, P2)      │ ✅ core  (scoring) │
-                                              │ ✅ adapters        │
-   ✅ Cognito (P2)                            │ ✅ api  (/v1)      │
-                                              └────────────────────┘
-   DynamoDB ✅ ◄──────────────────────────────────────┘  durable store
+   ✅ React SPA ──► CloudFront ✅ ──► API Gateway ✅ ──► Lambda (FastAPI/Mangum) ✅
+   (Phase 3,        (SPA + /v1 proxy,    (+ ✅ Cognito JWT  ┌────────────────────┐
+    guest mode)      one origin)           + guest, P2/P9)  │ ✅ core  (scoring) │
+                                                            │ ✅ adapters        │
+   ✅ Cognito (P2)                                          │ ✅ api  (/v1)      │
+                                                            └────────────────────┘
+   DynamoDB ✅ ◄────────────────────────────────────────────────┘  durable store
    ⬜ EventBridge → discovery batch (Phase 4)
 ```
 
@@ -126,7 +150,7 @@ See [docs/deploy-aws.md](docs/deploy-aws.md) and [docs/deploy-render.md](docs/de
 | 0 | Pure scoring core + adapter interfaces | ✅ done |
 | 1 | FastAPI backend + Lambda + API Gateway + DynamoDB | ✅ **deployed on AWS** |
 | 2 | Cognito auth (app-level JWT) + per-user seeding | ✅ **deployed on AWS** |
-| 3 | React web frontend — foundation built, expanding screens | ◑ in progress |
+| 3 | React SPA on CloudFront + S3, guest sessions | ✅ **deployed**; sign-in UI + leaderboard/discovery screens pending |
 | 4 | Discovery / screener (scheduled batch) | ⬜ |
 | 5 | Larger universe, sector-aware scoring, mobile | ⬜ |
 
