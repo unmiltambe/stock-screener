@@ -16,7 +16,9 @@ SCORE_TTL_SECONDS = 900  # 15 minutes (FR-3.3/3.4)
 
 # Starter content for a brand-new user, so the first experience isn't empty
 # (FR-2.4). Generic — distinct from the owner's demo seed (seed_watchlists.json).
-STARTER_WATCHLISTS = {"My Watchlist": ["AAPL", "MSFT", "NVDA"]}
+STARTER_WATCHLISTS = {
+    "My Watchlist": ["AAPL", "AMZN", "GOOG", "MSFT", "NFLX", "NVDA", "TSLA", "AMD", "INTC"],
+}
 
 
 class ScreenerService:
