@@ -3,15 +3,20 @@ import WatchlistsPage from './features/watchlists/WatchlistsPage'
 import WatchlistDetailPage from './features/watchlists/WatchlistDetailPage'
 import AllSymbolsPage from './features/watchlists/AllSymbolsPage'
 import TickerDetailPage from './features/tickers/TickerDetailPage'
+import AuthControls from './auth/AuthControls'
+import CallbackPage from './auth/CallbackPage'
 
 const DOCS_URL = "https://github.com/unmiltambe/stock-screener/tree/main/docs";
 
 export default function App() {
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="border-b border-line px-6 py-3 flex items-baseline gap-3">
-        <Link to="/" className="font-semibold">Bellwether</Link>
-        <span className="text-dim text-sm">stock screener</span>
+      <header className="border-b border-line px-6 py-3 flex items-center justify-between">
+        <div className="flex items-baseline gap-3">
+          <Link to="/" className="font-semibold">Bellwether</Link>
+          <span className="text-dim text-sm">stock screener</span>
+        </div>
+        <AuthControls />
       </header>
 
       <main className="flex-1 px-6 py-6">
@@ -20,6 +25,7 @@ export default function App() {
           <Route path="/watchlists/_all" element={<AllSymbolsPage />} />
           <Route path="/watchlists/:id" element={<WatchlistDetailPage />} />
           <Route path="/tickers/:symbol" element={<TickerDetailPage />} />
+          <Route path="/callback" element={<CallbackPage />} />
         </Routes>
       </main>
 
