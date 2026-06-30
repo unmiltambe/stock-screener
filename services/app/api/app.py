@@ -104,6 +104,13 @@ def create_app() -> FastAPI:
                     user_id: str = Depends(get_user_id)):
         return svc.leaderboard(user_id)
 
+    @v1.get("/all-symbols", response_model=List[schemas.TickerRow])
+    def all_symbols(svc: ScreenerService = Depends(get_service),
+                    user_id: str = Depends(get_user_id)):
+        """Consolidated, de-duplicated view across all the user's watchlists in a
+        single cache-first batch (avoids the N-parallel-request storm)."""
+        return svc.all_symbols(user_id)
+
     @v1.get("/scores", response_model=List[schemas.TickerRow])
     def scores(tickers: str = Query(..., description="comma-separated symbols"),
             svc: ScreenerService = Depends(get_service),

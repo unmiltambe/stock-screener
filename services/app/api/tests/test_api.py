@@ -100,6 +100,27 @@ def test_leaderboard_shape_and_membership(client):
         assert nvda["lists"] == ["Big Tech"]  # membership by list name
 
 
+def test_all_symbols_dedups_with_membership(client):
+    # Seeded user has Big Tech (AAPL, NVDA, GOOGL) and Streaming (NFLX).
+    rows = client.get("/v1/all-symbols").json()
+    tickers = {r["ticker"] for r in rows}
+    assert {"AAPL", "NVDA", "GOOGL", "NFLX"} <= tickers
+    # each unique ticker appears exactly once (deduplicated)
+    assert len(tickers) == len(rows)
+    nvda = next(r for r in rows if r["ticker"] == "NVDA")
+    assert nvda["lists"] == ["Big Tech"]  # membership attached
+
+
+def test_all_symbols_membership_merges_across_lists(client):
+    # Add NVDA to Streaming too — it should now report both lists, once.
+    streaming = _id_for(client, "Streaming")
+    client.put(f"/v1/watchlists/{streaming}/tickers/NVDA")
+    rows = client.get("/v1/all-symbols").json()
+    nvda_rows = [r for r in rows if r["ticker"] == "NVDA"]
+    assert len(nvda_rows) == 1  # still deduplicated
+    assert set(nvda_rows[0]["lists"]) == {"Big Tech", "Streaming"}
+
+
 def test_chart_has_overlays(client):
     out = client.get("/v1/tickers/NVDA/chart").json()
     assert out["ticker"] == "NVDA"

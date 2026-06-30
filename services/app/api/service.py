@@ -137,6 +137,21 @@ class ScreenerService:
             "best_momentum": by("tech", reverse=True)[:5],
         }
 
+    def all_symbols(self, user_id: str) -> List[Dict]:
+        """Every unique ticker across the user's watchlists, de-duplicated, with
+        list membership attached. ONE cache-first batch fetch (P5) — this is the
+        backend for the All Symbols view, replacing N parallel watchlist requests
+        that otherwise storm the upstream provider on a cold cache."""
+        membership: Dict[str, List[str]] = {}
+        for wl in self._watchlists.list_all(user_id):
+            for t in wl.tickers:
+                membership.setdefault(t.upper(), []).append(wl.name)
+
+        rows = self.scored_rows(list(membership.keys()))
+        for row in rows:
+            row["lists"] = membership.get(row["ticker"], [])
+        return rows
+
     # ── chart ─────────────────────────────────────────────────────────────────
 
     def chart(self, symbol: str, years: int = 1) -> Optional[Dict]:
