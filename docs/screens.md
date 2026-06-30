@@ -164,15 +164,22 @@ P/E  Fwd P/E  PEG  FCFYld  ROE    RSI  vs200  vs50  52WRange   MktCap  Sector  L
 ## S4 — Leaderboard
 
 **Route:** `/leaderboard`
-**Status:** ⬜ not built
+**Status:** ✅ built
 
-**Job:** cross-watchlist ranked view — "my best stocks right now" by combined score.
+**Job:** the opinionated "best picks first" companion to All Symbols.
 
-**Data:** `GET /v1/leaderboard` → `[TickerRow]` sorted by combined score, deduplicated.
+**Data:** `GET /v1/leaderboard` → four ranked views (`top_opportunities`,
+`best_value`, `best_momentum`, `reconsider`), each up to 5 deduplicated `TickerRow`.
 
-**Note:** overlaps with S1b (All Symbols). Leaderboard will be opinionated —
-pre-sorted, possibly filtered to Buy signals only — while All Symbols is a neutral
-full-table view the user controls.
+**Layout:** four cards (2×2), each a small ranked list (rank · ticker · company ·
+signal · score) where rows link to S3 ticker detail. Friendly section blurbs and an
+inviting empty state (voice.md).
+
+**Decision — Leaderboard vs All Symbols (S1b):** kept **separate but presented
+together** under "Built-in views" on S1. All Symbols is the neutral, full, sortable
+table the user drives; Leaderboard is the curated highlights. They answer different
+questions ("show me everything" vs "what's best right now"), so merging them would
+weaken both; cross-links connect them.
 
 ---
 
@@ -221,6 +228,26 @@ Feeds from nightly EventBridge batch.
 
 ---
 
+## S7 — Profile & account
+
+**Route:** `/profile`
+**Status:** ✅ built
+
+**Job:** let a signed-in user set how they're addressed and delete their account.
+
+**Data:** `GET/PUT /v1/profile` (first/last name); `DELETE /v1/account`.
+
+**Layout:**
+- Name form (first, last) → Save (with a warm confirmation, voice.md).
+- **Danger zone:** Delete account → `window.confirm` → `DELETE /v1/account` (wipes
+  DynamoDB data + Cognito identity) → sign out → back to guest.
+- Guests see a friendly "sign in to manage your account" instead.
+
+**Related:** the first-run name nudge (part of S5) seeds the name without a wall;
+the name powers the S5 greeting.
+
+---
+
 ## Build order
 
 | # | Screen/feature | Status |
@@ -231,6 +258,7 @@ Feeds from nightly EventBridge batch.
 | S3 | Ticker detail page (chart + metrics) | ✅ done |
 | S5 guest | X-Guest-Id backend path + frontend UUID | ✅ done |
 | S5 auth | Cognito sign-in + migrate-guest | ✅ done |
-| S5 nudge | Proactive "sign in to save" banner | ⬜ next |
-| S4 | Leaderboard | ⬜ |
+| S5 nudge | First-run name prompt | ✅ done |
+| S7 | Profile + account deletion | ✅ done |
+| S4 | Leaderboard | ✅ done |
 | S6 | Discovery (Phase 4) | ⬜ |

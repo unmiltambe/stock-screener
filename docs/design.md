@@ -98,6 +98,10 @@ GET    /v1/leaderboard                     → aggregated ranked views (FR-5.1)
 POST   /v1/auth/migrate-guest              → absorb a guest session's lists into the
                                              signed-in account { guest_id } (ADR-0009)
 
+GET    /v1/profile                         → { first_name, last_name } (how to address)
+PUT    /v1/profile                         → set name { first_name, last_name }
+DELETE /v1/account                         → wipe the user's data + Cognito identity
+
 GET    /v1/tickers/{sym}/chart?years=1     → price + SMA-50 + SMA-200 (FR-3.6)
 GET    /v1/scores?tickers=A,B,C            → scores for an arbitrary set (cache-first)
 

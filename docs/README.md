@@ -28,6 +28,7 @@ Specification for stock-screener. Conventions: **EARS** for requirements, **ADR*
 
 | Doc | Purpose |
 |-----|---------|
+| [voice.md](voice.md) | The UI design motto — warm, personal, a little witty — and where it shows up. |
 | [ui-columns.md](ui-columns.md) | Reference: every table column — definition, colour thresholds, tooltips, sort/persistence behaviour. |
 | [deployments.md](deployments.md) | **The environment map** — all four surfaces (local, Render, API Gateway, CloudFront), URLs, and how to retire the interim ones safely. |
 | [deploy-aws.md](deploy-aws.md) | AWS architecture, control flows, deploy steps. Live URLs at top. |

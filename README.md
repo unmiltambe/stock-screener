@@ -75,9 +75,10 @@ for full options (offline fixture data, DynamoDB Local, etc.).
 - **Interactive charts** — price with SMA-50/200 overlays, 1W → 10Y, on every ticker.
 - **Guest sessions** — full use with zero friction, no login required ([ADR-0009](docs/decisions/0009-guest-session-before-login.md)).
 - **Sign in & save** — Cognito Hosted UI login; guest watchlists migrate into the account on first sign-in.
+- **Leaderboard** — curated "best picks first" board (top opportunities, value, momentum, second looks) alongside the full All Symbols table.
+- **Your account** — set how you're addressed (warm, personal greetings, [voice.md](docs/voice.md)) and delete your account + data any time.
 
 **Planned next:**
-- **Leaderboards** — ranked cross-watchlist views (best value, best momentum, buy the dip). API exists; UI pending.
 - **Discovery / screener** *(the new direction)* — surface stocks beyond your watchlists, ranked across a broad universe by configurable factors ([ADR-0003](docs/decisions/0003-discovery-engine.md)).
 
 **Out of scope (for now):** no portfolio tracking, brokerage integration, or
@@ -150,7 +151,7 @@ Full environment map, configs, and safe-retirement plan for the interim surfaces
 | 0 | Pure scoring core + adapter interfaces | ✅ done |
 | 1 | FastAPI backend + Lambda + API Gateway + DynamoDB | ✅ **deployed on AWS** |
 | 2 | Cognito auth (app-level JWT) + per-user seeding | ✅ **deployed on AWS** |
-| 3 | React SPA on CloudFront + S3; guest sessions + Cognito sign-in | ✅ **deployed**; leaderboard/discovery screens still to come |
+| 3 | React SPA on CloudFront + S3; guest + sign-in, profile/account, leaderboard | ✅ **deployed**; discovery (Phase 4) still to come |
 | 4 | Discovery / screener (scheduled batch) | ⬜ |
 | 5 | Larger universe, sector-aware scoring, mobile | ⬜ |
 

@@ -64,7 +64,9 @@ work on any `jwt` surface (persisted on AWS, ephemeral on Render's memory store)
 - **Auth:** guest sessions **and** Cognito Hosted-UI sign-in (Authorization Code +
   PKCE); guest watchlists migrate into the account on first sign-in
   (`POST /v1/auth/migrate-guest`). The CloudFront `/callback` + logout URLs are
-  registered on the Cognito client (CDK `-c frontend_url=…`).
+  registered on the Cognito client (CDK `-c frontend_url=…`). Account deletion
+  (`DELETE /v1/account`) wipes the user's data and Cognito identity — the Lambda is
+  granted `cognito-idp:AdminDeleteUser` on the pool.
 - **Purpose:** the public web app. This is the target end users hit.
 
 ## Retirement guidance (how to remove the interim pieces safely)
