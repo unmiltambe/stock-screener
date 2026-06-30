@@ -48,3 +48,36 @@ def test_account_deletion_allows_reseed():
     svc.delete_user_data("user-1")             # clears lists + seed marker
     svc.ensure_seeded("user-1")
     assert _names(svc, "user-1") == ["My Watchlist"]
+
+
+# ── init_session: bootstrap exactly once (the dup-on-every-sign-in fix) ─────────
+
+def test_init_session_seeds_once_over_many_calls():
+    svc = _svc()
+    for _ in range(10):                         # mimic many app loads / refreshes
+        svc.init_session("user-1")
+    assert _names(svc, "user-1") == ["My Watchlist"]
+
+
+def test_init_session_migrates_then_never_recopies_guest_starter():
+    svc = _svc()
+    # First sign-in: guest g1 had a real list → migrated, no starter on top.
+    g1 = "GUEST#g1"
+    wl = svc._watchlists.create(g1, "My Picks")
+    svc._watchlists.add_ticker(g1, wl.id, "NVDA")
+    r1 = svc.init_session("user-1", "g1")
+    assert r1["bootstrapped"] and r1["migrated"] == 1
+    assert _names(svc, "user-1") == ["My Picks"]
+
+    # Later: signed out, browsed as guest g2 (auto-seeded a starter), signs back in.
+    svc._seed_starter("GUEST#g2")
+    r2 = svc.init_session("user-1", "g2")
+    assert r2["bootstrapped"] is False          # marker already set → no-op
+    assert _names(svc, "user-1") == ["My Picks"]  # NO duplicate 'My Watchlist'
+
+
+def test_init_session_seeds_guest_once():
+    svc = _svc()
+    svc.init_session("GUEST#abc")
+    svc.init_session("GUEST#abc")
+    assert _names(svc, "GUEST#abc") == ["My Watchlist"]

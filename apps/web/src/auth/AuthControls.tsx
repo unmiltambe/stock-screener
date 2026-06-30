@@ -13,7 +13,7 @@ import { cognitoLogoutUrl } from "./cognito";
 export default function AuthControls() {
   const auth = useAuth();
   const qc = useQueryClient();
-  const migrated = useRef(false);
+  const bootstrapped = useRef(false);
   const { data: profile } = useProfile(auth.isAuthenticated);
 
   // Bearer token follows the session (null falls back to the X-Guest-Id path).
@@ -21,22 +21,22 @@ export default function AuthControls() {
     setAuthToken(auth.isAuthenticated ? auth.user?.access_token ?? null : null);
   }, [auth.isAuthenticated, auth.user?.access_token]);
 
-  // On first authentication, absorb any guest watchlists, then refresh queries.
+  // Bootstrap the account exactly once per load (guest or signed-in): the backend
+  // seeds-or-migrates only on the first call for an identity and is a no-op after,
+  // so this is the single write path for new-account state. Reads stay pure.
   useEffect(() => {
-    if (!auth.isAuthenticated || migrated.current) return;
-    migrated.current = true;
-    const guestId = sessionStorage.getItem("guestId");
-    const refresh = () => void qc.invalidateQueries();
-    if (!guestId) return refresh();
-    api("/v1/auth/migrate-guest", {
+    if (auth.isLoading || bootstrapped.current) return;
+    bootstrapped.current = true;
+    const guestId = auth.isAuthenticated ? sessionStorage.getItem("guestId") : null;
+    api("/v1/session/init", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ guest_id: guestId }),
+      body: JSON.stringify(guestId ? { guest_id: guestId } : {}),
     })
-      .then(() => sessionStorage.removeItem("guestId"))
-      .catch(() => { /* non-fatal */ })
-      .finally(refresh);
-  }, [auth.isAuthenticated, qc]);
+      .then(() => { if (guestId) sessionStorage.removeItem("guestId"); })
+      .catch(() => { /* non-fatal — reads still work */ })
+      .finally(() => void qc.invalidateQueries());
+  }, [auth.isLoading, auth.isAuthenticated, qc]);
 
   const firstName = profile?.first_name;
   // Pick one greeting per name value, so it varies across visits but is stable

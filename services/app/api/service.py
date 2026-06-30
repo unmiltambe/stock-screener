@@ -69,23 +69,40 @@ class ScreenerService:
 
     # ── watchlists (keyed by stable id — ADR-0004) ────────────────────────────
 
-    def ensure_seeded(self, user_id: str) -> None:
-        """Seed starter watchlists exactly once for a brand-new user (FR-2.4).
-
-        Runs on every watchlist fetch, so it must be race-safe: an atomic marker
-        (try_mark_seeded) lets exactly one caller proceed — without it, DynamoDB's
-        eventually-consistent reads let concurrent/repeated fetches each see an
-        empty list and re-seed, producing duplicate 'My Watchlist' lists. The
-        list_all guard then skips seeding for users who already have lists
-        (e.g. migrated guests, or accounts seeded before this marker existed)."""
-        if not self._watchlists.try_mark_seeded(user_id):
-            return  # already claimed by this or a concurrent request
-        if self._watchlists.list_all(user_id):
-            return  # already has lists — keep the marker, add no starter
+    def _seed_starter(self, user_id: str) -> None:
         for name, tickers in STARTER_WATCHLISTS.items():
             wl = self._watchlists.create(user_id, name)
             for t in tickers:
                 self._watchlists.add_ticker(user_id, wl.id, t)
+
+    def init_session(self, user_id: str, guest_id: str = "") -> Dict:
+        """Bootstrap an identity EXACTLY ONCE (FR-2.4, ADR-0009).
+
+        The single source of new-account state. Gated by an atomic marker, so it's
+        safe to call on every app load from any identity (guest or signed-in):
+          - first time only → migrate the caller's prior guest lists if any, else
+            seed the starter watchlist;
+          - every time after → a strict no-op (no re-seed, no re-migration), which
+            is what prevents duplicate 'My Watchlist' lists.
+
+        Reads (`GET /v1/watchlists`) no longer seed — they stay pure and strongly
+        consistent, so a transient/empty view can never trigger a write."""
+        if not self._watchlists.try_mark_seeded(user_id):
+            return {"bootstrapped": False, "migrated": 0, "seeded": False}
+        migrated = self._migrate(user_id, guest_id) if guest_id else 0
+        seeded = False
+        if migrated == 0 and not self._watchlists.list_all(user_id):
+            self._seed_starter(user_id)
+            seeded = True
+        return {"bootstrapped": True, "migrated": migrated, "seeded": seeded}
+
+    def ensure_seeded(self, user_id: str) -> None:
+        """Seed the starter once, marker-gated. Retained for compatibility; new
+        flows use init_session (which also handles guest migration)."""
+        if not self._watchlists.try_mark_seeded(user_id):
+            return
+        if not self._watchlists.list_all(user_id):
+            self._seed_starter(user_id)
 
     def list_watchlists(self, user_id: str) -> List[Dict]:
         lists = sorted(self._watchlists.list_all(user_id), key=lambda w: w.name)
@@ -138,15 +155,9 @@ class ScreenerService:
         identity deletion is handled at the API edge (it's an IdP concern)."""
         self._watchlists.delete_all(user_id)
 
-    def migrate_guest(self, user_id: str, guest_id: str) -> int:
-        """Copy a guest's watchlists into the authenticated user's account, then
-        delete the guest's (ADR-0009, the conversion moment). Returns the number
-        of lists migrated. Idempotent: once moved the guest has no lists, so a
-        repeat call is a no-op — safe to call on every sign-in.
-
-        Call this *before* the first watchlist fetch so the migrated lists count
-        as the user's content and `ensure_seeded` doesn't add a duplicate starter.
-        """
+    def _migrate(self, user_id: str, guest_id: str) -> int:
+        """Copy a guest's watchlists into `user_id` and delete the guest's. Returns
+        the count moved. No marker handling — callers own that."""
         guest_user = f"{GUEST_PREFIX}{guest_id}"
         if guest_user == user_id:
             return 0
@@ -157,8 +168,14 @@ class ScreenerService:
                 self._watchlists.add_ticker(user_id, new.id, t)
             self._watchlists.delete(guest_user, wl.id)
             migrated += 1
+        return migrated
+
+    def migrate_guest(self, user_id: str, guest_id: str) -> int:
+        """Standalone guest migration (the /v1/auth/migrate-guest endpoint + tests).
+        New flows should use init_session, which migrates once and never re-copies a
+        guest's auto-seeded starter on later sign-ins."""
+        migrated = self._migrate(user_id, guest_id)
         if migrated:
-            # Brought their own data → claim the seed so no starter is added on top.
             self._watchlists.try_mark_seeded(user_id)
         return migrated
 

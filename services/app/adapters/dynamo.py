@@ -72,14 +72,21 @@ class DynamoWatchlistRepo:
                          tickers=list(item.get("tickers", [])))
 
     def list_all(self, user_id: str) -> List[Watchlist]:
+        # Strongly consistent: a user must always see their own latest data, never
+        # a stale/partial view from eventual consistency (which caused flicker +
+        # re-seeding). Per-user reads are tiny, so the 2x RCU cost is negligible.
         resp = self._t.query(
             KeyConditionExpression=Key("PK").eq(f"USER#{user_id}")
-            & Key("SK").begins_with("WL#")
+            & Key("SK").begins_with("WL#"),
+            ConsistentRead=True,
         )
         return [self._to_watchlist(it) for it in resp.get("Items", [])]
 
     def get(self, user_id: str, watchlist_id: str) -> Optional[Watchlist]:
-        resp = self._t.get_item(Key={"PK": f"USER#{user_id}", "SK": f"WL#{watchlist_id}"})
+        resp = self._t.get_item(
+            Key={"PK": f"USER#{user_id}", "SK": f"WL#{watchlist_id}"},
+            ConsistentRead=True,
+        )
         item = resp.get("Item")
         return self._to_watchlist(item) if item else None
 
@@ -152,7 +159,9 @@ class DynamoWatchlistRepo:
     # ── profile (SK=PROFILE) + account deletion ───────────────────────────────
 
     def get_profile(self, user_id: str) -> Optional[dict]:
-        resp = self._t.get_item(Key={"PK": f"USER#{user_id}", "SK": "PROFILE"})
+        resp = self._t.get_item(
+            Key={"PK": f"USER#{user_id}", "SK": "PROFILE"}, ConsistentRead=True,
+        )
         item = resp.get("Item")
         if not item:
             return None

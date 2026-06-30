@@ -77,6 +77,12 @@ class MigrateGuestIn(BaseModel):
     guest_id: str
 
 
+class SessionInitIn(BaseModel):
+    """Body for POST /v1/session/init — optional prior guest UUID to migrate when a
+    user signs in. Omitted/empty for a plain (guest or returning) bootstrap."""
+    guest_id: str = ""
+
+
 class ProfileIn(BaseModel):
     """Body for PUT /v1/profile — how the user wants to be addressed."""
     first_name: str = ""
