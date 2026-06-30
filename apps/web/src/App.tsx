@@ -3,7 +3,7 @@ import WatchlistsPage from './features/watchlists/WatchlistsPage'
 import WatchlistDetailPage from './features/watchlists/WatchlistDetailPage'
 import AllSymbolsPage from './features/watchlists/AllSymbolsPage'
 import TickerDetailPage from './features/tickers/TickerDetailPage'
-import { ExternalLink } from 'lucide-react'
+import { ExternalLink, Radio } from 'lucide-react'
 import AuthControls from './auth/AuthControls'
 import CallbackPage from './auth/CallbackPage'
 import ThemeToggle from './components/ThemeToggle'
@@ -18,7 +18,10 @@ export default function App() {
     <div className="min-h-screen flex flex-col">
       <header className="border-b border-line px-6 py-3 flex items-center justify-between">
         <div className="flex items-baseline gap-3">
-          <Link to="/" className="font-semibold">Bellwether</Link>
+          <Link to="/" className="font-semibold flex items-center gap-2">
+            <Radio size={18} strokeWidth={1.75} className="text-accent" />
+            Bellwether
+          </Link>
           <span className="text-dim text-sm">stock screener</span>
         </div>
         <div className="flex items-center gap-3">

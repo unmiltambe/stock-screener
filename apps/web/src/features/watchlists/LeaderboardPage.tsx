@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ArrowLeft, ArrowRight, Rocket, Scale, TrendingUp, RotateCcw, type LucideIcon } from "lucide-react";
 import { useLeaderboard } from "../../api/leaderboard";
 import type { Leaderboard, TickerRow } from "../../api/types";
 import { fmtNum, scoreColor, signalColor } from "../../lib/format";
@@ -10,16 +10,17 @@ const SECTIONS: {
   key: keyof Leaderboard;
   title: string;
   blurb: string;
+  icon: LucideIcon;
   metric: (r: TickerRow) => number | null;
 }[] = [
   { key: "top_opportunities", title: "Top Opportunities", blurb: "Best combined scores right now.",
-    metric: (r) => r.scores.combined },
+    icon: Rocket, metric: (r) => r.scores.combined },
   { key: "best_value", title: "Best Value", blurb: "Strong fundamentals at sensible prices.",
-    metric: (r) => r.scores.fund },
+    icon: Scale, metric: (r) => r.scores.fund },
   { key: "best_momentum", title: "Best Momentum", blurb: "Riding the strongest trends.",
-    metric: (r) => r.scores.tech },
+    icon: TrendingUp, metric: (r) => r.scores.tech },
   { key: "reconsider", title: "Worth a Second Look", blurb: "Lagging the pack — patience or a trim?",
-    metric: (r) => r.scores.combined },
+    icon: RotateCcw, metric: (r) => r.scores.combined },
 ];
 
 function Row({ rank, row, metric }: {
@@ -81,9 +82,12 @@ export default function LeaderboardPage() {
           const rows = data[s.key] ?? [];
           return (
             <div key={s.key} className="rounded-lg border border-line bg-panel p-4">
-              <div className="mb-2">
-                <h2 className="font-medium">{s.title}</h2>
-                <p className="text-dim text-xs">{s.blurb}</p>
+              <div className="mb-2 flex items-start gap-2">
+                <s.icon size={16} strokeWidth={1.75} className="text-accent mt-0.5 shrink-0" />
+                <div>
+                  <h2 className="font-medium">{s.title}</h2>
+                  <p className="text-dim text-xs">{s.blurb}</p>
+                </div>
               </div>
               {rows.length === 0 ? (
                 <p className="text-dim text-sm px-3 py-2">Nothing here yet.</p>
