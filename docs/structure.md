@@ -81,6 +81,16 @@ The only code that branches is [`app/api/deps.py`](../services/app/api/deps.py),
 reads `STORE_BACKEND` / `DATA_BACKEND` env vars and picks adapters. Keeping *both*
 targets working is a deliberate portability check — see [ADR-0007](decisions/0007-dual-deploy-portability.md).
 
+## Theming — one source of truth
+
+The entire look (palette + fonts) is driven from **`apps/web/src/index.css` `@theme`**
+tokens (`--color-*`, `--font-*`). Components consume them via Tailwind classes
+(`text-accent`, `bg-panel`, `font-mono`); semantic colour logic lives in
+`lib/format.ts` and returns those classes. Recharts can't read CSS variables in SVG
+attributes, so `lib/chartColors.ts` resolves the same tokens at runtime — the charts
+re-skin from the identical source. **Changing the palette or fonts is a one-file edit
+in `index.css`** — nothing else hardcodes colour. See [voice.md](voice.md) for tone.
+
 ## Imports & running locally
 
 `core` / `adapters` / `api` are **top-level packages** physically located under
