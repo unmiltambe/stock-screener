@@ -68,10 +68,18 @@ class ScreenerService:
     # ── watchlists (keyed by stable id — ADR-0004) ────────────────────────────
 
     def ensure_seeded(self, user_id: str) -> None:
-        """Seed starter watchlists for a user who has none (FR-2.4). Idempotent
-        while the user keeps at least one list."""
+        """Seed starter watchlists exactly once for a brand-new user (FR-2.4).
+
+        Runs on every watchlist fetch, so it must be race-safe: an atomic marker
+        (try_mark_seeded) lets exactly one caller proceed — without it, DynamoDB's
+        eventually-consistent reads let concurrent/repeated fetches each see an
+        empty list and re-seed, producing duplicate 'My Watchlist' lists. The
+        list_all guard then skips seeding for users who already have lists
+        (e.g. migrated guests, or accounts seeded before this marker existed)."""
+        if not self._watchlists.try_mark_seeded(user_id):
+            return  # already claimed by this or a concurrent request
         if self._watchlists.list_all(user_id):
-            return
+            return  # already has lists — keep the marker, add no starter
         for name, tickers in STARTER_WATCHLISTS.items():
             wl = self._watchlists.create(user_id, name)
             for t in tickers:
@@ -147,6 +155,9 @@ class ScreenerService:
                 self._watchlists.add_ticker(user_id, new.id, t)
             self._watchlists.delete(guest_user, wl.id)
             migrated += 1
+        if migrated:
+            # Brought their own data → claim the seed so no starter is added on top.
+            self._watchlists.try_mark_seeded(user_id)
         return migrated
 
     # ── leaderboard ───────────────────────────────────────────────────────────

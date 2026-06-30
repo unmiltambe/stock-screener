@@ -173,3 +173,17 @@ class DynamoWatchlistRepo:
         with self._t.batch_writer() as batch:
             for it in items:
                 batch.delete_item(Key={"PK": it["PK"], "SK": it["SK"]})
+
+    def try_mark_seeded(self, user_id: str) -> bool:
+        """Conditional put of a SEEDED marker — the write itself is the lock. Only
+        the first caller succeeds; everyone else gets ConditionalCheckFailed and
+        returns False. Immune to Query's eventual consistency."""
+        item = {"PK": f"USER#{user_id}", "SK": "META#SEEDED"}
+        ttl = _guest_ttl(user_id)
+        if ttl is not None:
+            item["ttl"] = ttl
+        try:
+            self._t.put_item(Item=item, ConditionExpression="attribute_not_exists(SK)")
+            return True
+        except self._t.meta.client.exceptions.ConditionalCheckFailedException:
+            return False

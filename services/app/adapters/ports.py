@@ -84,3 +84,10 @@ class WatchlistRepo(Protocol):
     def delete_all(self, user_id: str) -> None:
         """Remove every item for the user — watchlists + profile (account deletion)."""
         ...
+
+    def try_mark_seeded(self, user_id: str) -> bool:
+        """Atomically claim the one-time seed for this user. Returns True for the
+        single caller that set the marker, False if it already existed — so starter
+        seeding happens exactly once even under concurrent, eventually-consistent
+        reads (the dedup that prevents duplicate 'My Watchlist' lists)."""
+        ...
