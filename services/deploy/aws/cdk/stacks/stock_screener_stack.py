@@ -1,7 +1,9 @@
-"""Phase 1 infrastructure: DynamoDB + Lambda (container) + API Gateway HTTP API.
+"""Infrastructure: DynamoDB + Lambda (container) + API Gateway HTTP API +
+Cognito + S3/CloudFront (unified origin for the React SPA, Phase 3).
 
-Realizes docs/deploy-aws.md. Frontend (S3/CloudFront, Phase 3), Cognito (Phase 2), and
-the discovery batch (Phase 4) are intentionally NOT here.
+Realizes docs/deploy-aws.md. The discovery batch (Phase 4) is intentionally NOT
+here. CloudFront serves the SPA and proxies /v1/* + /health to the API so the
+browser sees a single origin (no CORS).
 
 Interim auth: the app's Basic-Auth middleware gates everything (env-configured).
 The password is passed at deploy time via context (`-c basic_auth_pass=...`) so it
@@ -15,15 +17,19 @@ import platform as _platform
 from aws_cdk import (
     CfnOutput,
     Duration,
+    Fn,
     RemovalPolicy,
     Stack,
 )
 from aws_cdk import aws_apigatewayv2 as apigwv2
 from aws_cdk import aws_apigatewayv2_integrations as integrations
+from aws_cdk import aws_cloudfront as cloudfront
+from aws_cdk import aws_cloudfront_origins as origins
 from aws_cdk import aws_cognito as cognito
 from aws_cdk import aws_dynamodb as dynamodb
 from aws_cdk import aws_ecr_assets as ecr_assets
 from aws_cdk import aws_lambda as lambda_
+from aws_cdk import aws_s3 as s3
 from constructs import Construct
 
 # Docker build context = services/ (so the Dockerfile can COPY app/... and
@@ -45,6 +51,18 @@ class StockScreenerStack(Stack):
 
         basic_auth_user = self.node.try_get_context("basic_auth_user") or "admin"
         basic_auth_pass = self.node.try_get_context("basic_auth_pass") or ""
+
+        # The deployed SPA origin (CloudFront). Passed as a literal on a later
+        # deploy — `-c frontend_url=https://<dist>.cloudfront.net` — once the
+        # distribution exists, so its Hosted-UI callback can be registered without
+        # creating a client→CloudFront→API→Lambda→client dependency cycle. Guests
+        # don't use Cognito, so the first deploy can omit it.
+        frontend_url = self.node.try_get_context("frontend_url")
+        callback_urls = ["http://localhost:5173/callback", "http://localhost:3000/callback"]
+        logout_urls = ["http://localhost:5173", "http://localhost:3000"]
+        if frontend_url:
+            callback_urls.append(f"{frontend_url}/callback")
+            logout_urls.append(frontend_url)
 
         # ── DynamoDB: single-table store (design.md §5) ───────────────────────
         table = dynamodb.Table(
@@ -84,9 +102,8 @@ class StockScreenerStack(Stack):
                     authorization_code_grant=True, implicit_code_grant=True),
                 scopes=[cognito.OAuthScope.OPENID, cognito.OAuthScope.EMAIL,
                         cognito.OAuthScope.PROFILE],
-                callback_urls=["http://localhost:5173/callback",
-                            "http://localhost:3000/callback"],
-                logout_urls=["http://localhost:5173", "http://localhost:3000"],
+                callback_urls=callback_urls,
+                logout_urls=logout_urls,
             ),
             prevent_user_existence_errors=True,
         )
@@ -133,8 +150,75 @@ class StockScreenerStack(Stack):
             default_integration=integrations.HttpLambdaIntegration("Integration", fn),
         )
 
+        # ── Frontend: S3 (private) + CloudFront unified origin (ADR — option B) ─
+        # CloudFront serves the SPA at / and proxies /v1/* + /health to the API,
+        # so the browser sees one origin: no CORS, one URL for Cognito + clients.
+        site_bucket = s3.Bucket(
+            self,
+            "SiteBucket",
+            block_public_access=s3.BlockPublicAccess.BLOCK_ALL,  # reached only via CloudFront OAC
+            encryption=s3.BucketEncryption.S3_MANAGED,
+            removal_policy=RemovalPolicy.DESTROY,  # dev: tear down cleanly. prod → RETAIN.
+            auto_delete_objects=True,              # dev convenience (pairs with DESTROY)
+        )
+
+        # SPA deep-link routing: rewrite extension-less paths (e.g. /watchlists/_all)
+        # to the SPA shell so client-side routes survive a refresh. Attached to the
+        # S3 behavior ONLY, so API requests (their own behavior) are never rewritten
+        # — avoids the classic "404 error page clobbers API errors" mistake.
+        spa_rewrite = cloudfront.Function(
+            self,
+            "SpaRewrite",
+            code=cloudfront.FunctionCode.from_inline(
+                "function handler(event) {"
+                "  var r = event.request;"
+                "  if (r.uri.indexOf('.') === -1) { r.uri = '/index.html'; }"
+                "  return r;"
+                "}"
+            ),
+        )
+
+        # API origin = the HTTP API's domain (strip scheme/path from the endpoint).
+        api_domain = Fn.select(2, Fn.split("/", http_api.api_endpoint))
+        api_behavior = cloudfront.BehaviorOptions(
+            origin=origins.HttpOrigin(api_domain),
+            viewer_protocol_policy=cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+            allowed_methods=cloudfront.AllowedMethods.ALLOW_ALL,   # GET/POST/PUT/PATCH/DELETE/OPTIONS
+            cache_policy=cloudfront.CachePolicy.CACHING_DISABLED,  # per-user data — never cache (covers all /v1)
+            # forward everything EXCEPT Host (API Gateway must see its own host header)
+            origin_request_policy=cloudfront.OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER,
+        )
+
+        distribution = cloudfront.Distribution(
+            self,
+            "SiteDistribution",
+            default_root_object="index.html",
+            default_behavior=cloudfront.BehaviorOptions(
+                origin=origins.S3BucketOrigin.with_origin_access_control(site_bucket),
+                viewer_protocol_policy=cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+                cache_policy=cloudfront.CachePolicy.CACHING_OPTIMIZED,
+                function_associations=[
+                    cloudfront.FunctionAssociation(
+                        function=spa_rewrite,
+                        event_type=cloudfront.FunctionEventType.VIEWER_REQUEST,
+                    )
+                ],
+            ),
+            additional_behaviors={
+                "/v1/*": api_behavior,
+                "/health": api_behavior,
+            },
+            comment="stock-screener SPA + API (unified origin)",
+        )
+
         CfnOutput(self, "ApiUrl", value=http_api.api_endpoint,
-                description="Base URL of the deployed API")
+                description="Base URL of the deployed API (direct; CloudFront also proxies it)")
+        CfnOutput(self, "FrontendUrl", value=f"https://{distribution.distribution_domain_name}",
+                description="Public app URL (SPA + API, same origin)")
+        CfnOutput(self, "FrontendBucket", value=site_bucket.bucket_name,
+                description="S3 bucket to sync the built SPA into")
+        CfnOutput(self, "DistributionId", value=distribution.distribution_id,
+                description="CloudFront distribution id (for cache invalidation)")
         CfnOutput(self, "TableName", value=table.table_name,
                 description="DynamoDB table (pass as DDB_TABLE to the seed script)")
         CfnOutput(self, "UserPoolId", value=user_pool.user_pool_id,

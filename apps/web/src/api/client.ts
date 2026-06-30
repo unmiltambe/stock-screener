@@ -1,6 +1,9 @@
-// The one place that talks to the backend. Base URL from env (local backend in
-// header mode for dev); a Cognito bearer token is attached when set (auth step).
-const BASE = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
+// The one place that talks to the backend. Same-origin by default: in prod the
+// CloudFront distribution serves the SPA and proxies /v1/* to API Gateway, and in
+// dev Vite proxies /v1 + /health to the local backend (see vite.config.ts). So
+// requests use relative paths and there is no CORS in any environment. VITE_API_URL
+// remains an optional override (e.g. pointing dev straight at a deployed API).
+const BASE = import.meta.env.VITE_API_URL ?? "";
 
 let authToken: string | null = null;
 export function setAuthToken(token: string | null) {
