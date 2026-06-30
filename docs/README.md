@@ -23,6 +23,7 @@ Specification for stock-screener. Conventions: **EARS** for requirements, **ADR*
 | 14 | [decisions/0009-guest-session-before-login.md](decisions/0009-guest-session-before-login.md) | ADR: guest session before login (try the app before signing in). |
 | 15 | [structure.md](structure.md) | Canonical project tree + how the two deploys are selected. |
 | 16 | [roadmap.md](roadmap.md) | Phased build sequence (0–5). |
+| 17 | [backlog.md](backlog.md) | Captured-but-unbuilt enhancements, with open questions + rough approaches. |
 
 ### Reference & operations
 

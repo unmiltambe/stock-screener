@@ -87,6 +87,10 @@ their own holdings, served from precomputed rankings.
   ([ADR-0002](decisions/0002-web-mobile-sharing.md)).
 - News-sentiment factor (documented future enhancement).
 
+> **Smaller captured enhancements** (ticker autocomplete/validation, multi-ticker
+> add, related-ticker suggestions, chart interactivity, …) live in
+> [backlog.md](backlog.md) until they're scheduled into a phase.
+
 ---
 
 ## Cross-cutting, throughout
