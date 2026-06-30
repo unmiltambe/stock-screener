@@ -58,32 +58,52 @@ def _closes_by_symbol(
     symbols: Sequence[str], years: int = _SCORE_HISTORY_YEARS
 ) -> Dict[str, tuple]:
     """Return {sym: (dates, closes)} for each symbol. Both lists are parallel and
-    in chronological order (oldest → newest). `dates` are ISO-8601 strings."""
+    in chronological order (oldest → newest). `dates` are ISO-8601 strings.
+
+    Retries on empty result or exception — yf.download() is a single batch HTTP
+    request and is the most common casualty of Yahoo rate-limiting under concurrent
+    load (e.g. All Symbols firing N watchlist requests simultaneously)."""
     if not symbols:
         return {}
-    data = yf.download(
-        list(symbols), period=f"{years}y", auto_adjust=True,
-        progress=False, group_by="column",
-    )
-    out: Dict[str, tuple] = {}
-    if data is None or data.empty:
+
+    def _extract(data) -> Dict[str, tuple]:
+        out: Dict[str, tuple] = {}
+        close = data["Close"]
+        if hasattr(close, "columns"):
+            for sym in symbols:
+                if sym in close.columns:
+                    col = close[sym].dropna()
+                    out[sym] = (
+                        [str(d.date()) for d in col.index],
+                        [float(x) for x in col.tolist()],
+                    )
+        else:
+            col = close.dropna()
+            out[symbols[0]] = (
+                [str(d.date()) for d in col.index],
+                [float(x) for x in col.tolist()],
+            )
         return out
-    close = data["Close"]
-    if hasattr(close, "columns"):  # multiple symbols → DataFrame
-        for sym in symbols:
-            if sym in close.columns:
-                col = close[sym].dropna()
-                out[sym] = (
-                    [str(d.date()) for d in col.index],
-                    [float(x) for x in col.tolist()],
-                )
-    else:  # single symbol → Series
-        col = close.dropna()
-        out[symbols[0]] = (
-            [str(d.date()) for d in col.index],
-            [float(x) for x in col.tolist()],
-        )
-    return out
+
+    last_exc: Optional[Exception] = None
+    for attempt in range(_FUNDAMENTALS_RETRIES + 1):
+        try:
+            data = yf.download(
+                list(symbols), period=f"{years}y", auto_adjust=True,
+                progress=False, group_by="column",
+            )
+            if data is not None and not data.empty:
+                return _extract(data)
+        except Exception as exc:
+            last_exc = exc
+        if attempt < _FUNDAMENTALS_RETRIES:
+            time.sleep(_RETRY_BACKOFF * (2 ** attempt))
+
+    logger.warning(
+        "closes download failed for %d symbols after %d attempts: %s",
+        len(symbols), _FUNDAMENTALS_RETRIES + 1, last_exc,
+    )
+    return {}
 
 
 class YFinanceMarketData:

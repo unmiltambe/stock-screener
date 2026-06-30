@@ -8,40 +8,30 @@ from api.service import ScreenerService
 from core.models import Fundamentals, MarketSnapshot
 
 
-class _PartialMarketData:
-    """Returns a MarketSnapshot with empty fundamentals (simulates .info failure)
-    but valid closes — mirrors the real yfinance_market behaviour when Yahoo
-    rate-limits the .info call."""
-
-    def fetch(self, symbols: Sequence[str]) -> Dict[str, Optional[MarketSnapshot]]:
-        out: Dict[str, Optional[MarketSnapshot]] = {}
-        for sym in symbols:
-            # Real closes present; fundamentals failed (price=None)
-            out[sym] = MarketSnapshot(
-                fundamentals=Fundamentals(),   # price=None
-                closes=[100.0 + i for i in range(300)],
-            )
-        return out
-
-
 class _CountingMarketData:
-    """Wraps _PartialMarketData but succeeds on the second call."""
+    """Returns partial data on first call, full data on subsequent calls."""
 
-    def __init__(self) -> None:
+    def __init__(self, first_call_closes: bool = False, first_call_price: bool = False) -> None:
         self.calls: int = 0
+        self._first_closes = first_call_closes
+        self._first_price = first_call_price
 
-    def fetch(self, symbols: Sequence[str]) -> Dict[str, Optional[MarketSnapshot]]:
+    def fetch(self, symbols: Sequence[str], years: int = 2) -> Dict[str, Optional[MarketSnapshot]]:
         self.calls += 1
         out: Dict[str, Optional[MarketSnapshot]] = {}
+        good_closes = [float(i) for i in range(300)]
         for sym in symbols:
             if self.calls == 1:
-                # First call: fundamentals failed
-                out[sym] = MarketSnapshot(fundamentals=Fundamentals(), closes=[float(i) for i in range(300)])
-            else:
-                # Subsequent calls: full data
+                closes = good_closes if self._first_closes else []
+                price = 100.0 if self._first_price else None
                 out[sym] = MarketSnapshot(
-                    fundamentals=Fundamentals(name="Test Corp", price=100.0, market_cap=1_000_000),
-                    closes=[float(i) for i in range(300)],
+                    fundamentals=Fundamentals(name="Corp", price=price),
+                    closes=closes,
+                )
+            else:
+                out[sym] = MarketSnapshot(
+                    fundamentals=Fundamentals(name="Corp", price=100.0),
+                    closes=good_closes,
                 )
         return out
 
@@ -51,37 +41,45 @@ def _svc(market):
 
 
 def test_partial_fundamentals_not_cached():
-    """When .info fails (price=None), the row must NOT be cached.
-    A second call to scored_rows must re-fetch from the adapter."""
-    market = _CountingMarketData()
+    """When .info fails (price=None), the row must NOT be cached."""
+    # First call: price=None, closes present
+    market = _CountingMarketData(first_call_closes=True, first_call_price=False)
     svc = _svc(market)
 
-    # First call: fundamentals failed → should NOT cache
     rows1 = svc.scored_rows(["AAPL"])
     assert market.calls == 1
-    assert rows1[0]["price"] is None  # confirms partial row returned
+    assert rows1[0]["price"] is None
 
-    # Second call: should re-fetch (not hit cache) because price was None
     rows2 = svc.scored_rows(["AAPL"])
-    assert market.calls == 2  # adapter called again — not served from cache
-    assert rows2[0]["price"] == 100.0  # now full data
+    assert market.calls == 2  # re-fetched, not from cache
+    assert rows2[0]["price"] == 100.0
 
 
-def test_full_fundamentals_are_cached():
-    """When fundamentals succeed (price present), subsequent calls use the cache."""
-    market = _CountingMarketData()
+def test_partial_closes_not_cached():
+    """When yf.download() fails (closes=[]), the row must NOT be cached even if
+    fundamentals succeeded — this is the All Symbols rate-limit scenario."""
+    # First call: price present, closes empty
+    market = _CountingMarketData(first_call_closes=False, first_call_price=True)
     svc = _svc(market)
 
-    # Prime cache by calling twice (first call is partial, second populates cache)
-    svc.scored_rows(["AAPL"])
     rows1 = svc.scored_rows(["AAPL"])
-    assert market.calls == 2
+    assert market.calls == 1
     assert rows1[0]["price"] == 100.0
+    assert rows1[0]["scores"]["tech"] is None  # no closes → no tech score
 
-    # Third call: should hit cache — adapter NOT called again
     rows2 = svc.scored_rows(["AAPL"])
-    assert market.calls == 2  # still 2; cache served the row
-    assert rows2[0]["price"] == 100.0
+    assert market.calls == 2  # re-fetched — not served from cache
+    assert rows2[0]["scores"]["tech"] is not None  # now has closes → tech score computed
+
+
+def test_full_data_is_cached():
+    """When both fundamentals and closes succeed, subsequent calls use the cache."""
+    market = _CountingMarketData(first_call_closes=True, first_call_price=True)
+    svc = _svc(market)
+
+    svc.scored_rows(["AAPL"])           # first call: full data, gets cached
+    svc.scored_rows(["AAPL"])           # second call: from cache
+    assert market.calls == 1
 
 
 def test_etf_with_no_pe_is_cached():
@@ -90,7 +88,7 @@ def test_etf_with_no_pe_is_cached():
     class ETFMarket:
         calls = 0
 
-        def fetch(self, symbols):
+        def fetch(self, symbols, years=2):
             self.calls += 1
             return {
                 s: MarketSnapshot(
