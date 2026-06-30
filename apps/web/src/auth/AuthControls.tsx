@@ -1,26 +1,27 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
+import { Link } from "react-router-dom";
 import { useAuth } from "react-oidc-context";
 import { useQueryClient } from "@tanstack/react-query";
 import { api, setAuthToken } from "../api/client";
+import { useProfile } from "../api/profile";
+import { greeting } from "../lib/greeting";
 import { cognitoLogoutUrl } from "./cognito";
 
 // Header auth controls + the side effects that bridge OIDC into the rest of the
-// app: keep the API client's bearer token in sync, and migrate guest data on the
-// first sign-in (ADR-0009).
+// app: keep the API bearer token in sync, and migrate guest data on first sign-in
+// (ADR-0009). Signed in, the corner greets the user warmly by first name.
 export default function AuthControls() {
   const auth = useAuth();
   const qc = useQueryClient();
   const migrated = useRef(false);
+  const { data: profile } = useProfile(auth.isAuthenticated);
 
-  // Bearer token follows the session (access token is the API's authz token;
-  // null falls the client back to the X-Guest-Id path).
+  // Bearer token follows the session (null falls back to the X-Guest-Id path).
   useEffect(() => {
     setAuthToken(auth.isAuthenticated ? auth.user?.access_token ?? null : null);
   }, [auth.isAuthenticated, auth.user?.access_token]);
 
   // On first authentication, absorb any guest watchlists, then refresh queries.
-  // Runs before nothing else fetches authenticated data because invalidate() is
-  // what triggers refetch with the new token.
   useEffect(() => {
     if (!auth.isAuthenticated || migrated.current) return;
     migrated.current = true;
@@ -33,17 +34,23 @@ export default function AuthControls() {
       body: JSON.stringify({ guest_id: guestId }),
     })
       .then(() => sessionStorage.removeItem("guestId"))
-      .catch(() => { /* non-fatal: user still has their account */ })
+      .catch(() => { /* non-fatal */ })
       .finally(refresh);
   }, [auth.isAuthenticated, qc]);
+
+  const firstName = profile?.first_name;
+  // Pick one greeting per name value, so it varies across visits but is stable
+  // within a render (no reshuffle on every paint).
+  const hello = useMemo(() => greeting(firstName), [firstName]);
 
   if (auth.isLoading) return <span className="text-dim text-sm">…</span>;
 
   if (auth.isAuthenticated) {
-    const email = (auth.user?.profile.email as string | undefined) ?? "Account";
     return (
       <div className="flex items-center gap-3 text-sm">
-        <span className="text-dim">{email}</span>
+        <Link to="/profile" className="text-ink hover:text-accent transition-colors" title="Your profile">
+          {hello}
+        </Link>
         <button
           onClick={() => {
             setAuthToken(null);

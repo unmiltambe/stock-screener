@@ -47,8 +47,8 @@ export default function WatchlistsPage() {
     }
   }
 
-  if (isLoading) return <p className="text-dim">Loading…</p>;
-  if (error) return <p className="text-neg">Failed to load: {String(error)}</p>;
+  if (isLoading) return <p className="text-dim">Pulling your lists together…</p>;
+  if (error) return <p className="text-neg">Hmm, couldn't load that: {String(error)}</p>;
 
   return (
     <div className="max-w-5xl mx-auto">
@@ -62,26 +62,45 @@ export default function WatchlistsPage() {
         </button>
       </div>
 
-      {/* Built-in: All Symbols consolidated view */}
+      {/* Built-in boards: the full table (All Symbols) + the curated highlights */}
       <div className="mb-5">
         <p className="text-[10px] uppercase tracking-wider text-dim mb-2">Built-in views</p>
-        <Link
-          to="/watchlists/_all"
-          className="flex items-center justify-between rounded-lg border border-dashed border-accent/40 bg-accent/5 px-4 py-3 hover:border-accent/70 hover:bg-accent/10 transition-colors group"
-        >
-          <div>
-            <div className="font-medium">All Symbols</div>
-            <div className="text-dim text-sm mt-0.5">
-              {allTotal > 0
-                ? `${allTotal} unique symbols across ${listCount} watchlists`
-                : "All symbols from your watchlists in one view"}
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Link
+            to="/watchlists/_all"
+            className="flex items-center justify-between rounded-lg border border-dashed border-accent/40 bg-accent/5 px-4 py-3 hover:border-accent/70 hover:bg-accent/10 transition-colors group"
+          >
+            <div>
+              <div className="font-medium">All Symbols</div>
+              <div className="text-dim text-sm mt-0.5">
+                {allTotal > 0
+                  ? `${allTotal} symbols across ${listCount} lists — full sortable table`
+                  : "Every symbol you track, in one sortable table"}
+              </div>
             </div>
-          </div>
-          <span className="text-accent text-lg opacity-40 group-hover:opacity-100 transition-opacity">⊞</span>
-        </Link>
+            <span className="text-accent text-lg opacity-40 group-hover:opacity-100 transition-opacity">⊞</span>
+          </Link>
+          <Link
+            to="/leaderboard"
+            className="flex items-center justify-between rounded-lg border border-dashed border-accent/40 bg-accent/5 px-4 py-3 hover:border-accent/70 hover:bg-accent/10 transition-colors group"
+          >
+            <div>
+              <div className="font-medium">Leaderboard</div>
+              <div className="text-dim text-sm mt-0.5">
+                Best picks first — value, momentum & second looks
+              </div>
+            </div>
+            <span className="text-accent text-lg opacity-40 group-hover:opacity-100 transition-opacity">🏆</span>
+          </Link>
+        </div>
       </div>
 
       <p className="text-[10px] uppercase tracking-wider text-dim mb-2">Your watchlists</p>
+      {data!.length === 0 && (
+        <p className="text-dim text-sm mb-3">
+          No lists yet — start one above and add a ticker or two. We'll handle the scoring.
+        </p>
+      )}
       <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
         {data!.map((w) => (
           <div
