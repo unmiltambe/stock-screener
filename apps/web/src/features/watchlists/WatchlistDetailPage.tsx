@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ArrowUp, ArrowDown, ArrowUpRight, ArrowLeft } from "lucide-react";
-import { chartColors } from "../../lib/chartColors";
+import { useChartColors } from "../../lib/chartColors";
 import {
   Area,
   CartesianGrid,
@@ -201,7 +201,7 @@ function ChartPanel({ ticker, watchlistId, onClose }: {
   watchlistId: string;
   onClose: () => void;
 }) {
-  const CHART_C = chartColors();
+  const CHART_C = useChartColors();
   const [period, setPeriod] = useState<Period>("1Y");
   const { data: chartData, isLoading: chartLoading } = useTickerChart(ticker, YEARS_TO_FETCH[period]);
   const { data: row, isLoading: rowLoading } = useTickerScores(ticker);

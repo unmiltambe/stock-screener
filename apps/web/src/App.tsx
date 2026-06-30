@@ -6,6 +6,7 @@ import TickerDetailPage from './features/tickers/TickerDetailPage'
 import { ExternalLink } from 'lucide-react'
 import AuthControls from './auth/AuthControls'
 import CallbackPage from './auth/CallbackPage'
+import ThemeToggle from './components/ThemeToggle'
 import WelcomeNamePrompt from './auth/WelcomeNamePrompt'
 import ProfilePage from './features/account/ProfilePage'
 import LeaderboardPage from './features/watchlists/LeaderboardPage'
@@ -20,7 +21,10 @@ export default function App() {
           <Link to="/" className="font-semibold">Bellwether</Link>
           <span className="text-dim text-sm">stock screener</span>
         </div>
-        <AuthControls />
+        <div className="flex items-center gap-3">
+          <ThemeToggle />
+          <AuthControls />
+        </div>
       </header>
 
       <WelcomeNamePrompt />

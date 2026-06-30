@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
-import { chartColors } from "../../lib/chartColors";
+import { useChartColors } from "../../lib/chartColors";
 import {
   Area,
   CartesianGrid,
@@ -95,7 +95,7 @@ function Metric({ label, value, color = "" }: { label: string; value: string; co
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function TickerDetailPage() {
-  const C = chartColors();
+  const C = useChartColors();
   const { symbol = "" } = useParams();
   const location = useLocation();
   const fromId: string | undefined = location.state?.from;

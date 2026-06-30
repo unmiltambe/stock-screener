@@ -6,6 +6,7 @@ import { AuthProvider } from 'react-oidc-context'
 import './index.css'
 import App from './App.tsx'
 import { oidcConfig } from './auth/cognito'
+import { ThemeProvider } from './lib/theme'
 
 const queryClient = new QueryClient()
 
@@ -14,11 +15,13 @@ const queryClient = new QueryClient()
 createRoot(document.getElementById('root')!).render(
   <AuthProvider {...oidcConfig}>
     <StrictMode>
-      <QueryClientProvider client={queryClient}>
-        <BrowserRouter>
-          <App />
-        </BrowserRouter>
-      </QueryClientProvider>
+      <ThemeProvider>
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <App />
+          </BrowserRouter>
+        </QueryClientProvider>
+      </ThemeProvider>
     </StrictMode>
   </AuthProvider>,
 )
