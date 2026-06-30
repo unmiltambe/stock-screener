@@ -316,15 +316,26 @@ const TIPS = {
   lists:    "Watchlists this ticker appears in.",
 };
 
+const ALL_SORT_KEY = "wl-sort-_all";
+function loadAllSort(): { key: string; dir: SortDir } {
+  try {
+    const raw = localStorage.getItem(ALL_SORT_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return { key: "combined", dir: "desc" };
+}
+
 export default function AllSymbolsPage() {
   const { data, isLoading, total, listCount } = useAllSymbols();
-  const [sortKey, setSortKey] = useState<string | null>("combined");
-  const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const [sortKey, setSortKey] = useState<string | null>(() => loadAllSort().key);
+  const [sortDir, setSortDir] = useState<SortDir>(() => loadAllSort().dir);
   const [selectedTicker, setSelectedTicker] = useState<string | null>(null);
 
   function handleSort(key: string) {
-    if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-    else { setSortKey(key); setSortDir("desc"); }
+    const newDir: SortDir = sortKey === key ? (sortDir === "asc" ? "desc" : "asc") : "asc";
+    setSortKey(key);
+    setSortDir(newDir);
+    localStorage.setItem(ALL_SORT_KEY, JSON.stringify({ key, dir: newDir }));
   }
 
   const sort = { key: sortKey, dir: sortDir };

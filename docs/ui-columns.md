@@ -251,6 +251,10 @@ SCORING.md §3 for the full decision table.
 
 Click any column header to sort the table by that column. Click again to reverse direction. The active sort column is highlighted in blue with a ↑ / ↓ indicator. Null values always sink to the bottom regardless of direction.
 
+**Default sort:** each watchlist defaults to Ticker ↑ (alphabetical). The All Symbols view defaults to Combined Score ↓ (best picks first).
+
+**Persistence:** sort preference is remembered per watchlist in `localStorage` (`wl-sort-<watchlistId>` and `wl-sort-_all` for All Symbols). Preferences survive page refreshes and browser restarts but are local to the browser.
+
 **Recommended sort patterns:**
 
 | Goal | Sort column | Direction |

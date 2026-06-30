@@ -405,15 +405,26 @@ export default function WatchlistDetailPage() {
   const removeTicker = useRemoveTicker(id);
 
   const [tickerInput, setTickerInput] = useState("");
-  const [sortKey, setSortKey] = useState<string | null>(null);
-  const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [selectedTicker, setSelectedTicker] = useState<string | null>(null);
 
   const watchlistName = watchlists?.find((w) => w.id === id)?.name ?? "Watchlist";
 
+  const sortStorageKey = `wl-sort-${id}`;
+  function loadSort(): { key: string; dir: SortDir } {
+    try {
+      const raw = localStorage.getItem(sortStorageKey);
+      if (raw) return JSON.parse(raw);
+    } catch {}
+    return { key: "ticker", dir: "asc" };
+  }
+  const [sortKey, setSortKey] = useState<string | null>(() => loadSort().key);
+  const [sortDir, setSortDir] = useState<SortDir>(() => loadSort().dir);
+
   function handleSort(key: string) {
-    if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-    else { setSortKey(key); setSortDir("asc"); }
+    const newDir: SortDir = sortKey === key ? (sortDir === "asc" ? "desc" : "asc") : "asc";
+    setSortKey(key);
+    setSortDir(newDir);
+    localStorage.setItem(sortStorageKey, JSON.stringify({ key, dir: newDir }));
   }
 
   function handleRowClick(ticker: string) {
