@@ -112,6 +112,22 @@ class ScreenerService:
         self._watchlists.remove_ticker(user_id, watchlist_id, symbol)
         return True
 
+    # ── profile + account ──────────────────────────────────────────────────────
+
+    def get_profile(self, user_id: str) -> Dict[str, str]:
+        """Profile attributes for the user; empty dict if none set yet."""
+        return self._watchlists.get_profile(user_id) or {}
+
+    def update_profile(self, user_id: str, first_name: str, last_name: str) -> Dict[str, str]:
+        profile = {"first_name": first_name.strip(), "last_name": last_name.strip()}
+        self._watchlists.set_profile(user_id, profile)
+        return profile
+
+    def delete_user_data(self, user_id: str) -> None:
+        """Remove all of the user's stored data (watchlists + profile). Cognito
+        identity deletion is handled at the API edge (it's an IdP concern)."""
+        self._watchlists.delete_all(user_id)
+
     def migrate_guest(self, user_id: str, guest_id: str) -> int:
         """Copy a guest's watchlists into the authenticated user's account, then
         delete the guest's (ADR-0009, the conversion moment). Returns the number

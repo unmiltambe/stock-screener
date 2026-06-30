@@ -148,3 +148,28 @@ class DynamoWatchlistRepo:
         if symbol in wl.tickers:
             self._save_tickers(user_id, watchlist_id,
                             [t for t in wl.tickers if t != symbol])
+
+    # ── profile (SK=PROFILE) + account deletion ───────────────────────────────
+
+    def get_profile(self, user_id: str) -> Optional[dict]:
+        resp = self._t.get_item(Key={"PK": f"USER#{user_id}", "SK": "PROFILE"})
+        item = resp.get("Item")
+        if not item:
+            return None
+        return {k: item[k] for k in ("first_name", "last_name") if k in item}
+
+    def set_profile(self, user_id: str, profile: dict) -> None:
+        item = {"PK": f"USER#{user_id}", "SK": "PROFILE",
+                "first_name": profile.get("first_name", ""),
+                "last_name": profile.get("last_name", "")}
+        ttl = _guest_ttl(user_id)
+        if ttl is not None:
+            item["ttl"] = ttl
+        self._t.put_item(Item=item)
+
+    def delete_all(self, user_id: str) -> None:
+        resp = self._t.query(KeyConditionExpression=Key("PK").eq(f"USER#{user_id}"))
+        items = resp.get("Items", [])
+        with self._t.batch_writer() as batch:
+            for it in items:
+                batch.delete_item(Key={"PK": it["PK"], "SK": it["SK"]})

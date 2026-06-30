@@ -71,3 +71,16 @@ class WatchlistRepo(Protocol):
 
     def remove_ticker(self, user_id: str, watchlist_id: str, symbol: str) -> None:
         ...
+
+    # ── user profile + account lifecycle (single-table, same USER# partition) ──
+
+    def get_profile(self, user_id: str) -> Optional[Dict[str, str]]:
+        """The user's profile attributes (e.g. {'first_name','last_name'}), or None."""
+        ...
+
+    def set_profile(self, user_id: str, profile: Dict[str, str]) -> None:
+        ...
+
+    def delete_all(self, user_id: str) -> None:
+        """Remove every item for the user — watchlists + profile (account deletion)."""
+        ...

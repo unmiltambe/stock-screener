@@ -77,6 +77,17 @@ class MigrateGuestIn(BaseModel):
     guest_id: str
 
 
+class ProfileIn(BaseModel):
+    """Body for PUT /v1/profile — how the user wants to be addressed."""
+    first_name: str = ""
+    last_name: str = ""
+
+
+class ProfileOut(BaseModel):
+    first_name: str = ""
+    last_name: str = ""
+
+
 def row_from_scored(
     scored: ScoredTicker,
     lists: Optional[List[str]] = None,

@@ -111,6 +111,30 @@ def create_app() -> FastAPI:
             raise HTTPException(status_code=401, detail="Sign in before migrating guest data")
         return {"migrated": svc.migrate_guest(user_id, body.guest_id)}
 
+    # ── profile + account ──────────────────────────────────────────────────────
+
+    @v1.get("/profile", response_model=schemas.ProfileOut)
+    def get_profile(svc: ScreenerService = Depends(get_service),
+                    user_id: str = Depends(get_user_id)):
+        return svc.get_profile(user_id)
+
+    @v1.put("/profile", response_model=schemas.ProfileOut)
+    def update_profile(body: schemas.ProfileIn,
+                       svc: ScreenerService = Depends(get_service),
+                       user_id: str = Depends(get_user_id)):
+        return svc.update_profile(user_id, body.first_name, body.last_name)
+
+    @v1.delete("/account", status_code=204)
+    def delete_account(svc: ScreenerService = Depends(get_service),
+                       user_id: str = Depends(get_user_id)):
+        """Delete the signed-in user's data and Cognito identity. Guests have no
+        account to delete (their data self-expires) — reject to avoid confusion."""
+        if is_guest(user_id):
+            raise HTTPException(status_code=400, detail="Guests have no account to delete")
+        svc.delete_user_data(user_id)
+        from .auth import delete_cognito_user
+        delete_cognito_user(user_id)
+
     # ── leaderboard, scores, chart ────────────────────────────────────────────
 
     @v1.get("/leaderboard")

@@ -143,6 +143,9 @@ class StockScreenerStack(Stack):
         # Least privilege: the Lambda can touch only this one table.
         table.grant_read_write_data(fn)
 
+        # Account deletion (DELETE /v1/account) removes the user's Cognito identity.
+        user_pool.grant(fn, "cognito-idp:AdminDeleteUser")
+
         # ── API Gateway HTTP API: proxy every path/method to the Lambda ───────
         http_api = apigwv2.HttpApi(
             self,
