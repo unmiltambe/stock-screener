@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Area,
@@ -340,6 +340,15 @@ export default function AllSymbolsPage() {
 
   const sort = { key: sortKey, dir: sortDir };
   const rows = sortRows(data, sortKey, sortDir);
+
+  // Auto-select the first sorted row once data first loads, so the chart is
+  // immediately visible without requiring a click (mirrors WatchlistDetailPage).
+  const didAutoSelect = useRef(false);
+  useEffect(() => {
+    if (didAutoSelect.current || rows.length === 0) return;
+    didAutoSelect.current = true;
+    setSelectedTicker(rows[0].ticker);
+  }, [rows]);
   const thProps = { sort, onSort: handleSort };
 
   return (
