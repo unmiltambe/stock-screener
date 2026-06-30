@@ -29,14 +29,16 @@ Specification for stock-screener. Conventions: **EARS** for requirements, **ADR*
 | Doc | Purpose |
 |-----|---------|
 | [ui-columns.md](ui-columns.md) | Reference: every table column — definition, colour thresholds, tooltips, sort/persistence behaviour. |
-| [deploy-aws.md](deploy-aws.md) | AWS architecture, control flows, deploy steps. Live URL at top. |
+| [deployments.md](deployments.md) | **The environment map** — all four surfaces (local, Render, API Gateway, CloudFront), URLs, and how to retire the interim ones safely. |
+| [deploy-aws.md](deploy-aws.md) | AWS architecture, control flows, deploy steps. Live URLs at top. |
 | [deploy-render.md](deploy-render.md) | Deploy the interim demo to a public URL. Live URL at top. |
-| [local-dev.md](local-dev.md) | Run & test the backend locally. |
+| [local-dev.md](local-dev.md) | Run & test the backend + SPA locally. |
 
 ## Status
 
-Active build. Backend (Phases 0–2) is implemented and deployed on AWS
-(Lambda + API Gateway + DynamoDB); the React web app (Phase 3) is built —
-watchlists, All Symbols, charts, and ticker detail — with guest auth and
-S3/CloudFront hosting still pending. Phased build order is in the
-[roadmap](roadmap.md).
+Active build. Backend (Phases 0–2) and the React web app (Phase 3 —
+watchlists, All Symbols, charts, ticker detail) are deployed on AWS via
+CloudFront + S3 + API Gateway + Lambda + DynamoDB, with guest sessions live.
+Remaining Phase-3 work: Cognito sign-in UI + guest→account migration. The
+[deployments.md](deployments.md) map tracks every environment; phased build
+order is in the [roadmap](roadmap.md).
