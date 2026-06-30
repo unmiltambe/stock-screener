@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "react-oidc-context";
 import { useQueryClient } from "@tanstack/react-query";
@@ -16,9 +16,11 @@ export default function AuthControls() {
   const bootstrapped = useRef(false);
   const { data: profile } = useProfile(auth.isAuthenticated);
 
-  // Bearer token follows the session (null falls back to the X-Guest-Id path).
-  useEffect(() => {
-    setAuthToken(auth.isAuthenticated ? auth.user?.access_token ?? null : null);
+  // useLayoutEffect fires after the committed render but before any useEffect —
+  // including TanStack Query's fetch trigger — so the bearer token module variable
+  // is always set before the first query fires for this auth state.
+  useLayoutEffect(() => {
+    setAuthToken(auth.isAuthenticated ? (auth.user?.access_token ?? null) : null);
   }, [auth.isAuthenticated, auth.user?.access_token]);
 
   // Bootstrap the account exactly once per load (guest or signed-in): the backend

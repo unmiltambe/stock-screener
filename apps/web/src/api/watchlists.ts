@@ -1,11 +1,16 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "react-oidc-context";
 import { api } from "./client";
 import type { TickerRow, WatchlistOut, WatchlistSummary } from "./types";
 
 export function useWatchlists() {
+  // Don't fire while OIDC is still resolving — prevents a guest-credentialed
+  // request from racing ahead of the bearer token being set.
+  const { isLoading: authLoading } = useAuth();
   return useQuery({
     queryKey: ["watchlists"],
     queryFn: () => api<WatchlistSummary[]>("/v1/watchlists"),
+    enabled: !authLoading,
   });
 }
 
