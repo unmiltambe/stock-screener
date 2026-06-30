@@ -64,6 +64,12 @@ DATA_BACKEND=yfinance BASIC_AUTH_USER=admin BASIC_AUTH_PASS=test python -m api
 
 ## Tearing it down later
 
-When the React SPA (Phase 3) is ready, this whole interim layer is removed in one
-step — see [ADR-0005](decisions/0005-interim-demo-deployment.md) § Consequences —
-and the Render service is deleted.
+The React SPA is now live on AWS CloudFront (the canonical app), so this Render
+service is no longer needed *as the demo*. But [ADR-0007](decisions/0007-dual-deploy-portability.md)
+deliberately keeps a second host as a **portability forcing function** — it costs
+~nothing on the free tier and proves the app runs unchanged off AWS.
+
+Decide explicitly whether to keep it (recommended) or delete it; the full
+retirement procedure and trade-off live in
+[deployments.md](deployments.md) § Retirement guidance. This page is the Render
+entry in that map.

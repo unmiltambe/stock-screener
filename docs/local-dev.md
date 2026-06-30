@@ -121,9 +121,27 @@ STORE_BACKEND=dynamo DDB_TABLE=stock-screener \
 | `AUTH_MODE` | `header` \| `jwt` | `header` | `jwt` is the Phase 2 Cognito path |
 | `PORT` | int | `8000` | Local server port |
 
-## What's not here yet
+## Running the web frontend locally
 
-- **CDK deploy** (the cloud half of roadmap Phase 1) — Lambda + API Gateway +
-  DynamoDB provisioning lands in `services/deploy/aws/cdk/`. The Lambda entrypoint
-  (`api/handler.py`, Mangum) is ready for it.
-- **Cognito auth** (Phase 2) and the **web frontend** (Phase 3).
+The React SPA lives in `apps/web`. Run it against the local backend:
+
+```bash
+# terminal 1 — backend (port 8000)
+cd services && source .venv/bin/activate
+DATA_BACKEND=yfinance uvicorn api.app:app --app-dir app --reload --port 8000
+
+# terminal 2 — SPA (port 5173)
+cd apps/web && npm install && npm run dev
+```
+
+Open <http://localhost:5173>. Vite proxies `/v1` + `/health` to `:8000`
+(see `vite.config.ts`), mirroring prod's same-origin model — no CORS locally, and
+the SPA uses relative API paths. In `header` mode the backend resolves to the
+seeded demo user (the SPA's `X-Guest-Id` header is ignored locally), so you see the
+demo watchlists immediately.
+
+## Where this fits
+
+- **Cloud deploys** (AWS API Gateway + CloudFront, Render) and how to retire the
+  interim surfaces: [deployments.md](deployments.md).
+- **Auth:** `header` locally; `jwt` (Cognito + guest sessions) when deployed.

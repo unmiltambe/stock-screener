@@ -44,9 +44,14 @@ score cache demonstrably prevents repeat upstream fetches (FR-3.3).
 
 **Exit:** two test users cannot see each other's data.
 
-## Phase 3 — Web frontend
+## Phase 3 — Web frontend  ◑ deployed (guest mode); sign-in pending
 
 **Goal:** replace the prototype UI for end users.
+
+**Status:** SPA (watchlists, All Symbols, charts, ticker detail) live on AWS
+CloudFront + S3 (unified origin) with guest sessions. Remaining: Cognito sign-in
+UI + guest→account migration; leaderboard/comments screens. See
+[deployments.md](deployments.md).
 
 - Stand up the [monorepo](design.md#7-monorepo-layout-p4) packages; move
   presentation logic (color thresholds, formatting, sort/rank) into
