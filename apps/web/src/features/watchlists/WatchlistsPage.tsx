@@ -70,10 +70,7 @@ export default function WatchlistsPage() {
           className="flex items-center justify-between rounded-lg border border-dashed border-accent/40 bg-accent/5 px-4 py-3 hover:border-accent/70 hover:bg-accent/10 transition-colors group"
         >
           <div>
-            <div className="flex items-center gap-2">
-              <span className="font-medium">All Symbols</span>
-              <span className="text-[10px] text-dim bg-line px-1.5 py-0.5 rounded">Read-only</span>
-            </div>
+            <div className="font-medium">All Symbols</div>
             <div className="text-dim text-sm mt-0.5">
               {allTotal > 0
                 ? `${allTotal} unique symbols across ${listCount} watchlists`

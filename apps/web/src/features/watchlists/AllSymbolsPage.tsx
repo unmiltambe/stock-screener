@@ -338,7 +338,7 @@ export default function AllSymbolsPage() {
         <Link to="/" className="text-accent text-sm">← watchlists</Link>
         <span className="text-dim text-sm">/</span>
         <span className="text-sm font-semibold">All Symbols</span>
-        <span className="text-[10px] text-dim bg-line px-2 py-0.5 rounded">Built-in · Read-only</span>
+        <span className="text-[10px] text-dim bg-line px-2 py-0.5 rounded">Built-in</span>
         {!isLoading && (
           <span className="text-dim text-xs ml-auto">
             {total} symbols across {listCount} watchlists
