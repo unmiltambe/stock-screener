@@ -3,6 +3,7 @@ import WatchlistsPage from './features/watchlists/WatchlistsPage'
 import WatchlistDetailPage from './features/watchlists/WatchlistDetailPage'
 import AllSymbolsPage from './features/watchlists/AllSymbolsPage'
 import TickerDetailPage from './features/tickers/TickerDetailPage'
+import { ExternalLink } from 'lucide-react'
 import AuthControls from './auth/AuthControls'
 import CallbackPage from './auth/CallbackPage'
 import WelcomeNamePrompt from './auth/WelcomeNamePrompt'
@@ -42,9 +43,9 @@ export default function App() {
           href={DOCS_URL}
           target="_blank"
           rel="noopener noreferrer"
-          className="hover:text-accent transition-colors"
+          className="hover:text-accent transition-colors inline-flex items-center gap-1"
         >
-          Docs ↗
+          Docs <ExternalLink size={12} strokeWidth={1.75} />
         </a>
       </footer>
     </div>

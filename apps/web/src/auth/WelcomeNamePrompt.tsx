@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "react-oidc-context";
+import { Sparkles } from "lucide-react";
 import { useProfile, useUpdateProfile } from "../api/profile";
 
 // A gentle, dismissible nudge shown right after first sign-in when we don't yet
@@ -33,7 +34,10 @@ export default function WelcomeNamePrompt() {
   return (
     <div className="border-b border-line bg-accent/5 px-6 py-2.5">
       <form onSubmit={save} className="max-w-5xl mx-auto flex items-center gap-3 text-sm">
-        <span>👋 Welcome aboard! What should we call you?</span>
+        <span className="flex items-center gap-2">
+          <Sparkles className="text-accent shrink-0" size={16} strokeWidth={1.5} />
+          Welcome aboard! What should we call you?
+        </span>
         <input
           autoFocus
           value={first}

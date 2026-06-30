@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 import {
   Area,
   CartesianGrid,
@@ -127,7 +128,7 @@ export default function TickerDetailPage() {
     <div className="max-w-[1400px] mx-auto">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-sm mb-6">
-        <Link to={backTo} className="text-accent">← {backLabel}</Link>
+        <Link to={backTo} className="text-accent inline-flex items-center gap-1"><ArrowLeft size={14} strokeWidth={1.75} /> {backLabel}</Link>
         <span className="text-dim">/</span>
         <span className="font-semibold font-mono">{symbol}</span>
       </div>

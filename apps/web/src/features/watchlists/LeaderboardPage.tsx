@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useLeaderboard } from "../../api/leaderboard";
 import type { Leaderboard, TickerRow } from "../../api/types";
 import { fmtNum, scoreColor, signalColor } from "../../lib/format";
@@ -55,8 +56,8 @@ export default function LeaderboardPage() {
           Add a few tickers to your watchlists and the rankings fill in here —
           best value, best momentum, and the ones worth a second look.
         </p>
-        <Link to="/" className="inline-block mt-5 text-accent text-sm hover:underline">
-          ← Back to watchlists
+        <Link to="/" className="inline-flex items-center gap-1 mt-5 text-accent text-sm hover:underline">
+          <ArrowLeft size={14} strokeWidth={1.75} /> Back to watchlists
         </Link>
       </div>
     );
@@ -66,8 +67,8 @@ export default function LeaderboardPage() {
     <div className="max-w-5xl mx-auto">
       <div className="flex items-baseline justify-between mb-1">
         <h1 className="text-lg font-semibold">Leaderboard</h1>
-        <Link to="/watchlists/_all" className="text-accent text-sm hover:underline">
-          See the full board →
+        <Link to="/watchlists/_all" className="text-accent text-sm hover:underline inline-flex items-center gap-1">
+          See the full board <ArrowRight size={14} strokeWidth={1.75} />
         </Link>
       </div>
       <p className="text-dim text-sm mb-6">

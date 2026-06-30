@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import { ArrowUp, ArrowDown, ArrowUpRight, ArrowLeft } from "lucide-react";
 import {
   Area,
   CartesianGrid,
@@ -94,7 +95,9 @@ function Th({
       ].join(" ")}
     >
       {children}
-      {isActive && <span className="ml-0.5 text-[10px]">{sort?.dir === "asc" ? " ↑" : " ↓"}</span>}
+      {isActive && (sort?.dir === "asc"
+        ? <ArrowUp className="inline ml-0.5" size={12} strokeWidth={2} />
+        : <ArrowDown className="inline ml-0.5" size={12} strokeWidth={2} />)}
     </th>
   );
 }
@@ -165,7 +168,7 @@ function ChartPanel({ ticker, onClose }: { ticker: string; onClose: () => void }
             <div className="flex items-start justify-between gap-1 mb-1">
               <span className="font-mono font-semibold text-xl">{ticker}</span>
               <div className="flex items-center gap-2 shrink-0 mt-0.5">
-                <Link to={`/tickers/${ticker}`} title="Full detail" className="text-dim hover:text-accent text-xs transition-colors">↗</Link>
+                <Link to={`/tickers/${ticker}`} title="Full detail" className="text-dim hover:text-accent transition-colors"><ArrowUpRight size={15} strokeWidth={1.75} /></Link>
                 <button onClick={onClose} className="text-dim hover:text-ink transition-colors text-lg leading-none">×</button>
               </div>
             </div>
@@ -355,7 +358,7 @@ export default function AllSymbolsPage() {
     <div className="max-w-[1400px] mx-auto">
       {/* Header */}
       <div className="flex items-center gap-3 mb-4">
-        <Link to="/" className="text-accent text-sm">← watchlists</Link>
+        <Link to="/" className="text-accent text-sm inline-flex items-center gap-1"><ArrowLeft size={14} strokeWidth={1.75} /> watchlists</Link>
         <span className="text-dim text-sm">/</span>
         <span className="text-sm font-semibold">All Symbols</span>
         <span className="text-[10px] text-dim bg-line px-2 py-0.5 rounded">Built-in</span>

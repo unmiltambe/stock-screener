@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "react-oidc-context";
+import { ArrowLeft } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { setAuthToken } from "../../api/client";
 import { useProfile, useUpdateProfile, useDeleteAccount } from "../../api/profile";
@@ -68,7 +69,7 @@ export default function ProfilePage() {
 
   return (
     <div className="max-w-lg mx-auto">
-      <Link to="/" className="text-accent text-sm hover:underline">← Back</Link>
+      <Link to="/" className="text-accent text-sm hover:underline inline-flex items-center gap-1"><ArrowLeft size={14} strokeWidth={1.75} /> Back</Link>
       <h1 className="text-lg font-semibold mt-2 mb-1">Your profile</h1>
       <p className="text-dim text-sm mb-6">
         Tell us what to call you — we'll keep it friendly.

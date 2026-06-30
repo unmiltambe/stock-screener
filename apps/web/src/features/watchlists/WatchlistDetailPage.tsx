@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { ArrowUp, ArrowDown, ArrowUpRight, ArrowLeft } from "lucide-react";
 import {
   Area,
   CartesianGrid,
@@ -100,9 +101,9 @@ function Th({
       ].join(" ")}
     >
       {children}
-      {isActive && (
-        <span className="ml-0.5 text-[10px]">{sort?.dir === "asc" ? " ↑" : " ↓"}</span>
-      )}
+      {isActive && (sort?.dir === "asc"
+        ? <ArrowUp className="inline ml-0.5" size={12} strokeWidth={2} />
+        : <ArrowDown className="inline ml-0.5" size={12} strokeWidth={2} />)}
     </th>
   );
 }
@@ -229,8 +230,8 @@ function ChartPanel({ ticker, watchlistId, onClose }: {
                   to={`/tickers/${ticker}`}
                   state={{ from: watchlistId }}
                   title="Full detail page"
-                  className="text-dim hover:text-accent text-xs transition-colors"
-                >↗</Link>
+                  className="text-dim hover:text-accent transition-colors"
+                ><ArrowUpRight size={15} strokeWidth={1.75} /></Link>
                 <button onClick={onClose} className="text-dim hover:text-ink transition-colors text-lg leading-none">×</button>
               </div>
             </div>
@@ -461,7 +462,7 @@ export default function WatchlistDetailPage() {
       {/* Page header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2 text-sm">
-          <Link to="/" className="text-accent">← watchlists</Link>
+          <Link to="/" className="text-accent inline-flex items-center gap-1"><ArrowLeft size={14} strokeWidth={1.75} /> watchlists</Link>
           <span className="text-dim">/</span>
           <span className="font-semibold">{watchlistName}</span>
         </div>

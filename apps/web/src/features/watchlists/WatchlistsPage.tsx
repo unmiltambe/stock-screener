@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { LayoutGrid, Trophy } from "lucide-react";
 import {
   useAllSymbols,
   useCreateWatchlist,
@@ -78,7 +79,7 @@ export default function WatchlistsPage() {
                   : "Every symbol you track, in one sortable table"}
               </div>
             </div>
-            <span className="text-accent text-lg opacity-40 group-hover:opacity-100 transition-opacity">⊞</span>
+            <LayoutGrid className="text-accent opacity-40 group-hover:opacity-100 transition-opacity shrink-0" size={20} strokeWidth={1.5} />
           </Link>
           <Link
             to="/leaderboard"
@@ -90,7 +91,7 @@ export default function WatchlistsPage() {
                 Best picks first — value, momentum & second looks
               </div>
             </div>
-            <span className="text-accent text-lg opacity-40 group-hover:opacity-100 transition-opacity">🏆</span>
+            <Trophy className="text-accent opacity-40 group-hover:opacity-100 transition-opacity shrink-0" size={20} strokeWidth={1.5} />
           </Link>
         </div>
       </div>
