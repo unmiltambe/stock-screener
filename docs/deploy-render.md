@@ -4,10 +4,11 @@ The shortest path to a public, password-protected site showing live scores. This
 is the temporary stepping stone in [ADR-0005](decisions/0005-interim-demo-deployment.md),
 not the final serverless target.
 
+**Live URL:** https://stock-screener-demo.onrender.com
+
 ## What you get
 
-A public HTTPS URL (e.g. `https://stock-screener-demo.onrender.com`) that, behind
-HTTP Basic Auth, serves:
+The live URL above, behind HTTP Basic Auth, serves:
 
 - `/ui` — read-only score tables for your watchlists (live yfinance data)
 - `/v1/...` — the JSON API (also live)

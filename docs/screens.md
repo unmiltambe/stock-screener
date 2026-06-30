@@ -7,25 +7,23 @@ prevent screens from overlapping or missing features, and to be the checklist
 we work from.
 
 > Related: [design.md](design.md) for data model and API, [roadmap.md](roadmap.md)
-> for build sequence.
+> for build sequence, [ui-columns.md](ui-columns.md) for full column reference.
 
 ---
 
 ## Navigation shell (App.tsx)
 
-**Status:** ✅ built (top nav bar)
+**Status:** ✅ built
 
-A persistent header with the app name and nav links. Wraps every screen.
-
-Pending decision: **sidebar vs top nav.** Current top bar is minimal (good for
-now). When we have 4+ nav destinations we may want a collapsible sidebar.
-Decision deferred until we see how many top-level screens stabilize.
+- Persistent top header: app name + "stock screener" subtitle
+- Persistent footer: app name + **Docs ↗** link → GitHub docs
+- `<main>` flex-grows to fill viewport; pages control their own max-width
 
 ---
 
 ## S1 — Watchlists index
 
-**Route:** `/`  
+**Route:** `/`
 **Status:** ✅ built
 
 **Job:** entry point; shows everything a user is tracking at a glance.
@@ -34,124 +32,158 @@ Decision deferred until we see how many top-level screens stabilize.
 
 **Layout:**
 ```
-[+ New watchlist]                           ← primary action, top-right
+Built-in views
+┌────────────────────────────────────────────────────────┐
+│ ⊞  All Symbols                              [Read-only] │  ← dashed accent border
+│    42 unique symbols across 3 watchlists               │
+└────────────────────────────────────────────────────────┘
+
+Your watchlists                              [+ New watchlist]
 ┌──────────────┐ ┌──────────────┐ ┌──────────────┐
 │ Tech Leaders │ │ Value Plays  │ │ Growth Watch │
 │ 8 tickers    │ │ 5 tickers    │ │ 12 tickers   │
-│ [Edit] [Del] │ │ [Edit] [Del] │ │ [Edit] [Del] │
 └──────────────┘ └──────────────┘ └──────────────┘
+  (hover shows [Rename] [Delete])
 ```
 
 **Actions:**
-- Click card → navigate to S2 (watchlist detail)
-- "+ New watchlist" → inline modal: name input → POST /v1/watchlists
-- Rename → inline edit on card (double-click or pencil icon) → PATCH /v1/watchlists/:id
-- Delete → confirm dialog → DELETE /v1/watchlists/:id
+- Click All Symbols card → `/watchlists/_all` (built-in read-only view)
+- Click watchlist card → navigate to S2
+- `+ New watchlist` → modal: name input → POST /v1/watchlists
+- Rename → inline edit on card (hover → Rename button) → PATCH /v1/watchlists/:id
+- Delete → `window.confirm` → DELETE /v1/watchlists/:id
 
-**Pending:** action buttons and modal — next build item.
+---
+
+## S1b — All Symbols (built-in view)
+
+**Route:** `/watchlists/_all`
+**Status:** ✅ built
+
+**Job:** consolidated read-only view of every unique symbol across all the user's
+watchlists. Like Apple Stocks' "My Symbols" — quick cross-list comparison
+without navigating each watchlist individually.
+
+**Data:** parallel `GET /v1/watchlists/:id` for each watchlist ID; deduplicated
+client-side by ticker symbol (merging `lists[]` arrays for tickers that appear
+in multiple watchlists).
+
+**Visual distinction from regular watchlists:**
+- Card on S1: dashed accent border, `bg-accent/5` tint, ⊞ icon, "Read-only" badge, no hover actions
+- Page header: "Built-in · Read-only" badge, symbol count + list count
+- Table: identical to S2 but with an extra "Watchlists" column showing list membership badges
+- No add-ticker form, no remove (×) button on rows
+- Defaults to sort by Combined Score descending (best picks first)
+
+**Layout:**
+```
+← watchlists  /  All Symbols  [Built-in · Read-only]     42 symbols across 3 watchlists
+
+[chart panel when ticker selected — full width]
+
+Ticker  Company   Price  MktCap  ── Fundamental Metrics ──  ── Technical Metrics ──  ── Scores ──  Watchlists
+NVDA    NVIDIA    $875   $2.1T   ...                         ...                       86  Buy       Tech, Growth
+AAPL    Apple     $213   $3.4T   ...                         ...                       70  Hold      Tech
+```
 
 ---
 
 ## S2 — Watchlist detail
 
-**Route:** `/watchlists/:id`  
-**Status:** ✅ built (read-only table)
+**Route:** `/watchlists/:id`
+**Status:** ✅ built
 
-**Job:** show the scored table for one watchlist; let the user manage tickers.
+**Job:** show the scored table for one watchlist; manage tickers; quick chart preview.
 
 **Data:** `GET /v1/watchlists/:id` → `[TickerRow]`
 
 **Layout:**
 ```
-← Watchlists   [Tech Leaders ▾ rename]     [+ Add ticker]
+← watchlists  /  Tech Leaders                  [ticker input]  [Add]
 
-Ticker  Company              Price    Fund  Tech  Combined  Signal
-AAPL    Apple Inc.           $213.07   72    68       70     Hold  ←── row color by signal
-NVDA    NVIDIA Corporation   $875.20   81    91       86     Buy
-MSFT    Microsoft            $415.33   74    71       73     Hold
-────────────────────────────────────────────────
-                                              [×] on hover removes ticker
+[chart panel — full width, 280px tall — shows when a row is clicked]
+ Left (208px): ticker, price, F/T/C badges, signal, 4 key metrics
+ Right (flex): period toggle (1W/1M/3M/6M/1Y/5Y/10Y) + Recharts chart
+
+                    ┌── Fundamental Metrics ──┐ ┌── Technical Metrics ──┐ ┌─── Scores ───┐
+Ticker  Company  Price  MktCap  P/E  FwdP/E  PEG  FCFYld  ROE  RSI  vs200d  vs50d  52WRange  Fund  Tech  Combined  Signal
+NVDA    NVIDIA   $875   $2.1T   ...  color-coded metrics ...                                    81    91      86      Buy   ×(hover)
 ```
 
-**Actions:**
-- `[+ Add ticker]` → search/typeahead input → POST /v1/watchlists/:id/tickers
-- Hover row → show `[×]` → DELETE /v1/watchlists/:id/tickers/:ticker
-- Click ticker symbol → navigate to S3 (ticker detail)
-- Rename via header (pencil or click name)
-- Stale badge on row when `stale: true`
+**Columns (17 + remove):**
+- Info: Ticker, Company, Price, Market Cap
+- Fundamental Metrics group (green header): P/E, Fwd P/E, PEG, FCF Yield, ROE
+- Technical Metrics group (blue header): RSI, vs 200d, vs 50d, 52W Range (with RangeBar)
+- Scores group (grey header): Fund Score, Tech Score, Combined Score, Signal
 
-**Pending:** add/remove ticker actions, ticker click → S3.
+**Two-level header:** group row (colour-coded) sits above individual column names.
+Vertical dividers at group boundaries run through both header rows and data rows.
+
+**Actions:**
+- Click row → chart panel slides in above table; click same row again (or ×) to dismiss
+- ↗ in chart panel → navigate to full S3 ticker detail page
+- `[Add]` form → PUT /v1/watchlists/:id/tickers/:symbol
+- Hover row → `×` appears → DELETE /v1/watchlists/:id/tickers/:symbol
+- Click any column header → sort (toggle asc/desc; nulls sink to bottom)
+- Period toggle in chart → 1W/1M/3M/6M/1Y fetches 1Y of data and slices; 5Y/10Y fetches full history
+
+**Sorting:** all 17 data columns are sortable. Recommended: Combined Score ↓ (best picks first).
+See [ui-columns.md](ui-columns.md) for full column definitions, color thresholds, and tooltips.
 
 ---
 
 ## S3 — Ticker detail
 
-**Route:** `/tickers/:symbol`  
-**Status:** ⬜ not built
+**Route:** `/tickers/:symbol`
+**Status:** ✅ built
 
-**Job:** deep-dive on one stock — chart, all metrics, signal history.
+**Job:** deep-dive on one stock. Reached via ↗ in the inline chart panel (S2/S1b),
+or directly. Reserved for future additions: news, sentiment, additional indicators.
 
 **Data:**
-- `GET /v1/tickers/:symbol/chart` → price series + moving averages
-- `GET /v1/scores?tickers=:symbol` → full TickerRow with all metrics
+- `GET /v1/tickers/:symbol/chart?years=N` → `ChartOut { ticker, points[] }`
+- `GET /v1/scores?tickers=:symbol` → `TickerRow`
 
 **Layout:**
 ```
-← back   NVDA  NVIDIA Corporation              $875.20  ▲ +2.3%
+← Tech Leaders  /  NVDA                       $875.20  F 81  T 91  C 86  Buy
 
-[1W] [1M] [3M] [1Y]
-┌──────────────────────────────────────────────────────┐
-│  price chart + MA50/MA200                            │
-└──────────────────────────────────────────────────────┘
+[1W][1M][3M][6M][1Y][5Y][10Y]   — Price  -- SMA50  · · SMA200
+┌─────────────────────────────────────────────────────────────────────────┐
+│  320px interactive Recharts ComposedChart (price area + SMA lines)      │
+└─────────────────────────────────────────────────────────────────────────┘
 
-Scores          Metrics
-Fund   81       P/E  39.1    EPS growth  +112%
-Tech   91       P/B   22     Rev growth   +82%
-Combined 86     Mkt cap $2.1T
-
-Signal: BUY     [appears in my watchlists: Tech Leaders, Growth Watch]
+Fundamental inputs          Technical inputs           Context
+P/E  Fwd P/E  PEG  FCFYld  ROE    RSI  vs200  vs50  52WRange   MktCap  Sector  Lists
 ```
 
-**Actions:** timeframe toggle for chart, "add to watchlist" quick-add.
+**Actions:** period toggle (1W–10Y), breadcrumb back to originating watchlist.
 
 ---
 
 ## S4 — Leaderboard
 
-**Route:** `/leaderboard`  
+**Route:** `/leaderboard`
 **Status:** ⬜ not built
 
-**Job:** cross-watchlist ranked view — "my best stocks right now" without
-navigating each watchlist separately.
+**Job:** cross-watchlist ranked view — "my best stocks right now" by combined score.
 
-**Data:** `GET /v1/leaderboard` → `[TickerRow]` sorted by combined score,
-de-duplicated across all user watchlists.
+**Data:** `GET /v1/leaderboard` → `[TickerRow]` sorted by combined score, deduplicated.
 
-**Layout:**
-```
-Leaderboard — top picks across all your watchlists
-
-[Sort: Combined ▾]  [Filter: Buy only □]
-
-Rank  Ticker  Company        Fund  Tech  Combined  Signal  Lists
-  1   NVDA    NVIDIA          81    91      86       Buy    Tech Leaders, Growth
-  2   AMZN    Amazon          78    80      79       Buy    Value Plays
-  3   AAPL    Apple           72    68      70      Hold    Tech Leaders
-...
-```
-
-**Actions:** sort by fund/tech/combined, filter to Buy-only, click row → S3.
+**Note:** overlaps with S1b (All Symbols). Leaderboard will be opinionated —
+pre-sorted, possibly filtered to Buy signals only — while All Symbols is a neutral
+full-table view the user controls.
 
 ---
 
 ## S5 — Auth (sign-in nudge, not a gate)
 
-**Route:** handled in App shell (no separate URL)  
-**Status:** ⬜ not built  
+**Route:** handled in App shell (no separate URL)
+**Status:** ⬜ not built
 **Decision:** [ADR-0009](decisions/0009-guest-session-before-login.md)
 
-**Job:** let guests use the full app immediately. Offer sign-in persistently but
-non-intrusively; migrate their data when they do sign in.
+**Job:** let guests use the full app immediately; offer sign-in persistently but
+non-intrusively; migrate their data when they sign in.
 
 **Guest flow:**
 1. First visit → auto-generate `guestId` UUID in `sessionStorage`
@@ -159,65 +191,43 @@ non-intrusively; migrate their data when they do sign in.
 3. Backend assigns identity `GUEST#<uuid>`, stores with 7-day TTL
 4. User gets full CRUD — create watchlists, add tickers, see scores
 
-**Sign-in flow (when user chooses to):**
+**Sign-in flow:**
 1. Click "Sign in" → redirect to Cognito Hosted UI
-2. Hosted UI redirects back with `?code=...` → exchange for tokens → store in `sessionStorage`
-3. Call `POST /v1/auth/migrate-guest` with `{ guest_id }` → watchlists copied to Cognito account
-4. Clear `guestId` from sessionStorage; all future calls use `Bearer <id_token>`
+2. Redirect back with `?code=...` → exchange for tokens → store in `sessionStorage`
+3. Call `POST /v1/auth/migrate-guest` → watchlists copied to Cognito account
+4. Clear guestId; all future calls use `Bearer <id_token>`
 
-**Layout — header (unauthenticated):**
+**Layout — unauthenticated header:**
 ```
 Bellwether  stock screener                    [Sign in to save]
 ```
 
-**Layout — header (authenticated):**
-```
-Bellwether  stock screener                    ●  unmiltambe  [Sign out]
-```
-
-**Nudge on watchlists page (after user creates something):**
+**Nudge (after user creates something):**
 ```
 💡 Sign in to keep your lists permanently — they'll be here on any device.  [Sign in]  [×]
 ```
-Shown once; dismissed with [×]; not shown again this session.
-
-**Implementation notes:**
-- Use Cognito Hosted UI (OAuth2 redirect) — no Amplify UI bundle
-- Tokens in `sessionStorage` only (cleared on tab close, reduces XSS surface)
-- `migrate-guest` is idempotent — safe to call on each login in case of retry
 
 ---
 
 ## S6 — Discovery / screener *(Phase 4)*
 
-**Route:** `/discover`  
+**Route:** `/discover`
 **Status:** ⬜ not built (Phase 4 feature)
 
-**Job:** surface stocks the user isn't watching, ranked by score across a broader
-universe. Feeds from the scheduled EventBridge batch that runs nightly.
-
-**Layout (sketch):**
-```
-Discover — stocks you're not tracking, ranked
-
-[Filters: sector ▾  signal ▾  min score __]   [Run screener]
-
-Rank  Ticker  Sector      Fund  Tech  Combined  Signal
-  1   META    Comm Svcs    79    77      78       Buy   [+ Add to watchlist]
-  2   LLY     Healthcare   82    71      77       Buy   [+ Add to watchlist]
-...
-```
+**Job:** surface stocks the user isn't watching, ranked across a broader universe.
+Feeds from nightly EventBridge batch.
 
 ---
 
 ## Build order
 
-| # | Screen/feature | Depends on | Priority |
-|---|----------------|-----------|----------|
-| 1 | S1 actions (new/rename/delete watchlist) | S1 built | High — core CRUD |
-| 2 | S2 actions (add/remove ticker) | S2 built | High — core CRUD |
-| 3 | S5 guest session + `X-Guest-Id` backend path | — | High — needed for zero-friction onboarding |
-| 4 | S5 Cognito sign-in + `migrate-guest` | guest session | High — needed for deployed API |
-| 5 | S4 leaderboard | backend `/v1/leaderboard` exists | Medium |
-| 6 | S3 ticker detail + chart | backend `/v1/tickers/:s/chart` exists | Medium |
-| 7 | S6 discovery | Phase 4 batch job | Low — Phase 4 |
+| # | Screen/feature | Status |
+|---|----------------|--------|
+| S1 | Watchlists index (CRUD) | ✅ done |
+| S1b | All Symbols built-in view | ✅ done |
+| S2 | Watchlist detail (full table, chart panel, sort) | ✅ done |
+| S3 | Ticker detail page (chart + metrics) | ✅ done |
+| S5 guest | X-Guest-Id backend path + frontend UUID | ⬜ next |
+| S5 auth | Cognito sign-in + migrate-guest | ⬜ next |
+| S4 | Leaderboard | ⬜ |
+| S6 | Discovery (Phase 4) | ⬜ |

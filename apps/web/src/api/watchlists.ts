@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "./client";
 import type { TickerRow, WatchlistOut, WatchlistSummary } from "./types";
 
@@ -62,6 +62,34 @@ export function useAddTicker(watchlistId: string) {
     onSuccess: () =>
       qc.invalidateQueries({ queryKey: ["watchlist", watchlistId] }),
   });
+}
+
+export function useAllSymbols() {
+  const { data: watchlists } = useWatchlists();
+  const ids = watchlists?.map((w) => w.id) ?? [];
+
+  const results = useQueries({
+    queries: ids.map((id) => ({
+      queryKey: ["watchlist", id] as const,
+      queryFn: () => api<TickerRow[]>(`/v1/watchlists/${id}`),
+      enabled: ids.length > 0,
+    })),
+  });
+
+  const isLoading = results.some((r) => r.isLoading) || (ids.length > 0 && results.length === 0);
+  const seen = new Map<string, TickerRow>();
+  for (const row of results.flatMap((r) => r.data ?? [])) {
+    if (seen.has(row.ticker)) {
+      const existing = seen.get(row.ticker)!;
+      seen.set(row.ticker, {
+        ...existing,
+        lists: [...new Set([...existing.lists, ...row.lists])],
+      });
+    } else {
+      seen.set(row.ticker, row);
+    }
+  }
+  return { data: [...seen.values()], isLoading, total: seen.size, listCount: ids.length };
 }
 
 export function useRemoveTicker(watchlistId: string) {

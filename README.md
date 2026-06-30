@@ -97,6 +97,15 @@ for the principles, then [requirements](docs/requirements.md) and
 [design](docs/design.md). The build sequence is in [roadmap](docs/roadmap.md);
 running the backend locally is in [local-dev](docs/local-dev.md).
 
+## Live deployments
+
+| Environment | URL | Notes |
+|------------|-----|-------|
+| AWS (API + Lambda) | https://7x1e7unmh5.execute-api.us-east-1.amazonaws.com/ui | Backend + Swagger UI |
+| Render (demo) | https://stock-screener-demo.onrender.com/ui | Full-stack demo (may spin down on idle) |
+
+See [docs/deploy-aws.md](docs/deploy-aws.md) and [docs/deploy-render.md](docs/deploy-render.md) for deploy instructions.
+
 ## Build status
 
 `✅ done · ◑ in progress · ⬜ not started`

@@ -42,27 +42,29 @@ const C = {
 };
 
 // ── Timeframe filtering ───────────────────────────────────────────────────────
-const PERIODS = ["1W", "1M", "3M", "6M", "1Y"] as const;
+const PERIODS = ["1W", "1M", "3M", "6M", "1Y", "5Y", "10Y"] as const;
 type Period = typeof PERIODS[number];
 
 const TRADING_DAYS: Record<Period, number> = {
-  "1W": 5, "1M": 21, "3M": 63, "6M": 126, "1Y": 252,
+  "1W": 5, "1M": 21, "3M": 63, "6M": 126, "1Y": 252, "5Y": 252 * 5, "10Y": 252 * 10,
+};
+const YEARS_TO_FETCH: Record<Period, number> = {
+  "1W": 1, "1M": 1, "3M": 1, "6M": 1, "1Y": 1, "5Y": 5, "10Y": 10,
 };
 
 function filterPoints(points: ChartPoint[], period: Period): ChartPoint[] {
-  const n = TRADING_DAYS[period];
-  return points.slice(-n);
+  return points.slice(-TRADING_DAYS[period]);
 }
 
-// ── X-axis date formatter ─────────────────────────────────────────────────────
 function makeTickFormatter(period: Period) {
   return (t: string): string => {
-    if (!/^\d{4}/.test(t)) return t; // index-based offline data
+    if (!/^\d{4}/.test(t)) return t;
     const d = new Date(t + "T00:00:00");
-    if (period === "1W") return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-    if (period === "1M") return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-    if (period === "3M") return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-    return d.toLocaleDateString("en-US", { month: "short", year: "2-digit" });
+    if (period === "5Y" || period === "10Y")
+      return d.toLocaleDateString("en-US", { year: "numeric" });
+    if (period === "1Y")
+      return d.toLocaleDateString("en-US", { month: "short", year: "2-digit" });
+    return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
   };
 }
 
@@ -108,7 +110,7 @@ export default function TickerDetailPage() {
   const fromName: string | undefined = location.state?.fromName;
 
   const [period, setPeriod] = useState<Period>("1Y");
-  const { data: chartData, isLoading: chartLoading, error: chartError } = useTickerChart(symbol);
+  const { data: chartData, isLoading: chartLoading, error: chartError } = useTickerChart(symbol, YEARS_TO_FETCH[period]);
   const { data: row, isLoading: rowLoading } = useTickerScores(symbol);
 
   const points = chartData ? filterPoints(chartData.points, period) : [];

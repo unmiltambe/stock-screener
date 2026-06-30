@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
+  useAllSymbols,
   useCreateWatchlist,
   useDeleteWatchlist,
   useRenameWatchlist,
@@ -9,6 +10,7 @@ import {
 
 export default function WatchlistsPage() {
   const { data, isLoading, error } = useWatchlists();
+  const { total: allTotal, listCount } = useAllSymbols();
   const createWL = useCreateWatchlist();
   const renameWL = useRenameWatchlist();
   const deleteWL = useDeleteWatchlist();
@@ -60,6 +62,29 @@ export default function WatchlistsPage() {
         </button>
       </div>
 
+      {/* Built-in: All Symbols consolidated view */}
+      <div className="mb-5">
+        <p className="text-[10px] uppercase tracking-wider text-dim mb-2">Built-in views</p>
+        <Link
+          to="/watchlists/_all"
+          className="flex items-center justify-between rounded-lg border border-dashed border-accent/40 bg-accent/5 px-4 py-3 hover:border-accent/70 hover:bg-accent/10 transition-colors group"
+        >
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="font-medium">All Symbols</span>
+              <span className="text-[10px] text-dim bg-line px-1.5 py-0.5 rounded">Read-only</span>
+            </div>
+            <div className="text-dim text-sm mt-0.5">
+              {allTotal > 0
+                ? `${allTotal} unique symbols across ${listCount} watchlists`
+                : "All symbols from your watchlists in one view"}
+            </div>
+          </div>
+          <span className="text-accent text-lg opacity-40 group-hover:opacity-100 transition-opacity">⊞</span>
+        </Link>
+      </div>
+
+      <p className="text-[10px] uppercase tracking-wider text-dim mb-2">Your watchlists</p>
       <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
         {data!.map((w) => (
           <div
