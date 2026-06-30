@@ -163,6 +163,29 @@ cache entries automatically; old universe partitions are pruned by the batch job
   from yfinance to a bulk fundamentals provider without touching core or handlers.
   This data-source decision is deferred — see [ADR-0003](decisions/0003-discovery-engine.md).
 
+### Known pitfalls
+
+**Do not cache rows where fundamentals failed (price = None).**
+`yf.Ticker(sym).info` is a multi-request HTTP call and is rate-limited by Yahoo.
+Under concurrent load (e.g. the "All Symbols" view firing N parallel watchlist
+requests on cold start), some `.info` calls fail with an exception that is caught
+and returns `None`. `yf.download()` (the batch closes fetch) is more resilient and
+succeeds regardless. This produces a `MarketSnapshot` with valid closes but
+`Fundamentals(price=None)` — RSI / vs200d / vs50d are computable from closes, but
+price, P/E, FCF, ROE, and Fund Score are all null.
+
+If this partial row is cached for the full 15-minute TTL every subsequent request
+serves stale empty fundamentals — the only escape is a server restart.
+
+**The rule:** cache a scored row only when `snap.fundamentals.price is not None`.
+ETFs legitimately have `price` but no `trailing_pe` / `roe` — they still satisfy
+the condition and are cached normally. A failed `.info` call will not be cached,
+so the next request retries the upstream fetch automatically.
+
+`_fundamentals()` in `adapters/yfinance_market.py` also retries twice with
+exponential backoff (1 s, 2 s) before giving up, and logs a warning so failures
+are observable in server logs.
+
 ## 7. Monorepo layout (P4)
 
 ```
