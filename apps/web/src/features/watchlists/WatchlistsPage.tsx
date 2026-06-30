@@ -116,7 +116,15 @@ export default function WatchlistsPage() {
                   onBlur={() => setEditingId(null)}
                   className="flex-1 bg-transparent border-b border-accent outline-none text-sm font-medium py-0.5"
                 />
-                <button type="submit" className="text-accent text-xs shrink-0">Save</button>
+                {/* preventDefault on mousedown keeps the input focused so its
+                    onBlur (cancel) doesn't unmount the form before this submits */}
+                <button
+                  type="submit"
+                  onMouseDown={(e) => e.preventDefault()}
+                  className="text-accent text-xs shrink-0"
+                >
+                  Save
+                </button>
               </form>
             ) : (
               <Link to={`/watchlists/${w.id}`} className="block">
