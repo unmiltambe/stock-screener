@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
   Area,
@@ -408,6 +408,17 @@ export default function WatchlistDetailPage() {
   const [selectedTicker, setSelectedTicker] = useState<string | null>(null);
 
   const watchlistName = watchlists?.find((w) => w.id === id)?.name ?? "Watchlist";
+
+  // Auto-select the first sorted row when data first loads for a watchlist,
+  // so the chart is immediately visible without requiring a click.
+  const autoSelectedForId = useRef<string | null>(null);
+  useEffect(() => {
+    if (!data || data.length === 0) return;
+    if (autoSelectedForId.current === id) return;
+    autoSelectedForId.current = id;
+    const sorted = sortRows(data, sortKey, sortDir);
+    setSelectedTicker(sorted[0].ticker);
+  }, [data, id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const sortStorageKey = `wl-sort-${id}`;
   function loadSort(): { key: string; dir: SortDir } {
