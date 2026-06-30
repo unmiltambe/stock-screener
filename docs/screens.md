@@ -176,36 +176,38 @@ full-table view the user controls.
 
 ---
 
-## S5 — Auth (sign-in nudge, not a gate)
+## S5 — Auth (sign-in, not a gate)
 
-**Route:** handled in App shell (no separate URL)
-**Status:** ⬜ not built
-**Decision:** [ADR-0009](decisions/0009-guest-session-before-login.md)
+**Route:** `/callback` (OIDC redirect); controls live in the App-shell header
+**Status:** ✅ built (header Sign in/out + guest mode); ⬜ proactive nudge banner pending
+**Decision:** [ADR-0009](decisions/0009-guest-session-before-login.md), [ADR-0008](decisions/0008-app-level-cognito-jwt.md)
 
-**Job:** let guests use the full app immediately; offer sign-in persistently but
-non-intrusively; migrate their data when they sign in.
+**Job:** let guests use the full app immediately; offer sign-in non-intrusively;
+migrate their data when they sign in.
 
-**Guest flow:**
-1. First visit → auto-generate `guestId` UUID in `sessionStorage`
-2. All API calls send `X-Guest-Id: <uuid>` (no Authorization header)
-3. Backend assigns identity `GUEST#<uuid>`, stores with 7-day TTL
-4. User gets full CRUD — create watchlists, add tickers, see scores
+**Guest flow (built):**
+1. First visit → generate `guestId` UUID in `sessionStorage`
+2. API calls send `X-Guest-Id: <uuid>` when no token (api/client.ts)
+3. Backend resolves `GUEST#<uuid>` (jwt mode); guest items carry a 7-day TTL
+4. Full CRUD — watchlists, tickers, scores, charts
 
-**Sign-in flow:**
-1. Click "Sign in" → redirect to Cognito Hosted UI
-2. Redirect back with `?code=...` → exchange for tokens → store in `sessionStorage`
-3. Call `POST /v1/auth/migrate-guest` → watchlists copied to Cognito account
-4. Clear guestId; all future calls use `Bearer <id_token>`
+**Sign-in flow (built — `react-oidc-context` + `oidc-client-ts`):**
+1. Header **Sign in** → `signinRedirect()` → Cognito Hosted UI (login + sign-up)
+2. Redirect to `/callback?code=…` → Authorization Code + PKCE exchange; tokens in
+   `localStorage` (survive reload)
+3. First authentication → `POST /v1/auth/migrate-guest { guest_id }` → guest lists
+   copied to the account, then `guestId` cleared
+4. API calls send `Authorization: Bearer <access_token>`; **Sign out** clears the
+   token and hits Cognito's `/logout`
 
-**Layout — unauthenticated header:**
+**Header (built):**
 ```
-Bellwether  stock screener                    [Sign in to save]
+Bellwether  stock screener                         [Sign in]      ← signed out
+Bellwether  stock screener        you@example.com  [Sign out]     ← signed in
 ```
 
-**Nudge (after user creates something):**
-```
-💡 Sign in to keep your lists permanently — they'll be here on any device.  [Sign in]  [×]
-```
+**Not yet built:** the proactive "💡 Sign in to keep your lists" nudge banner after
+a guest creates something; silent token renewal (session ~1h, Cognito default).
 
 ---
 
@@ -227,7 +229,8 @@ Feeds from nightly EventBridge batch.
 | S1b | All Symbols built-in view | ✅ done |
 | S2 | Watchlist detail (full table, chart panel, sort) | ✅ done |
 | S3 | Ticker detail page (chart + metrics) | ✅ done |
-| S5 guest | X-Guest-Id backend path + frontend UUID | ⬜ next |
-| S5 auth | Cognito sign-in + migrate-guest | ⬜ next |
+| S5 guest | X-Guest-Id backend path + frontend UUID | ✅ done |
+| S5 auth | Cognito sign-in + migrate-guest | ✅ done |
+| S5 nudge | Proactive "sign in to save" banner | ⬜ next |
 | S4 | Leaderboard | ⬜ |
 | S6 | Discovery (Phase 4) | ⬜ |

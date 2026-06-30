@@ -91,7 +91,12 @@ DELETE /v1/watchlists/{id}                 → delete
 PUT    /v1/watchlists/{id}/tickers/{sym}   → add ticker
 DELETE /v1/watchlists/{id}/tickers/{sym}   → remove ticker
 
+GET    /v1/all-symbols                     → every unique ticker across the user's
+                                             lists, deduped, one cache-first batch
 GET    /v1/leaderboard                     → aggregated ranked views (FR-5.1)
+
+POST   /v1/auth/migrate-guest              → absorb a guest session's lists into the
+                                             signed-in account { guest_id } (ADR-0009)
 
 GET    /v1/tickers/{sym}/chart?years=1     → price + SMA-50 + SMA-200 (FR-3.6)
 GET    /v1/scores?tickers=A,B,C            → scores for an arbitrary set (cache-first)

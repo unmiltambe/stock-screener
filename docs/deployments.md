@@ -61,8 +61,10 @@ work on any `jwt` surface (persisted on AWS, ephemeral on Render's memory store)
   and forwards all viewer headers except Host; a CloudFront Function on the S3
   behaviour rewrites extension-less paths to `/index.html` (SPA deep-link refresh)
   without touching API responses.
-- **Auth:** guest sessions today; Cognito sign-in + `migrate-guest` are the remaining
-  Phase-3 sub-tasks.
+- **Auth:** guest sessions **and** Cognito Hosted-UI sign-in (Authorization Code +
+  PKCE); guest watchlists migrate into the account on first sign-in
+  (`POST /v1/auth/migrate-guest`). The CloudFront `/callback` + logout URLs are
+  registered on the Cognito client (CDK `-c frontend_url=…`).
 - **Purpose:** the public web app. This is the target end users hit.
 
 ## Retirement guidance (how to remove the interim pieces safely)

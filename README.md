@@ -16,8 +16,8 @@ Three things to try in 30 seconds:
 2. Click any row → an interactive **price + moving-average chart** (1W → 10Y).
 3. Hit **+ New watchlist**, add a ticker like `AAPL` or `NVDA`, and watch it get scored.
 
-> Guest data is private to your browser session. One-click sign-in to save it
-> permanently across devices is coming next.
+> Want to keep your lists? **Sign in** (top-right) — your guest watchlists
+> migrate into the account automatically, saved across devices.
 
 ---
 
@@ -73,10 +73,10 @@ for full options (offline fixture data, DynamoDB Local, etc.).
 - **Watchlists** — create lists, add/remove tickers, each scored on fundamentals + technicals.
 - **All Symbols** — a built-in consolidated view across every watchlist, sortable by any metric or score.
 - **Interactive charts** — price with SMA-50/200 overlays, 1W → 10Y, on every ticker.
-- **Guest sessions** — full use with zero friction; your data is yours, no login required ([ADR-0009](docs/decisions/0009-guest-session-before-login.md)).
+- **Guest sessions** — full use with zero friction, no login required ([ADR-0009](docs/decisions/0009-guest-session-before-login.md)).
+- **Sign in & save** — Cognito Hosted UI login; guest watchlists migrate into the account on first sign-in.
 
 **Planned next:**
-- **Sign in & save** — Cognito login + one-click migration of your guest data to a permanent account.
 - **Leaderboards** — ranked cross-watchlist views (best value, best momentum, buy the dip). API exists; UI pending.
 - **Discovery / screener** *(the new direction)* — surface stocks beyond your watchlists, ranked across a broad universe by configurable factors ([ADR-0003](docs/decisions/0003-discovery-engine.md)).
 
@@ -137,7 +137,7 @@ Full environment map, configs, and safe-retirement plan for the interim surfaces
 ```
    ✅ React SPA ──► CloudFront ✅ ──► API Gateway ✅ ──► Lambda (FastAPI/Mangum) ✅
    (Phase 3,        (SPA + /v1 proxy,    (+ ✅ Cognito JWT  ┌────────────────────┐
-    guest mode)      one origin)           + guest, P2/P9)  │ ✅ core  (scoring) │
+    guest+sign-in)   one origin)           + guest, P2/P9)  │ ✅ core  (scoring) │
                                                             │ ✅ adapters        │
    ✅ Cognito (P2)                                          │ ✅ api  (/v1)      │
                                                             └────────────────────┘
@@ -150,7 +150,7 @@ Full environment map, configs, and safe-retirement plan for the interim surfaces
 | 0 | Pure scoring core + adapter interfaces | ✅ done |
 | 1 | FastAPI backend + Lambda + API Gateway + DynamoDB | ✅ **deployed on AWS** |
 | 2 | Cognito auth (app-level JWT) + per-user seeding | ✅ **deployed on AWS** |
-| 3 | React SPA on CloudFront + S3, guest sessions | ✅ **deployed**; sign-in UI + leaderboard/discovery screens pending |
+| 3 | React SPA on CloudFront + S3; guest sessions + Cognito sign-in | ✅ **deployed**; leaderboard/discovery screens still to come |
 | 4 | Discovery / screener (scheduled batch) | ⬜ |
 | 5 | Larger universe, sector-aware scoring, mobile | ⬜ |
 
