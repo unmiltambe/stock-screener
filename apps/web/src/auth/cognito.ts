@@ -21,8 +21,16 @@ export const oidcConfig: AuthProviderProps = {
   redirect_uri: `${window.location.origin}/callback`,
   response_type: "code",
   scope: "openid email profile",
-  // Persist the session across reloads/tabs of this origin.
+  // Persist BOTH the session and the transient PKCE/auth-request state in
+  // localStorage. The state store is what the callback looks up by `state`; an
+  // explicit, matching store avoids the "No matching state found in storage"
+  // dead-end when defaults differ or a tab is involved.
   userStore: new WebStorageStateStore({ store: window.localStorage }),
+  stateStore: new WebStorageStateStore({ store: window.localStorage }),
+  // Cognito's Hosted UI can't be framed, so silent-renew/session-monitor iframes
+  // just throw "failed to fetch". Disable them — we re-auth via redirect instead.
+  automaticSilentRenew: false,
+  monitorSession: false,
   // Strip ?code/&state from the URL after a successful exchange (the /callback
   // route component then navigates home).
   onSigninCallback: () => {
