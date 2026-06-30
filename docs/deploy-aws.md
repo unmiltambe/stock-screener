@@ -1,5 +1,10 @@
 # Infrastructure — Phase 1 (AWS deploy)
 
+**Live URL:** https://7x1e7unmh5.execute-api.us-east-1.amazonaws.com
+
+- `/ui` — Swagger UI (Basic Auth gated)
+- `/v1/...` — JSON API
+
 How the backend runs on AWS, the control flows, and the step-by-step to deploy it.
 Implemented by [`../infra`](../infra) (AWS CDK, Python). Decisions:
 [ADR-0001](decisions/0001-backend-and-stack.md) (serverless),

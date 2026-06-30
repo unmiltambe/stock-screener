@@ -54,7 +54,13 @@ class ScreenerService:
                     rows[sym] = schemas.error_row(sym)
                     continue  # don't cache transient failures
                 row = schemas.row_from_scored(score_snapshot(sym, snap))
-                self._cache.set(self._key(sym), row, SCORE_TTL_SECONDS)
+                # Only cache when both fundamentals AND closes succeeded.
+                # - price=None → .info was rate-limited; retry next request
+                # - closes=[] → yf.download() was rate-limited; retry next request
+                # ETFs (price present, PE/ROE absent) and new IPOs (<200 days of
+                # history) are fine: they have a price and non-empty closes.
+                if snap.fundamentals.price is not None and snap.closes:
+                    self._cache.set(self._key(sym), row, SCORE_TTL_SECONDS)
                 rows[sym] = row
 
         return [rows[s] for s in symbols]
@@ -131,18 +137,39 @@ class ScreenerService:
             "best_momentum": by("tech", reverse=True)[:5],
         }
 
+    def all_symbols(self, user_id: str) -> List[Dict]:
+        """Every unique ticker across the user's watchlists, de-duplicated, with
+        list membership attached. ONE cache-first batch fetch (P5) — this is the
+        backend for the All Symbols view, replacing N parallel watchlist requests
+        that otherwise storm the upstream provider on a cold cache."""
+        membership: Dict[str, List[str]] = {}
+        for wl in self._watchlists.list_all(user_id):
+            for t in wl.tickers:
+                membership.setdefault(t.upper(), []).append(wl.name)
+
+        rows = self.scored_rows(list(membership.keys()))
+        for row in rows:
+            row["lists"] = membership.get(row["ticker"], [])
+        return rows
+
     # ── chart ─────────────────────────────────────────────────────────────────
 
     def chart(self, symbol: str, years: int = 1) -> Optional[Dict]:
         symbol = symbol.upper()
-        snap = self._market.fetch([symbol]).get(symbol)
+        snap = self._market.fetch([symbol], years=years).get(symbol)
         if snap is None or not snap.closes:
             return None
         closes = snap.closes
+        dates = snap.dates
         sma50 = sma_series(closes, 50)
         sma200 = sma_series(closes, 200)
         points = [
-            {"t": str(i), "price": closes[i], "sma50": sma50[i], "sma200": sma200[i]}
+            {
+                "t": dates[i] if i < len(dates) else str(i),
+                "price": closes[i],
+                "sma50": sma50[i],
+                "sma200": sma200[i],
+            }
             for i in range(len(closes))
         ]
         return {"ticker": symbol, "points": points}

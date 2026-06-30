@@ -152,8 +152,9 @@ cache entries automatically; old universe partitions are pruned by the batch job
 ## 6. Caching, market data & the discovery batch (P5)
 
 - **Request path:** a scores request checks `CACHE#<sym>` first; fresh → serve,
-  else fetch upstream once, cache (`ttl = now + 900s`), serve. Multi-ticker fetches
-  parallelize (NFR-2.2).
+  else fetch upstream once, cache (`ttl = now + 900s`), serve. The miss path issues
+  **one** batched upstream fetch for all missing symbols (`scored_rows`), never a
+  per-symbol storm (P5).
 - **Batch path:** EventBridge triggers the discovery Lambda daily. It iterates the
   universe (throttled to respect provider limits), scores each ticker via the same
   core, and writes a fresh `UNIVERSE#<asOf>` partition, then flips `UNIVERSE/LATEST`.
@@ -162,6 +163,57 @@ cache entries automatically; old universe partitions are pruned by the batch job
 - Market data lives behind an **adapter interface**, so the universe source can grow
   from yfinance to a bulk fundamentals provider without touching core or handlers.
   This data-source decision is deferred — see [ADR-0003](decisions/0003-discovery-engine.md).
+
+### Consolidated views fetch once, not N times
+
+The "All Symbols" view (S1b) shows every unique ticker across a user's watchlists.
+It is served by a **single** endpoint, `GET /v1/all-symbols` → `svc.all_symbols()`,
+which deduplicates tickers across lists, attaches list membership, and issues **one**
+cache-first batch fetch (the same `scored_rows` path everything else uses).
+
+> **Anti-pattern that caused a production-style outage:** the frontend originally
+> built All Symbols by firing **N parallel `/v1/watchlists/:id` requests** (one per
+> watchlist) and merging client-side. On a cold cache this meant N concurrent
+> `yf.download()` batch calls **plus** N × 6 concurrent `.info` threads all hitting
+> Yahoo at once — a thundering herd that triggered rate-limiting, returned empty
+> payloads, and (because empties aren't cached) re-stormed on every reload without
+> ever converging. Adding per-call retries made it *worse* by multiplying load.
+> **Rule:** a consolidated/cross-list view must resolve to one deduplicated,
+> cache-first backend batch — never a client-side fan-out of per-list requests.
+
+### Known pitfalls
+
+**1. Cache a scored row only when it is complete: `price is not None AND closes`.**
+There are two independent upstream calls per ticker, each with its own failure mode
+under rate-limiting:
+
+| Call | Failure symptom | What's still present |
+|------|-----------------|----------------------|
+| `yf.Ticker(sym).info` | `price`, P/E, ROE, Fund Score all null | closes / RSI / vs200d |
+| `yf.download()` (batch) | RSI, vs200d, vs50d, Tech Score all null | price / fundamentals |
+
+If a partial row is cached it serves stale gaps for the full 15-min TTL (escape:
+server restart). Caching is therefore gated on **both** signals being present:
+`snap.fundamentals.price is not None and snap.closes`. ETFs (price, no P/E) and new
+IPOs (price + short history) both satisfy this and cache normally.
+
+**2. `closes` is full-or-nothing, not "half filled".** `yf.download()` returns a
+ticker's *full available history or nothing* — a rate-limited ticker comes back as
+NaN → dropped to `[]`, never a partial series. So there is no "half a chart" state
+to detect; the only states are full, empty (→ not cached, retried), or genuinely
+short (a new listing like a recent IPO — legitimate, cached, scored with graceful
+degradation since SMA-200 honestly can't exist yet). A length-based "is it complete?"
+heuristic is the wrong tool: it can't distinguish a throttled ticker from a young
+one and would wrongly penalize real new listings.
+
+**3. Retry/backoff is source-agnostic — keep it out of the adapter internals.**
+Transient failures and rate-limiting affect *any* external source, so the
+retry/backoff loop lives in a generic helper, `adapters/retry.py::with_retry`, not
+duplicated inside each fetch. It retries on exception **and** on an invalid result
+(via an `is_valid` hook — used so an empty batch download is treated as a transient
+failure and retried, not accepted as "no data"). yfinance fetches call it with
+defaults of 2 retries and 1 s → 2 s backoff. A future news/sentiment/fundamentals
+adapter reuses the same helper.
 
 ## 7. Monorepo layout (P4)
 

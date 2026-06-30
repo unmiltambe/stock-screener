@@ -22,7 +22,8 @@ stock-screener/
 │   ├── app/                      ★ SHARED, hosting-agnostic application
 │   │   ├── core/                 pure scoring — no IO, no framework (SCORING.md, P3)
 │   │   ├── adapters/             IO boundary: ports + impls
-│   │   │                           memory (offline/tests), dynamo (AWS), yfinance
+│   │   │                           memory (offline/tests), dynamo (AWS), yfinance,
+│   │   │                           retry (source-agnostic backoff helper)
 │   │   ├── api/                  FastAPI app, service, deps, schemas, handler (Mangum),
 │   │   │                           auth (Cognito JWT + interim Basic-Auth), demo_ui,
 │   │   │                           seed_watchlists.json
