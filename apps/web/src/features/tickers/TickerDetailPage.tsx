@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
+import { chartColors } from "../../lib/chartColors";
 import {
   Area,
   CartesianGrid,
@@ -30,17 +31,6 @@ import {
   sma50Color,
 } from "../../lib/format";
 
-// ── Design token hex values (Recharts can't read CSS variables) ───────────────
-const C = {
-  accent:  "#6ab0f5",
-  accentA: "#6ab0f520",
-  warn:    "#f39c12",
-  pos:     "#2ecc71",
-  line:    "#222b3a",
-  dim:     "#8a93a6",
-  ink:     "#e6e6e6",
-  panel:   "#161d2b",
-};
 
 // ── Timeframe filtering ───────────────────────────────────────────────────────
 const PERIODS = ["1W", "1M", "3M", "6M", "1Y", "5Y", "10Y"] as const;
@@ -105,6 +95,7 @@ function Metric({ label, value, color = "" }: { label: string; value: string; co
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function TickerDetailPage() {
+  const C = chartColors();
   const { symbol = "" } = useParams();
   const location = useLocation();
   const fromId: string | undefined = location.state?.from;

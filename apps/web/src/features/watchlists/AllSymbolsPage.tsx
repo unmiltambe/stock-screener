@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowUp, ArrowDown, ArrowUpRight, ArrowLeft } from "lucide-react";
+import { chartColors } from "../../lib/chartColors";
 import {
   Area,
   CartesianGrid,
@@ -118,7 +119,6 @@ function RangeBar({ pos }: { pos: number | null }) {
 
 // ── Inline chart panel ────────────────────────────────────────────────────────
 
-const CHART_C = { accent: "#6ab0f5", accentA: "#6ab0f520", warn: "#f39c12", pos: "#2ecc71", line: "#222b3a", dim: "#8a93a6" };
 const PERIODS = ["1W", "1M", "3M", "6M", "1Y", "5Y", "10Y"] as const;
 type Period = typeof PERIODS[number];
 const TRADING_DAYS: Record<Period, number> = { "1W": 5, "1M": 21, "3M": 63, "6M": 126, "1Y": 252, "5Y": 252*5, "10Y": 252*10 };
@@ -154,6 +154,7 @@ function PanelTooltip({ active, payload, label }: {
 }
 
 function ChartPanel({ ticker, onClose }: { ticker: string; onClose: () => void }) {
+  const CHART_C = chartColors();
   const [period, setPeriod] = useState<Period>("1Y");
   const { data: chartData, isLoading: chartLoading } = useTickerChart(ticker, YEARS_TO_FETCH[period]);
   const { data: row } = useTickerScores(ticker);
@@ -383,13 +384,13 @@ export default function AllSymbolsPage() {
                 {/* Group header row */}
                 <tr className="text-[10px] uppercase tracking-wider border-b border-line/40">
                   <th colSpan={4} className="pb-1" />
-                  <th colSpan={5} className="pb-1 text-center border-l border-line/40 pl-3 pr-4" style={{ color: "#2ecc71" }}>
+                  <th colSpan={5} className="pb-1 text-center border-l border-line/40 pl-3 pr-4 text-pos">
                     Fundamental Metrics
                   </th>
-                  <th colSpan={4} className="pb-1 text-center border-l border-line/40 pl-3 pr-4" style={{ color: "#6ab0f5" }}>
+                  <th colSpan={4} className="pb-1 text-center border-l border-line/40 pl-3 pr-4 text-accent">
                     Technical Metrics
                   </th>
-                  <th colSpan={4} className="pb-1 text-center border-l border-line/40 pl-3" style={{ color: "#8a93a6" }}>
+                  <th colSpan={4} className="pb-1 text-center border-l border-line/40 pl-3 text-dim">
                     Scores
                   </th>
                   <th className="pb-1 border-l border-line/40 pl-3 text-dim">Lists</th>
