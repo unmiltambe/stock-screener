@@ -72,6 +72,28 @@ class WatchlistNameIn(BaseModel):
     name: str
 
 
+class MigrateGuestIn(BaseModel):
+    """Body for POST /v1/auth/migrate-guest — the guest UUID to absorb (ADR-0009)."""
+    guest_id: str
+
+
+class SessionInitIn(BaseModel):
+    """Body for POST /v1/session/init — optional prior guest UUID to migrate when a
+    user signs in. Omitted/empty for a plain (guest or returning) bootstrap."""
+    guest_id: str = ""
+
+
+class ProfileIn(BaseModel):
+    """Body for PUT /v1/profile — how the user wants to be addressed."""
+    first_name: str = ""
+    last_name: str = ""
+
+
+class ProfileOut(BaseModel):
+    first_name: str = ""
+    last_name: str = ""
+
+
 def row_from_scored(
     scored: ScoredTicker,
     lists: Optional[List[str]] = None,

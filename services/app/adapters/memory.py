@@ -45,6 +45,10 @@ class InMemoryWatchlistRepo:
     def __init__(self, seed: Optional[Dict[str, Dict[str, List[str]]]] = None) -> None:
         # user_id -> { watchlist_id -> {"name": str, "tickers": [str]} }
         self._data: Dict[str, Dict[str, Dict[str, Any]]] = {}
+        # user_id -> {"first_name": str, "last_name": str}
+        self._profiles: Dict[str, Dict[str, str]] = {}
+        # user_ids that have had their one-time starter seed claimed
+        self._seeded: set = set()
         for user_id, lists in (seed or {}).items():
             for name, tickers in lists.items():
                 self._data.setdefault(user_id, {})[self._new_id()] = {
@@ -95,6 +99,24 @@ class InMemoryWatchlistRepo:
         symbol = symbol.upper()
         if symbol in rec["tickers"]:
             rec["tickers"].remove(symbol)
+
+    def get_profile(self, user_id: str) -> Optional[Dict[str, str]]:
+        prof = self._profiles.get(user_id)
+        return dict(prof) if prof else None
+
+    def set_profile(self, user_id: str, profile: Dict[str, str]) -> None:
+        self._profiles[user_id] = dict(profile)
+
+    def delete_all(self, user_id: str) -> None:
+        self._data.pop(user_id, None)
+        self._profiles.pop(user_id, None)
+        self._seeded.discard(user_id)
+
+    def try_mark_seeded(self, user_id: str) -> bool:
+        if user_id in self._seeded:
+            return False
+        self._seeded.add(user_id)
+        return True
 
 
 # ── Fixture market data ───────────────────────────────────────────────────────

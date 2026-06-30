@@ -63,6 +63,21 @@ def verify_cognito_jwt(token: str) -> dict:
     return claims
 
 
+def delete_cognito_user(user_sub: str) -> None:
+    """Delete the user from the Cognito pool (account deletion). No-op when the
+    pool isn't configured (local/header mode) so account-deletion still wipes the
+    user's stored data offline. Best-effort: a missing user is treated as done."""
+    pool_id = os.getenv("COGNITO_POOL_ID")
+    if not pool_id:
+        return
+    import boto3
+    client = boto3.client("cognito-idp", region_name=os.getenv("COGNITO_REGION"))
+    try:
+        client.admin_delete_user(UserPoolId=pool_id, Username=user_sub)
+    except client.exceptions.UserNotFoundException:
+        pass  # already gone — deletion is idempotent
+
+
 # ── Interim Basic Auth — gates the /ui demo only ──────────────────────────────
 
 def _unauthorized() -> Response:

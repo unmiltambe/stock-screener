@@ -4,17 +4,35 @@
    without touching components. Tailwind v4 turns these into utilities:
    --color-panel → bg-panel / text-panel / border-panel, --font-mono → font-mono. */
 @theme {
-  --color-bg: #0f1420;
-  --color-panel: #161d2b;
-  --color-line: #222b3a;
-  --color-ink: #e6e6e6;
-  --color-dim: #8a93a6;
-  --color-pos: #2ecc71;
-  --color-warn: #f39c12;
-  --color-neg: #e74c3c;
-  --color-accent: #6ab0f5;
+  /* Default = Clockwork light. Dark overrides live in the `.dark` rule below.
+     The whole look is driven from these tokens — never hardcode (see
+     docs/structure.md § Theming). */
+  --color-bg: #f8f8f8;
+  --color-panel: #ffffff;
+  --color-line: #e2e1dd;
+  --color-ink: #232320;
+  --color-dim: #6f7174;
+  --color-pos: #1f9b6b;
+  --color-warn: #b7791f;
+  --color-neg: #d23f4d;
+  --color-accent: #e56515;
 
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+/* Clockwork dark — applied when <html> has class `dark` (set by the theme
+   toggle / system preference). Same token names, dark values. */
+.dark {
+  --color-bg: #1a1a17;
+  --color-panel: #24241f;
+  --color-line: #34342d;
+  --color-ink: #f8f8f8;
+  --color-dim: #919599;
+  --color-pos: #35b8a0;
+  --color-warn: #eab308;
+  --color-neg: #e8556a;
+  --color-accent: #e56515;
 }
 
 html, body, #root {
@@ -23,5 +41,5 @@ html, body, #root {
 body {
   background-color: var(--color-bg);
   color: var(--color-ink);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family: var(--font-sans);
 }

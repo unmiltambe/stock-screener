@@ -54,3 +54,16 @@ export interface TickerRow {
   lists: string[];
   stale: boolean;
 }
+
+export interface Profile {
+  first_name: string;
+  last_name: string;
+}
+
+// GET /v1/leaderboard — four ranked views across the user's lists.
+export interface Leaderboard {
+  top_opportunities: TickerRow[];
+  reconsider: TickerRow[];
+  best_value: TickerRow[];
+  best_momentum: TickerRow[];
+}

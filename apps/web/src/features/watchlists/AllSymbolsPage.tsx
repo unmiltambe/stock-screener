@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import { ArrowUp, ArrowDown, ArrowUpRight, ArrowLeft } from "lucide-react";
+import { useChartColors } from "../../lib/chartColors";
 import {
   Area,
   CartesianGrid,
@@ -94,7 +96,9 @@ function Th({
       ].join(" ")}
     >
       {children}
-      {isActive && <span className="ml-0.5 text-[10px]">{sort?.dir === "asc" ? " ↑" : " ↓"}</span>}
+      {isActive && (sort?.dir === "asc"
+        ? <ArrowUp className="inline ml-0.5" size={12} strokeWidth={2} />
+        : <ArrowDown className="inline ml-0.5" size={12} strokeWidth={2} />)}
     </th>
   );
 }
@@ -115,7 +119,6 @@ function RangeBar({ pos }: { pos: number | null }) {
 
 // ── Inline chart panel ────────────────────────────────────────────────────────
 
-const CHART_C = { accent: "#6ab0f5", accentA: "#6ab0f520", warn: "#f39c12", pos: "#2ecc71", line: "#222b3a", dim: "#8a93a6" };
 const PERIODS = ["1W", "1M", "3M", "6M", "1Y", "5Y", "10Y"] as const;
 type Period = typeof PERIODS[number];
 const TRADING_DAYS: Record<Period, number> = { "1W": 5, "1M": 21, "3M": 63, "6M": 126, "1Y": 252, "5Y": 252*5, "10Y": 252*10 };
@@ -151,6 +154,7 @@ function PanelTooltip({ active, payload, label }: {
 }
 
 function ChartPanel({ ticker, onClose }: { ticker: string; onClose: () => void }) {
+  const CHART_C = useChartColors();
   const [period, setPeriod] = useState<Period>("1Y");
   const { data: chartData, isLoading: chartLoading } = useTickerChart(ticker, YEARS_TO_FETCH[period]);
   const { data: row } = useTickerScores(ticker);
@@ -165,7 +169,7 @@ function ChartPanel({ ticker, onClose }: { ticker: string; onClose: () => void }
             <div className="flex items-start justify-between gap-1 mb-1">
               <span className="font-mono font-semibold text-xl">{ticker}</span>
               <div className="flex items-center gap-2 shrink-0 mt-0.5">
-                <Link to={`/tickers/${ticker}`} title="Full detail" className="text-dim hover:text-accent text-xs transition-colors">↗</Link>
+                <Link to={`/tickers/${ticker}`} title="Full detail" className="text-dim hover:text-accent transition-colors"><ArrowUpRight size={15} strokeWidth={1.75} /></Link>
                 <button onClick={onClose} className="text-dim hover:text-ink transition-colors text-lg leading-none">×</button>
               </div>
             </div>
@@ -355,7 +359,7 @@ export default function AllSymbolsPage() {
     <div className="max-w-[1400px] mx-auto">
       {/* Header */}
       <div className="flex items-center gap-3 mb-4">
-        <Link to="/" className="text-accent text-sm">← watchlists</Link>
+        <Link to="/" className="text-accent text-sm inline-flex items-center gap-1"><ArrowLeft size={14} strokeWidth={1.75} /> watchlists</Link>
         <span className="text-dim text-sm">/</span>
         <span className="text-sm font-semibold">All Symbols</span>
         <span className="text-[10px] text-dim bg-line px-2 py-0.5 rounded">Built-in</span>
@@ -380,13 +384,13 @@ export default function AllSymbolsPage() {
                 {/* Group header row */}
                 <tr className="text-[10px] uppercase tracking-wider border-b border-line/40">
                   <th colSpan={4} className="pb-1" />
-                  <th colSpan={5} className="pb-1 text-center border-l border-line/40 pl-3 pr-4" style={{ color: "#2ecc71" }}>
+                  <th colSpan={5} className="pb-1 text-center border-l border-line/40 pl-3 pr-4 text-pos">
                     Fundamental Metrics
                   </th>
-                  <th colSpan={4} className="pb-1 text-center border-l border-line/40 pl-3 pr-4" style={{ color: "#6ab0f5" }}>
+                  <th colSpan={4} className="pb-1 text-center border-l border-line/40 pl-3 pr-4 text-accent">
                     Technical Metrics
                   </th>
-                  <th colSpan={4} className="pb-1 text-center border-l border-line/40 pl-3" style={{ color: "#8a93a6" }}>
+                  <th colSpan={4} className="pb-1 text-center border-l border-line/40 pl-3 text-dim">
                     Scores
                   </th>
                   <th className="pb-1 border-l border-line/40 pl-3 text-dim">Lists</th>

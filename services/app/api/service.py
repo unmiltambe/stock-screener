@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import Dict, List, Optional, Sequence
 
-from adapters.ports import CachePort, MarketDataPort, WatchlistRepo
+from adapters.ports import GUEST_PREFIX, CachePort, MarketDataPort, WatchlistRepo
 from core import score_snapshot, sma_series
 
 from . import schemas
@@ -16,7 +16,9 @@ SCORE_TTL_SECONDS = 900  # 15 minutes (FR-3.3/3.4)
 
 # Starter content for a brand-new user, so the first experience isn't empty
 # (FR-2.4). Generic — distinct from the owner's demo seed (seed_watchlists.json).
-STARTER_WATCHLISTS = {"My Watchlist": ["AAPL", "MSFT", "NVDA"]}
+STARTER_WATCHLISTS = {
+    "My Watchlist": ["AAPL", "AMZN", "GOOG", "MSFT", "NFLX", "NVDA", "TSLA", "AMD", "INTC"],
+}
 
 
 class ScreenerService:
@@ -67,15 +69,40 @@ class ScreenerService:
 
     # ── watchlists (keyed by stable id — ADR-0004) ────────────────────────────
 
-    def ensure_seeded(self, user_id: str) -> None:
-        """Seed starter watchlists for a user who has none (FR-2.4). Idempotent
-        while the user keeps at least one list."""
-        if self._watchlists.list_all(user_id):
-            return
+    def _seed_starter(self, user_id: str) -> None:
         for name, tickers in STARTER_WATCHLISTS.items():
             wl = self._watchlists.create(user_id, name)
             for t in tickers:
                 self._watchlists.add_ticker(user_id, wl.id, t)
+
+    def init_session(self, user_id: str, guest_id: str = "") -> Dict:
+        """Bootstrap an identity EXACTLY ONCE (FR-2.4, ADR-0009).
+
+        The single source of new-account state. Gated by an atomic marker, so it's
+        safe to call on every app load from any identity (guest or signed-in):
+          - first time only → migrate the caller's prior guest lists if any, else
+            seed the starter watchlist;
+          - every time after → a strict no-op (no re-seed, no re-migration), which
+            is what prevents duplicate 'My Watchlist' lists.
+
+        Reads (`GET /v1/watchlists`) no longer seed — they stay pure and strongly
+        consistent, so a transient/empty view can never trigger a write."""
+        if not self._watchlists.try_mark_seeded(user_id):
+            return {"bootstrapped": False, "migrated": 0, "seeded": False}
+        migrated = self._migrate(user_id, guest_id) if guest_id else 0
+        seeded = False
+        if migrated == 0 and not self._watchlists.list_all(user_id):
+            self._seed_starter(user_id)
+            seeded = True
+        return {"bootstrapped": True, "migrated": migrated, "seeded": seeded}
+
+    def ensure_seeded(self, user_id: str) -> None:
+        """Seed the starter once, marker-gated. Retained for compatibility; new
+        flows use init_session (which also handles guest migration)."""
+        if not self._watchlists.try_mark_seeded(user_id):
+            return
+        if not self._watchlists.list_all(user_id):
+            self._seed_starter(user_id)
 
     def list_watchlists(self, user_id: str) -> List[Dict]:
         lists = sorted(self._watchlists.list_all(user_id), key=lambda w: w.name)
@@ -111,6 +138,46 @@ class ScreenerService:
             return False
         self._watchlists.remove_ticker(user_id, watchlist_id, symbol)
         return True
+
+    # ── profile + account ──────────────────────────────────────────────────────
+
+    def get_profile(self, user_id: str) -> Dict[str, str]:
+        """Profile attributes for the user; empty dict if none set yet."""
+        return self._watchlists.get_profile(user_id) or {}
+
+    def update_profile(self, user_id: str, first_name: str, last_name: str) -> Dict[str, str]:
+        profile = {"first_name": first_name.strip(), "last_name": last_name.strip()}
+        self._watchlists.set_profile(user_id, profile)
+        return profile
+
+    def delete_user_data(self, user_id: str) -> None:
+        """Remove all of the user's stored data (watchlists + profile). Cognito
+        identity deletion is handled at the API edge (it's an IdP concern)."""
+        self._watchlists.delete_all(user_id)
+
+    def _migrate(self, user_id: str, guest_id: str) -> int:
+        """Copy a guest's watchlists into `user_id` and delete the guest's. Returns
+        the count moved. No marker handling — callers own that."""
+        guest_user = f"{GUEST_PREFIX}{guest_id}"
+        if guest_user == user_id:
+            return 0
+        migrated = 0
+        for wl in self._watchlists.list_all(guest_user):
+            new = self._watchlists.create(user_id, wl.name)
+            for t in wl.tickers:
+                self._watchlists.add_ticker(user_id, new.id, t)
+            self._watchlists.delete(guest_user, wl.id)
+            migrated += 1
+        return migrated
+
+    def migrate_guest(self, user_id: str, guest_id: str) -> int:
+        """Standalone guest migration (the /v1/auth/migrate-guest endpoint + tests).
+        New flows should use init_session, which migrates once and never re-copies a
+        guest's auto-seeded starter on later sign-ins."""
+        migrated = self._migrate(user_id, guest_id)
+        if migrated:
+            self._watchlists.try_mark_seeded(user_id)
+        return migrated
 
     # ── leaderboard ───────────────────────────────────────────────────────────
 

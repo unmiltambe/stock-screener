@@ -81,6 +81,25 @@ The only code that branches is [`app/api/deps.py`](../services/app/api/deps.py),
 reads `STORE_BACKEND` / `DATA_BACKEND` env vars and picks adapters. Keeping *both*
 targets working is a deliberate portability check — see [ADR-0007](decisions/0007-dual-deploy-portability.md).
 
+## Theming — one source of truth
+
+The entire look (palette + fonts) is driven from **`apps/web/src/index.css` `@theme`**
+tokens (`--color-*`, `--font-*`). Components consume them via Tailwind classes
+(`text-accent`, `bg-panel`, `font-mono`); semantic colour logic lives in
+`lib/format.ts` and returns those classes. Recharts can't read CSS variables in SVG
+attributes, so `lib/chartColors.ts` resolves the same tokens at runtime — the charts
+re-skin from the identical source. **Changing the palette or fonts is a one-file edit
+in `index.css`.** See [voice.md](voice.md) for tone.
+
+> **Strict rule — no hardcoded look-and-feel, anywhere.** Colours, fonts, and other
+> visual constants live ONLY in `index.css` `@theme` (with `lib/chartColors.ts` as the
+> sole runtime bridge for canvas/SVG that can't read CSS vars). Never write a hex
+> colour, `rgb()/hsl()`, or a raw font stack in a component, inline `style`, or
+> elsewhere — reference a token via a Tailwind class or `chartColors()`. New visual
+> dimensions (spacing scales, radii, shadows, z-index) get a token too. A quick guard:
+> `grep -rnP "#[0-9a-fA-F]{6}" apps/web/src --include=*.tsx --include=*.ts` should match
+> nothing outside `index.css`/`chartColors.ts`. This keeps re-theming a one-file change.
+
 ## Imports & running locally
 
 `core` / `adapters` / `api` are **top-level packages** physically located under

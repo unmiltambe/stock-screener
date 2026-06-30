@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
+import { useChartColors } from "../../lib/chartColors";
 import {
   Area,
   CartesianGrid,
@@ -29,17 +31,6 @@ import {
   sma50Color,
 } from "../../lib/format";
 
-// ── Design token hex values (Recharts can't read CSS variables) ───────────────
-const C = {
-  accent:  "#6ab0f5",
-  accentA: "#6ab0f520",
-  warn:    "#f39c12",
-  pos:     "#2ecc71",
-  line:    "#222b3a",
-  dim:     "#8a93a6",
-  ink:     "#e6e6e6",
-  panel:   "#161d2b",
-};
 
 // ── Timeframe filtering ───────────────────────────────────────────────────────
 const PERIODS = ["1W", "1M", "3M", "6M", "1Y", "5Y", "10Y"] as const;
@@ -104,6 +95,7 @@ function Metric({ label, value, color = "" }: { label: string; value: string; co
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function TickerDetailPage() {
+  const C = useChartColors();
   const { symbol = "" } = useParams();
   const location = useLocation();
   const fromId: string | undefined = location.state?.from;
@@ -127,7 +119,7 @@ export default function TickerDetailPage() {
     <div className="max-w-[1400px] mx-auto">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-sm mb-6">
-        <Link to={backTo} className="text-accent">← {backLabel}</Link>
+        <Link to={backTo} className="text-accent inline-flex items-center gap-1"><ArrowLeft size={14} strokeWidth={1.75} /> {backLabel}</Link>
         <span className="text-dim">/</span>
         <span className="font-semibold font-mono">{symbol}</span>
       </div>

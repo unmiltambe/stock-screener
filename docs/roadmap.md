@@ -44,13 +44,14 @@ score cache demonstrably prevents repeat upstream fetches (FR-3.3).
 
 **Exit:** two test users cannot see each other's data.
 
-## Phase 3 — Web frontend  ◑ deployed (guest mode); sign-in pending
+## Phase 3 — Web frontend  ◑ deployed (watchlists + auth); leaderboard/discovery UI pending
 
 **Goal:** replace the prototype UI for end users.
 
 **Status:** SPA (watchlists, All Symbols, charts, ticker detail) live on AWS
-CloudFront + S3 (unified origin) with guest sessions. Remaining: Cognito sign-in
-UI + guest→account migration; leaderboard/comments screens. See
+CloudFront + S3 (unified origin), with guest sessions **and** Cognito Hosted-UI
+sign-in (guest→account migration on first login). Remaining: leaderboard +
+comments screens; `/packages/view-logic` extraction. See
 [deployments.md](deployments.md).
 
 - Stand up the [monorepo](design.md#7-monorepo-layout-p4) packages; move
@@ -85,6 +86,10 @@ their own holdings, served from precomputed rankings.
 - Mobile scaffold (`/apps/mobile`, Expo) validating the shared packages
   ([ADR-0002](decisions/0002-web-mobile-sharing.md)).
 - News-sentiment factor (documented future enhancement).
+
+> **Smaller captured enhancements** (ticker autocomplete/validation, multi-ticker
+> add, related-ticker suggestions, chart interactivity, …) live in
+> [backlog.md](backlog.md) until they're scheduled into a phase.
 
 ---
 

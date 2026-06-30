@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { ArrowUp, ArrowDown, ArrowUpRight, ArrowLeft } from "lucide-react";
+import { useChartColors } from "../../lib/chartColors";
 import {
   Area,
   CartesianGrid,
@@ -100,9 +102,9 @@ function Th({
       ].join(" ")}
     >
       {children}
-      {isActive && (
-        <span className="ml-0.5 text-[10px]">{sort?.dir === "asc" ? " ↑" : " ↓"}</span>
-      )}
+      {isActive && (sort?.dir === "asc"
+        ? <ArrowUp className="inline ml-0.5" size={12} strokeWidth={2} />
+        : <ArrowDown className="inline ml-0.5" size={12} strokeWidth={2} />)}
     </th>
   );
 }
@@ -147,14 +149,6 @@ const TIPS = {
 
 // ── Chart panel (full-width, stacked above table) ─────────────────────────────
 
-const CHART_C = {
-  accent:  "#6ab0f5",
-  accentA: "#6ab0f520",
-  warn:    "#f39c12",
-  pos:     "#2ecc71",
-  line:    "#222b3a",
-  dim:     "#8a93a6",
-};
 
 const PERIODS = ["1W", "1M", "3M", "6M", "1Y", "5Y", "10Y"] as const;
 type Period = typeof PERIODS[number];
@@ -207,6 +201,7 @@ function ChartPanel({ ticker, watchlistId, onClose }: {
   watchlistId: string;
   onClose: () => void;
 }) {
+  const CHART_C = useChartColors();
   const [period, setPeriod] = useState<Period>("1Y");
   const { data: chartData, isLoading: chartLoading } = useTickerChart(ticker, YEARS_TO_FETCH[period]);
   const { data: row, isLoading: rowLoading } = useTickerScores(ticker);
@@ -229,8 +224,8 @@ function ChartPanel({ ticker, watchlistId, onClose }: {
                   to={`/tickers/${ticker}`}
                   state={{ from: watchlistId }}
                   title="Full detail page"
-                  className="text-dim hover:text-accent text-xs transition-colors"
-                >↗</Link>
+                  className="text-dim hover:text-accent transition-colors"
+                ><ArrowUpRight size={15} strokeWidth={1.75} /></Link>
                 <button onClick={onClose} className="text-dim hover:text-ink transition-colors text-lg leading-none">×</button>
               </div>
             </div>
@@ -461,7 +456,7 @@ export default function WatchlistDetailPage() {
       {/* Page header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2 text-sm">
-          <Link to="/" className="text-accent">← watchlists</Link>
+          <Link to="/" className="text-accent inline-flex items-center gap-1"><ArrowLeft size={14} strokeWidth={1.75} /> watchlists</Link>
           <span className="text-dim">/</span>
           <span className="font-semibold">{watchlistName}</span>
         </div>
@@ -507,24 +502,21 @@ export default function WatchlistDetailPage() {
                   {/* Fundamental Metrics group */}
                   <th
                     colSpan={5}
-                    className="pb-1 text-center border-l border-line/40 pl-3 pr-4"
-                    style={{ color: "#2ecc71" }}
+                    className="pb-1 text-center border-l border-line/40 pl-3 pr-4 text-pos"
                   >
                     Fundamental Metrics
                   </th>
                   {/* Technical Metrics group */}
                   <th
                     colSpan={4}
-                    className="pb-1 text-center border-l border-line/40 pl-3 pr-4"
-                    style={{ color: "#6ab0f5" }}
+                    className="pb-1 text-center border-l border-line/40 pl-3 pr-4 text-accent"
                   >
                     Technical Metrics
                   </th>
                   {/* Scores group */}
                   <th
                     colSpan={4}
-                    className="pb-1 text-center border-l border-line/40 pl-3"
-                    style={{ color: "#8a93a6" }}
+                    className="pb-1 text-center border-l border-line/40 pl-3 text-dim"
                   >
                     Scores
                   </th>

@@ -23,6 +23,8 @@ import uuid
 from fastapi import Header, HTTPException
 from typing import Dict, List, Optional
 
+from adapters.ports import GUEST_PREFIX
+
 from .service import ScreenerService
 
 DEMO_USER = "local-dev"
@@ -83,7 +85,7 @@ def _guest_id(x_guest_id: Optional[str]) -> Optional[str]:
         uuid.UUID(x_guest_id)
     except ValueError:
         return None
-    return f"GUEST#{x_guest_id}"
+    return f"{GUEST_PREFIX}{x_guest_id}"
 
 
 def get_user_id(

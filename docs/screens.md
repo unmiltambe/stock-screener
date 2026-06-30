@@ -164,48 +164,57 @@ P/E  Fwd P/E  PEG  FCFYld  ROE    RSI  vs200  vs50  52WRange   MktCap  Sector  L
 ## S4 — Leaderboard
 
 **Route:** `/leaderboard`
-**Status:** ⬜ not built
+**Status:** ✅ built
 
-**Job:** cross-watchlist ranked view — "my best stocks right now" by combined score.
+**Job:** the opinionated "best picks first" companion to All Symbols.
 
-**Data:** `GET /v1/leaderboard` → `[TickerRow]` sorted by combined score, deduplicated.
+**Data:** `GET /v1/leaderboard` → four ranked views (`top_opportunities`,
+`best_value`, `best_momentum`, `reconsider`), each up to 5 deduplicated `TickerRow`.
 
-**Note:** overlaps with S1b (All Symbols). Leaderboard will be opinionated —
-pre-sorted, possibly filtered to Buy signals only — while All Symbols is a neutral
-full-table view the user controls.
+**Layout:** four cards (2×2), each a small ranked list (rank · ticker · company ·
+signal · score) where rows link to S3 ticker detail. Friendly section blurbs and an
+inviting empty state (voice.md).
+
+**Decision — Leaderboard vs All Symbols (S1b):** kept **separate but presented
+together** under "Built-in views" on S1. All Symbols is the neutral, full, sortable
+table the user drives; Leaderboard is the curated highlights. They answer different
+questions ("show me everything" vs "what's best right now"), so merging them would
+weaken both; cross-links connect them.
 
 ---
 
-## S5 — Auth (sign-in nudge, not a gate)
+## S5 — Auth (sign-in, not a gate)
 
-**Route:** handled in App shell (no separate URL)
-**Status:** ⬜ not built
-**Decision:** [ADR-0009](decisions/0009-guest-session-before-login.md)
+**Route:** `/callback` (OIDC redirect); controls live in the App-shell header
+**Status:** ✅ built (header Sign in/out + guest mode); ⬜ proactive nudge banner pending
+**Decision:** [ADR-0009](decisions/0009-guest-session-before-login.md), [ADR-0008](decisions/0008-app-level-cognito-jwt.md)
 
-**Job:** let guests use the full app immediately; offer sign-in persistently but
-non-intrusively; migrate their data when they sign in.
+**Job:** let guests use the full app immediately; offer sign-in non-intrusively;
+migrate their data when they sign in.
 
-**Guest flow:**
-1. First visit → auto-generate `guestId` UUID in `sessionStorage`
-2. All API calls send `X-Guest-Id: <uuid>` (no Authorization header)
-3. Backend assigns identity `GUEST#<uuid>`, stores with 7-day TTL
-4. User gets full CRUD — create watchlists, add tickers, see scores
+**Guest flow (built):**
+1. First visit → generate `guestId` UUID in `sessionStorage`
+2. API calls send `X-Guest-Id: <uuid>` when no token (api/client.ts)
+3. Backend resolves `GUEST#<uuid>` (jwt mode); guest items carry a 7-day TTL
+4. Full CRUD — watchlists, tickers, scores, charts
 
-**Sign-in flow:**
-1. Click "Sign in" → redirect to Cognito Hosted UI
-2. Redirect back with `?code=...` → exchange for tokens → store in `sessionStorage`
-3. Call `POST /v1/auth/migrate-guest` → watchlists copied to Cognito account
-4. Clear guestId; all future calls use `Bearer <id_token>`
+**Sign-in flow (built — `react-oidc-context` + `oidc-client-ts`):**
+1. Header **Sign in** → `signinRedirect()` → Cognito Hosted UI (login + sign-up)
+2. Redirect to `/callback?code=…` → Authorization Code + PKCE exchange; tokens in
+   `localStorage` (survive reload)
+3. First authentication → `POST /v1/auth/migrate-guest { guest_id }` → guest lists
+   copied to the account, then `guestId` cleared
+4. API calls send `Authorization: Bearer <access_token>`; **Sign out** clears the
+   token and hits Cognito's `/logout`
 
-**Layout — unauthenticated header:**
+**Header (built):**
 ```
-Bellwether  stock screener                    [Sign in to save]
+Bellwether  stock screener                         [Sign in]      ← signed out
+Bellwether  stock screener        you@example.com  [Sign out]     ← signed in
 ```
 
-**Nudge (after user creates something):**
-```
-💡 Sign in to keep your lists permanently — they'll be here on any device.  [Sign in]  [×]
-```
+**Not yet built:** the proactive "💡 Sign in to keep your lists" nudge banner after
+a guest creates something; silent token renewal (session ~1h, Cognito default).
 
 ---
 
@@ -219,6 +228,26 @@ Feeds from nightly EventBridge batch.
 
 ---
 
+## S7 — Profile & account
+
+**Route:** `/profile`
+**Status:** ✅ built
+
+**Job:** let a signed-in user set how they're addressed and delete their account.
+
+**Data:** `GET/PUT /v1/profile` (first/last name); `DELETE /v1/account`.
+
+**Layout:**
+- Name form (first, last) → Save (with a warm confirmation, voice.md).
+- **Danger zone:** Delete account → `window.confirm` → `DELETE /v1/account` (wipes
+  DynamoDB data + Cognito identity) → sign out → back to guest.
+- Guests see a friendly "sign in to manage your account" instead.
+
+**Related:** the first-run name nudge (part of S5) seeds the name without a wall;
+the name powers the S5 greeting.
+
+---
+
 ## Build order
 
 | # | Screen/feature | Status |
@@ -227,7 +256,9 @@ Feeds from nightly EventBridge batch.
 | S1b | All Symbols built-in view | ✅ done |
 | S2 | Watchlist detail (full table, chart panel, sort) | ✅ done |
 | S3 | Ticker detail page (chart + metrics) | ✅ done |
-| S5 guest | X-Guest-Id backend path + frontend UUID | ⬜ next |
-| S5 auth | Cognito sign-in + migrate-guest | ⬜ next |
-| S4 | Leaderboard | ⬜ |
+| S5 guest | X-Guest-Id backend path + frontend UUID | ✅ done |
+| S5 auth | Cognito sign-in + migrate-guest | ✅ done |
+| S5 nudge | First-run name prompt | ✅ done |
+| S7 | Profile + account deletion | ✅ done |
+| S4 | Leaderboard | ✅ done |
 | S6 | Discovery (Phase 4) | ⬜ |

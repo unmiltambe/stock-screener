@@ -22,8 +22,8 @@ Implemented by the [CDK app](../services/deploy/aws/cdk/) (Python). See
    FULL TARGET (design.md)                    CURRENT
    ─────────────────────────                  ──────────────────────
    CloudFront + S3 (React SPA)                ✅  unified origin (SPA + API proxy)
-   Cognito (auth)                             ◑  app-level JWT (ADR-0008) + guests
-                                                 (ADR-0009); sign-in UI pending
+   Cognito (auth)                             ✅  app-level JWT (ADR-0008) + guests
+                                                 (ADR-0009) + Hosted-UI sign-in
    API Gateway (HTTP API)                     ✅
    Lambda (FastAPI via Mangum)                ✅  container image (Mangum)
    DynamoDB (single table)                    ✅  real, durable persistence
@@ -180,9 +180,10 @@ at this volume. See the cost breakdown discussion; set the budget alert regardle
 - **Cold starts:** container Lambda cold start adds ~1–2s occasionally; acceptable
   for a cached personal tool.
 - **Auth:** `/v1` accepts a Cognito JWT (`sub`) or a guest id (`GUEST#<uuid>`,
-  ADR-0009); the Cognito **sign-in UI + `migrate-guest` + 7-day guest TTL** are still
-  pending. The interim `/ui` keeps Basic Auth until it's retired (see
-  [deployments.md](deployments.md) § Retirement guidance).
+  ADR-0009); Hosted-UI sign-in + `migrate-guest` + 7-day guest TTL are **live**.
+  Still pending: the proactive "sign in to save" nudge and silent token renewal
+  (session ~1h, Cognito default). The interim `/ui` keeps Basic Auth until it's
+  retired (see [deployments.md](deployments.md) § Retirement guidance).
 - **Direct API Gateway URL is still public** and bypasses CloudFront — fine for now,
   lock it down when retiring interim surfaces ([deployments.md](deployments.md)).
 - **`RemovalPolicy.DESTROY`** on the table *and the SPA bucket* for easy dev

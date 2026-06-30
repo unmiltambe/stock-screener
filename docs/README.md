@@ -23,11 +23,13 @@ Specification for stock-screener. Conventions: **EARS** for requirements, **ADR*
 | 14 | [decisions/0009-guest-session-before-login.md](decisions/0009-guest-session-before-login.md) | ADR: guest session before login (try the app before signing in). |
 | 15 | [structure.md](structure.md) | Canonical project tree + how the two deploys are selected. |
 | 16 | [roadmap.md](roadmap.md) | Phased build sequence (0–5). |
+| 17 | [backlog.md](backlog.md) | Captured-but-unbuilt enhancements, with open questions + rough approaches. |
 
 ### Reference & operations
 
 | Doc | Purpose |
 |-----|---------|
+| [voice.md](voice.md) | The UI design motto — warm, personal, a little witty — and where it shows up. |
 | [ui-columns.md](ui-columns.md) | Reference: every table column — definition, colour thresholds, tooltips, sort/persistence behaviour. |
 | [deployments.md](deployments.md) | **The environment map** — all four surfaces (local, Render, API Gateway, CloudFront), URLs, and how to retire the interim ones safely. |
 | [deploy-aws.md](deploy-aws.md) | AWS architecture, control flows, deploy steps. Live URLs at top. |
