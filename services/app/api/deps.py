@@ -18,6 +18,7 @@ import functools
 import json
 import os
 import pathlib
+import uuid
 
 from fastapi import Header, HTTPException
 from typing import Dict, List, Optional
@@ -72,29 +73,48 @@ def get_service() -> ScreenerService:
     return _build_service()
 
 
+def _guest_id(x_guest_id: Optional[str]) -> Optional[str]:
+    """Namespace a client-supplied guest id (ADR-0009). Validates it parses as a
+    UUID so the header can't inject an arbitrary identity; returns None for a
+    missing/malformed value so callers can fall through."""
+    if not x_guest_id:
+        return None
+    try:
+        uuid.UUID(x_guest_id)
+    except ValueError:
+        return None
+    return f"GUEST#{x_guest_id}"
+
+
 def get_user_id(
     x_user_id: Optional[str] = Header(default=None),
+    x_guest_id: Optional[str] = Header(default=None),
     authorization: Optional[str] = Header(default=None),
 ) -> str:
-    """Resolve the authenticated user from a trusted source (P8).
+    """Resolve the user from a trusted source (P8) — never a path or body.
 
-    - `jwt` (deployed): validate the Cognito Bearer token in-app (ADR-0008) and
-      return the verified `sub`.
-    - `header` (local/tests): use `X-User-Id`, defaulting to the demo user.
+    - `jwt` (deployed): a validated Cognito Bearer token (ADR-0008) → verified
+      `sub`; failing that, a client-supplied `X-Guest-Id` → `GUEST#<uuid>`
+      (ADR-0009, try-before-login); otherwise 401.
+    - `header` (local/tests): `X-User-Id`, defaulting to the demo user. Guest ids
+      are intentionally ignored here so local/offline runs keep their seeded demo
+      data and existing tests are unaffected.
     """
     mode = os.getenv("AUTH_MODE", "header").lower()
     if mode == "jwt":
-        from .auth import verify_cognito_jwt  # imported lazily (PyJWT only needed in jwt mode)
-
-        if not authorization or not authorization.lower().startswith("bearer "):
-            raise HTTPException(
-                status_code=401, detail="Missing bearer token",
-                headers={"WWW-Authenticate": "Bearer"})
-        try:
-            claims = verify_cognito_jwt(authorization.split(" ", 1)[1].strip())
-        except Exception:
-            raise HTTPException(
-                status_code=401, detail="Invalid token",
-                headers={"WWW-Authenticate": "Bearer"})
-        return claims["sub"]
+        if authorization and authorization.lower().startswith("bearer "):
+            from .auth import verify_cognito_jwt  # lazy: PyJWT only needed in jwt mode
+            try:
+                claims = verify_cognito_jwt(authorization.split(" ", 1)[1].strip())
+            except Exception:
+                raise HTTPException(
+                    status_code=401, detail="Invalid token",
+                    headers={"WWW-Authenticate": "Bearer"})
+            return claims["sub"]
+        guest = _guest_id(x_guest_id)
+        if guest:
+            return guest
+        raise HTTPException(
+            status_code=401, detail="Missing bearer token or guest id",
+            headers={"WWW-Authenticate": "Bearer"})
     return x_user_id or DEMO_USER
