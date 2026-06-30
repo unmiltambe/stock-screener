@@ -19,7 +19,7 @@ from core.models import Fundamentals, MarketSnapshot
 logger = logging.getLogger(__name__)
 
 _MAX_WORKERS = 6
-_HISTORY_PERIOD = "2y"  # enough to warm up SMA-200
+_SCORE_HISTORY_YEARS = 2   # years fetched for scoring (enough for SMA-200 warm-up)
 _FUNDAMENTALS_RETRIES = 2  # retry transient rate-limit errors
 _RETRY_BACKOFF = 1.0       # seconds between retries (doubles each attempt)
 
@@ -54,30 +54,42 @@ def _fundamentals(sym: str) -> Optional[Fundamentals]:
     return None
 
 
-def _closes_by_symbol(symbols: Sequence[str]) -> Dict[str, List[float]]:
+def _closes_by_symbol(
+    symbols: Sequence[str], years: int = _SCORE_HISTORY_YEARS
+) -> Dict[str, tuple]:
+    """Return {sym: (dates, closes)} for each symbol. Both lists are parallel and
+    in chronological order (oldest → newest). `dates` are ISO-8601 strings."""
     if not symbols:
         return {}
     data = yf.download(
-        list(symbols), period=_HISTORY_PERIOD, auto_adjust=True,
+        list(symbols), period=f"{years}y", auto_adjust=True,
         progress=False, group_by="column",
     )
-    out: Dict[str, List[float]] = {}
+    out: Dict[str, tuple] = {}
     if data is None or data.empty:
         return out
     close = data["Close"]
     if hasattr(close, "columns"):  # multiple symbols → DataFrame
         for sym in symbols:
             if sym in close.columns:
-                out[sym] = [float(x) for x in close[sym].dropna().tolist()]
+                col = close[sym].dropna()
+                out[sym] = (
+                    [str(d.date()) for d in col.index],
+                    [float(x) for x in col.tolist()],
+                )
     else:  # single symbol → Series
-        out[symbols[0]] = [float(x) for x in close.dropna().tolist()]
+        col = close.dropna()
+        out[symbols[0]] = (
+            [str(d.date()) for d in col.index],
+            [float(x) for x in col.tolist()],
+        )
     return out
 
 
 class YFinanceMarketData:
-    def fetch(self, symbols: Sequence[str]) -> Dict[str, Optional[MarketSnapshot]]:
+    def fetch(self, symbols: Sequence[str], years: int = _SCORE_HISTORY_YEARS) -> Dict[str, Optional[MarketSnapshot]]:
         symbols = [s.upper() for s in symbols]
-        closes = _closes_by_symbol(symbols)
+        closes_data = _closes_by_symbol(symbols, years)
 
         funds: Dict[str, Optional[Fundamentals]] = {}
         with ThreadPoolExecutor(max_workers=_MAX_WORKERS) as pool:
@@ -88,9 +100,9 @@ class YFinanceMarketData:
         out: Dict[str, Optional[MarketSnapshot]] = {}
         for sym in symbols:
             f = funds.get(sym)
-            series = closes.get(sym, [])
+            dates, series = closes_data.get(sym, ([], []))
             if f is None and not series:
                 out[sym] = None
                 continue
-            out[sym] = MarketSnapshot(fundamentals=f or Fundamentals(), closes=series)
+            out[sym] = MarketSnapshot(fundamentals=f or Fundamentals(), closes=series, dates=dates)
         return out

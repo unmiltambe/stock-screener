@@ -5,6 +5,7 @@ The fixture market data lets the whole stack run offline and deterministically.
 """
 from __future__ import annotations
 
+import datetime
 import math
 import time
 import uuid
@@ -110,6 +111,18 @@ def _synthetic_closes(base: float, n: int = 260, drift: float = 0.0003,
     return out
 
 
+def _synthetic_dates(n: int) -> List[str]:
+    """Weekday dates ending today, going back n calendar steps (skips weekends)."""
+    dates: List[str] = []
+    day = datetime.date.today()
+    while len(dates) < n:
+        if day.weekday() < 5:  # Mon–Fri
+            dates.append(day.isoformat())
+        day -= datetime.timedelta(days=1)
+    dates.reverse()
+    return dates
+
+
 # A small offline universe with roughly realistic fundamentals.
 _FIXTURES: Dict[str, Fundamentals] = {
     "AAPL": Fundamentals(name="Apple Inc.", sector="Technology", price=None,
@@ -136,7 +149,7 @@ _BASE_PRICE = {"AAPL": 220.0, "NVDA": 125.0, "NFLX": 1100.0, "GOOGL": 185.0}
 class FixtureMarketData:
     """MarketDataPort backed by static fixtures — fully offline & deterministic."""
 
-    def fetch(self, symbols: Sequence[str]) -> Dict[str, Optional[MarketSnapshot]]:
+    def fetch(self, symbols: Sequence[str], years: int = 2) -> Dict[str, Optional[MarketSnapshot]]:
         out: Dict[str, Optional[MarketSnapshot]] = {}
         for raw in symbols:
             sym = raw.upper()
@@ -145,8 +158,9 @@ class FixtureMarketData:
                 out[sym] = None  # unresolved symbol (FR-2.5 / FR-3.5)
                 continue
             closes = _synthetic_closes(_BASE_PRICE.get(sym, 100.0))
+            dates = _synthetic_dates(len(closes))
             funds = Fundamentals(**{**base.__dict__, "price": closes[-1]})
-            out[sym] = MarketSnapshot(fundamentals=funds, closes=closes)
+            out[sym] = MarketSnapshot(fundamentals=funds, closes=closes, dates=dates)
         return out
 
     @staticmethod

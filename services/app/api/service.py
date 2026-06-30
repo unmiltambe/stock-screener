@@ -140,14 +140,20 @@ class ScreenerService:
 
     def chart(self, symbol: str, years: int = 1) -> Optional[Dict]:
         symbol = symbol.upper()
-        snap = self._market.fetch([symbol]).get(symbol)
+        snap = self._market.fetch([symbol], years=years).get(symbol)
         if snap is None or not snap.closes:
             return None
         closes = snap.closes
+        dates = snap.dates
         sma50 = sma_series(closes, 50)
         sma200 = sma_series(closes, 200)
         points = [
-            {"t": str(i), "price": closes[i], "sma50": sma50[i], "sma200": sma200[i]}
+            {
+                "t": dates[i] if i < len(dates) else str(i),
+                "price": closes[i],
+                "sma50": sma50[i],
+                "sma200": sma200[i],
+            }
             for i in range(len(closes))
         ]
         return {"ticker": symbol, "points": points}

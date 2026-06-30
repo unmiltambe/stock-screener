@@ -19,15 +19,18 @@ def sma(values: List[float], window: int) -> Optional[float]:
 
 
 def sma_series(values: List[float], window: int) -> List[Optional[float]]:
-    """Rolling SMA aligned to `values`; the first `window-1` points are None.
-    Used for chart overlays."""
+    """Rolling SMA aligned to `values`.
+
+    Uses an expanding average for the first `window-1` points so chart lines
+    start from day 1 with no leading gap. Once enough history is available the
+    output is a standard N-period simple moving average."""
     out: List[Optional[float]] = []
     running = 0.0
     for i, v in enumerate(values):
         running += v
         if i >= window:
             running -= values[i - window]
-        out.append(running / window if i >= window - 1 else None)
+        out.append(running / min(i + 1, window))
     return out
 
 

@@ -50,11 +50,13 @@ class MarketSnapshot:
     """An adapter's complete answer for one ticker: fundamentals + price history.
 
     `closes` is the daily close series (oldest → newest), long enough to warm up
-    the SMA-200 / RSI-14 windows. This is the contract between a MarketDataPort
-    and the pure core.
+    the SMA-200 / RSI-14 windows. `dates` is the parallel ISO-8601 date series
+    (YYYY-MM-DD); may be empty for synthetic/test snapshots. This is the contract
+    between a MarketDataPort and the pure core.
     """
     fundamentals: Fundamentals
     closes: List[float] = field(default_factory=list)
+    dates: List[str] = field(default_factory=list)  # YYYY-MM-DD, same length as closes
 
 
 @dataclass(frozen=True)

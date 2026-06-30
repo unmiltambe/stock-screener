@@ -20,7 +20,7 @@ class MarketDataPort(Protocol):
     (FR-3.5). Implementations are responsible for throttling/batching upstream.
     """
 
-    def fetch(self, symbols: Sequence[str]) -> Dict[str, Optional[MarketSnapshot]]:
+    def fetch(self, symbols: Sequence[str], years: int = 2) -> Dict[str, Optional[MarketSnapshot]]:
         ...
 
 
