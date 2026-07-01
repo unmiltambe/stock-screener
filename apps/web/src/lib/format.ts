@@ -13,15 +13,34 @@ export function fmtNum(v: number | null, digits = 1): string {
   return v == null ? "—" : v.toFixed(digits);
 }
 
+/** Like fmtNum but drops to 0 decimal places when |v| >= 10 — saves column space. */
+export function fmtNumAdaptive(v: number | null, digits = 1): string {
+  if (v == null) return "—";
+  return v.toFixed(Math.abs(v) >= 10 ? 0 : digits);
+}
+
 /** Signed percentage: +3.5% / -12.4% */
 export function fmtPct(v: number | null, digits = 1): string {
   if (v == null) return "—";
   return `${v > 0 ? "+" : ""}${v.toFixed(digits)}%`;
 }
 
+/** Like fmtPct but drops to 0 decimal places when |v| >= 10. */
+export function fmtPctAdaptive(v: number | null, digits = 1): string {
+  if (v == null) return "—";
+  const d = Math.abs(v) >= 10 ? 0 : digits;
+  return `${v > 0 ? "+" : ""}${v.toFixed(d)}%`;
+}
+
 /** Unsigned percentage: 42.0% */
 export function fmtPctAbs(v: number | null, digits = 1): string {
   return v == null ? "—" : `${v.toFixed(digits)}%`;
+}
+
+/** Like fmtPctAbs but drops to 0 decimal places when |v| >= 10. */
+export function fmtPctAbsAdaptive(v: number | null, digits = 1): string {
+  if (v == null) return "—";
+  return `${v.toFixed(Math.abs(v) >= 10 ? 0 : digits)}%`;
 }
 
 export function fmtMarketCap(v: number | null): string {
