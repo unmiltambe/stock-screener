@@ -16,16 +16,19 @@ captured.
 
 | Item | Effort | Notes |
 |------|--------|-------|
-| 4 — remove 1W | 🟢 trivial | ship anytime |
 | 2 — multi-ticker add | 🟢 small | decision made (spaces **and** commas) |
-| 6 — SMA 50/200 toggles | 🟢 small | decision made (independent toggles); likely frontend-only if SMA series already in chart payload |
+| 5 — SMA 50/200 toggles | 🟢 small | decision made (independent toggles); likely frontend-only if SMA series already in chart payload |
+| 11 — today's movers (sort) | 🟢→🟡 | cheapest version is just a sortable column on #10's data |
 | 1 — autocomplete + validation | 🟡 medium | needs a symbol universe (shared with Phase 4) |
-| 7 — MACD on graph | 🟡 medium | decision made (separate panel); needs backend MACD computation |
+| 6 — MACD on graph | 🟡 medium | decision made (separate panel); needs backend MACD computation |
 | 9 — fund/tech weight slider | 🟡 medium | decision made (persist per-user); Signal-table question still open |
-| 5 — interactive chart | 🟡→🔴 | likely a charting-library decision |
+| 10 — day change ($/%) | 🟡 medium | needs new backend fields (adapter → model → schema); UI toggle decision made |
+| 4 — interactive chart | 🟡→🔴 | likely a charting-library decision |
+| 7 — intraday (1D) chart | 🟡→🔴 | needs a new intraday data source, not the existing daily-close fetch |
 | 3 — related suggestions | 🔴 | phased; leans on Phase 4 universe + new data |
-| 10 — usage analytics/admin | 🟡 medium | start with free Cognito CloudWatch metrics; custom admin view only if needed |
+| 13 — usage analytics/admin | 🟡 medium | start with free Cognito CloudWatch metrics; custom admin view only if needed |
 | 8 — re-evaluate Tech Score / MACD | 🔴 | deliberate analysis session, not a quick decision; SCORING.md explicitly gates this |
+| 12 — movers beyond watchlist | 🔴 | deferred; depends on Phase 4 universe + batch infra |
 
 ---
 
@@ -98,15 +101,7 @@ same theme/"space", or "talked about together."
 
 ## Chart / Graph
 
-### 4. Remove the 1W chart timeframe  🟢
-
-**Intent:** 1W adds little over 1M and clutters the toggle.
-
-**Rough approach:** drop `"1W"` from the period toggles and the `TRADING_DAYS` /
-`YEARS_TO_FETCH` maps in the three chart spots (`WatchlistDetailPage`,
-`AllSymbolsPage`, `TickerDetailPage`). Default stays 1Y. Trivial — can ship anytime.
-
-### 5. Apple-Stocks-style interactive chart  🟡→🔴
+### 4. Apple-Stocks-style interactive chart  🟡→🔴
 
 **Intent:** make the chart explorable like Apple's Stocks app:
 - **Pan** left/right and **zoom** in/out across the series.
@@ -131,7 +126,7 @@ same theme/"space", or "talked about together."
   hovered point and show `Δ$ / Δ%` between anchor and cursor; clear on pointer-up/leave.
 - Pair the % readout with the existing voice (concise, e.g. "+4.2% · 3 mo").
 
-### 6. SMA 50 / SMA 200 line toggles  🟢
+### 5. SMA 50 / SMA 200 line toggles  🟢
 
 **Intent:** let the user show/hide the SMA-50 and SMA-200 overlay lines on the price
 chart independently, instead of them being (or not being) always-on.
@@ -154,7 +149,7 @@ trend but not the noisier 50-day line" and vice versa.
 - Frontend-only change if the series already renders; otherwise confirm the chart
   data payload includes SMA series points, not just the summary "price vs SMA" %.
 
-### 7. MACD indicator on the graph  🟡
+### 6. MACD indicator on the graph  🟡
 
 **Intent:** add MACD (line, signal line, histogram) to the chart as a **separate
 panel below the price chart** (not overlaid — MACD's scale is unrelated to price).
@@ -188,6 +183,43 @@ follows the same shape — no new upstream call, no new dependency.
   concludes MACD should feed the Tech Score, `macd_series()` added here is reused
   directly as that scoring input (same pattern as `sma()` already feeding both the
   chart and the Tech Score today).
+
+### 7. Intraday (1D) chart  🟡→🔴
+
+**Intent:** a same-day price chart (today's session, tick-by-tick or a few-minute
+resolution) — distinct from every existing chart period. **Today's daily-close
+chart infra is not intraday**: 1W/1M/etc. are built entirely from *daily closes*
+([`TickerTable.tsx:141-148`](../apps/web/src/features/watchlists/TickerTable.tsx)),
+so even the shortest existing period only shows one point per day, never
+within-day movement. Motivated directly by #10 (day change) — once a user sees
+"+1.8% today" prominently, the natural next click is "show me the shape of that
+move," which nothing today can answer.
+
+**Open questions**
+- **New data granularity, not a reuse of the existing fetch.** yfinance supports
+  intraday intervals (`interval="1m"/"5m"/"15m"`) via `.history()`, but Yahoo
+  restricts `1m` bars to roughly the last 7 days and `5m`/`15m` to roughly the last
+  60 days — this needs a new adapter method, separate from
+  `_closes_by_symbol()`'s daily fetch.
+- Regular-session bars only for v1, or include pre/post-market? Simpler to scope to
+  regular session first.
+- Refresh cadence while the market is open — static per page load, or does it poll?
+  Ties to [P5](constitution.md) (never hit an external source per user request):
+  needs its own short-TTL cache, distinct from the 15-min live-score TTL, tuned for
+  intraday freshness without re-fetching per request.
+- Does "1D" live in the same period-toggle control as the existing daily-close
+  periods, or does its different x-axis (time-of-day vs. date) warrant separate
+  handling in the chart component?
+
+**Rough approach**
+- Backend: new endpoint/param fetching intraday bars for the current (or last
+  completed) session via `interval="5m"` — reasonable resolution without hitting
+  Yahoo's `1m` restrictions.
+- Cache with a short, market-hours-aware TTL.
+- Frontend: "1D" chart mode with its own render path (time-of-day x-axis) rather
+  than folding into the existing `PERIODS`/`TRADING_DAYS` maps.
+- Natural pairing with #10: tapping the day-change value could jump straight into
+  the 1D chart.
 
 ---
 
@@ -228,7 +260,7 @@ its own dedicated session rather than folded into this one.
   ticker's technical setup actually look more/less favorable with MACD folded in?").
 - Update SCORING.md with the new formula + anchors, matching the existing
   documentation style, once landed.
-- Depends on #7 if MACD computation is added to the backend there — reuse
+- Depends on #6 if MACD computation is added to the backend there — reuse
   `macd_series()` from `core/metrics.py` rather than recompute.
 
 ### 9. User-adjustable Fundamental/Technical weight slider  🟡
@@ -272,9 +304,87 @@ across devices/sessions, not a session-only slider.
 
 ---
 
+## Daily Change & Movers
+
+> Three related but separable pieces of the same idea — see each item for why
+> they're split rather than one feature.
+
+### 10. Day change — absolute ($) and percentage, with a toggle  🟡
+
+**Intent:** show each stock's change for the current (or most recently completed)
+trading session — both in dollars and percent — with a way to switch between the
+two. "Daily" means **today's close vs. previous close**, or the last completed
+session's if viewed outside market hours.
+
+**Confirmed data source.** No day-change data exists in the app today. yfinance's
+`.info` already carries `previousClose`, `regularMarketChange`, and
+`regularMarketChangePercent` — Yahoo already handles the "vs. most recent session"
+logic, so this is a field we're not yet reading, not new computation. Needs changes
+at three layers: `_fundamentals()` in
+[`yfinance_market.py`](../services/app/adapters/yfinance_market.py) (pull the new
+fields), the `Fundamentals` model in `core/models.py` (add fields), and
+`TickerRow`/`MetricsOut` + `row_from_scored()` in `api/schemas.py` (expose them).
+
+**Decision — one global $/% toggle, not per-cell.** A single control per view
+(table header, ticker detail page) flips the whole display at once — matches how
+Robinhood/Schwab-style apps do it. No reusable toggle pattern exists yet in this
+codebase (checked); this is new UI, structurally similar to the existing `PERIODS`
+button-group.
+
+**Open questions**
+- Persist the $/% choice (`localStorage`, like a display preference) or
+  session-only? Pure display state, no backend needed either way — lean
+  `localStorage` for continuity across visits.
+- Default to % or $ first? Lean **%** — it's the unit that's comparable across
+  differently-priced stocks, which is exactly what #11 (movers) needs as its sort
+  key.
+
+**Rough approach**
+- Backend: add `previousClose`, `dayChange`, `dayChangePct` end to end as above.
+- Frontend: new column in [`TickerTable.tsx`](../apps/web/src/features/watchlists/TickerTable.tsx)
+  next to Price; a small button-group toggle (à la `PERIODS`) to switch $ ↔ %.
+  Also surface on `TickerDetailPage.tsx` beside the large price display.
+
+### 11. "Today's movers" — quick-glance sort for biggest gainers/losers  🟢→🟡
+
+**Intent:** the actual reason for #10 — during market hours, quickly see which
+watchlist stocks have moved the most (up or down) *today*, without manually
+scanning a column.
+
+**Rough approach**
+- Cheapest version (🟢): make the new `dayChangePct` column sortable — the table
+  already supports sortable columns via `BASE_ACCESSORS`. Sorting descending/
+  ascending surfaces the day's biggest movers with no new UI beyond #10.
+- Nicer version (🟡): a dedicated compact "Today's Movers" strip (e.g. top 3
+  gainers / top 3 losers across the watchlist) surfaced above or beside the table,
+  visible without the user needing to sort manually.
+
+**Open question:** is the sortable column enough, or do you want the always-visible
+movers strip? Lean toward shipping the sortable column first (near-free, reuses
+#10's data exactly) and only building the dedicated widget if that doesn't feel
+sufficient in practice.
+
+### 12. Movers beyond the current watchlist (post-Phase 4)  🔴
+
+**Intent:** once Phase 4 discovery's universe (S&P 500 initially) exists, extend
+"today's movers" past what's already being tracked — e.g. "here's what moved most
+in the S&P 500 today," independent of any watchlist.
+
+**Explicitly deferred.** Depends on Phase 4's universe/batch infrastructure existing
+first. Per [P5](constitution.md) (never hit an external data source per user
+request), a universe-wide day-change view can't be computed live per request — it
+needs the same precomputed-snapshot approach Phase 4 already plans for discovery
+rankings, not a new live-fetch path.
+
+**Rough approach (sketch only)**
+- Reuse Phase 4's daily batch snapshot; add day-change as one more field on the
+  precomputed `UNIVERSE#<asOf>` ranking rather than a separate live fetch.
+
+---
+
 ## Ops / Admin
 
-### 10. Usage analytics — signups, DAU, feature usage  🟡
+### 13. Usage analytics — signups, DAU, feature usage  🟡
 
 **Intent:** know how many people have signed up, how many are active daily, and
 which features (watchlists vs leaderboard vs chart vs discovery once it ships) get
