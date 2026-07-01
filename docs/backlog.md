@@ -12,6 +12,23 @@ captured.
 
 ---
 
+## Prioritized list
+
+| Item | Effort | Notes |
+|------|--------|-------|
+| 4 — remove 1W | 🟢 trivial | ship anytime |
+| 2 — multi-ticker add | 🟢 small | decision made (spaces **and** commas) |
+| 6 — SMA 50/200 toggles | 🟢 small | decision made (independent toggles); likely frontend-only if SMA series already in chart payload |
+| 1 — autocomplete + validation | 🟡 medium | needs a symbol universe (shared with Phase 4) |
+| 7 — MACD on graph | 🟡 medium | decision made (separate panel); needs backend MACD computation |
+| 9 — fund/tech weight slider | 🟡 medium | decision made (persist per-user); Signal-table question still open |
+| 5 — interactive chart | 🟡→🔴 | likely a charting-library decision |
+| 3 — related suggestions | 🔴 | phased; leans on Phase 4 universe + new data |
+| 10 — usage analytics/admin | 🟡 medium | start with free Cognito CloudWatch metrics; custom admin view only if needed |
+| 8 — re-evaluate Tech Score / MACD | 🔴 | deliberate analysis session, not a quick decision; SCORING.md explicitly gates this |
+
+---
+
 ## Watchlist / Add Ticker
 
 ### 1. Ticker autocomplete + validation on Add Ticker  🟡
@@ -294,20 +311,3 @@ used. Motivated by opening the repo/site up beyond a handful of friends.
   dashboard from those.
 - Phase 3 (if still needed): custom `/admin` page — Cognito group-gated route,
   small aggregation endpoint reading DynamoDB or the metrics store.
-
----
-
-## Quick wins vs bigger bets
-
-| Item | Effort | Notes |
-|------|--------|-------|
-| 4 — remove 1W | 🟢 trivial | ship anytime |
-| 2 — multi-ticker add | 🟢 small | decision made (spaces **and** commas) |
-| 6 — SMA 50/200 toggles | 🟢 small | decision made (independent toggles); likely frontend-only if SMA series already in chart payload |
-| 1 — autocomplete + validation | 🟡 medium | needs a symbol universe (shared with Phase 4) |
-| 7 — MACD on graph | 🟡 medium | decision made (separate panel); needs backend MACD computation |
-| 9 — fund/tech weight slider | 🟡 medium | decision made (persist per-user); Signal-table question still open |
-| 5 — interactive chart | 🟡→🔴 | likely a charting-library decision |
-| 3 — related suggestions | 🔴 | phased; leans on Phase 4 universe + new data |
-| 10 — usage analytics/admin | 🟡 medium | start with free Cognito CloudWatch metrics; custom admin view only if needed |
-| 8 — re-evaluate Tech Score / MACD | 🔴 | deliberate analysis session, not a quick decision; SCORING.md explicitly gates this |
