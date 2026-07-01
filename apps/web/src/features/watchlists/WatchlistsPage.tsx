@@ -48,7 +48,7 @@ export default function WatchlistsPage() {
     }
   }
 
-  if (isLoading) return <p className="text-dim">Pulling your lists together…</p>;
+  if (isLoading || !data) return <p className="text-dim">Pulling your lists together…</p>;
   if (error) return <p className="text-neg">Hmm, couldn't load that: {String(error)}</p>;
 
   return (
@@ -97,13 +97,13 @@ export default function WatchlistsPage() {
       </div>
 
       <p className="text-[10px] uppercase tracking-wider text-dim mb-2">Your watchlists</p>
-      {data!.length === 0 && (
+      {data.length === 0 && (
         <p className="text-dim text-sm mb-3">
           No lists yet — start one above and add a ticker or two. We'll handle the scoring.
         </p>
       )}
       <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
-        {data!.map((w) => (
+        {data.map((w) => (
           <div
             key={w.id}
             className="group rounded-lg border border-line bg-panel p-4 hover:border-accent/50 transition-colors"

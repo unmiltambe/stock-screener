@@ -82,8 +82,10 @@ export default function LeaderboardPage() {
           const rows = data[s.key] ?? [];
           return (
             <div key={s.key} className="rounded-lg border border-line bg-panel p-4">
-              <div className="mb-2 flex items-start gap-2">
-                <s.icon size={16} strokeWidth={1.75} className="text-accent mt-0.5 shrink-0" />
+              <div className="mb-2 flex items-center gap-3">
+                <div className="border border-accent rounded p-1.5 text-accent shrink-0">
+                  <s.icon size={18} strokeWidth={1.5} />
+                </div>
                 <div>
                   <h2 className="font-medium">{s.title}</h2>
                   <p className="text-dim text-xs">{s.blurb}</p>

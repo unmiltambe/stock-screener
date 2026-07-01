@@ -3,7 +3,7 @@ import WatchlistsPage from './features/watchlists/WatchlistsPage'
 import WatchlistDetailPage from './features/watchlists/WatchlistDetailPage'
 import AllSymbolsPage from './features/watchlists/AllSymbolsPage'
 import TickerDetailPage from './features/tickers/TickerDetailPage'
-import { ExternalLink, Radio } from 'lucide-react'
+import { ExternalLink, SquareActivity } from 'lucide-react'
 import AuthControls from './auth/AuthControls'
 import CallbackPage from './auth/CallbackPage'
 import ThemeToggle from './components/ThemeToggle'
@@ -17,13 +17,10 @@ export default function App() {
   return (
     <div className="min-h-screen flex flex-col">
       <header className="border-b border-line px-6 py-3 flex items-center justify-between">
-        <div className="flex items-baseline gap-3">
-          <Link to="/" className="font-semibold flex items-center gap-2">
-            <Radio size={18} strokeWidth={1.75} className="text-accent" />
-            Bellwether
-          </Link>
-          <span className="text-dim text-sm">stock screener</span>
-        </div>
+        <Link to="/" className="flex items-center gap-2.5">
+          <SquareActivity size={24} strokeWidth={1.5} className="text-accent shrink-0" />
+          <span className="text-2xl font-semibold tracking-tight leading-none">bellwether</span>
+        </Link>
         <div className="flex items-center gap-3">
           <ThemeToggle />
           <AuthControls />
@@ -45,7 +42,7 @@ export default function App() {
       </main>
 
       <footer className="border-t border-line px-6 py-3 flex items-center justify-between text-xs text-dim">
-        <span>Bellwether — read the signal, not the noise.</span>
+        <span>Bellwether Stock Screener — read the signal, not the noise.</span>
         <a
           href={DOCS_URL}
           target="_blank"
