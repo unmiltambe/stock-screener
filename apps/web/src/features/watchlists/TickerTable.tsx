@@ -14,10 +14,9 @@ import { useChartColors } from "../../lib/chartColors";
 import { useTickerChart, useTickerScores } from "../../api/tickers";
 import type { TickerRow } from "../../api/types";
 import {
-  fcfYieldColor, fmtMarketCap, fmtNum, fmtNumAdaptive, fmtPct,
-  fmtPctAbs, fmtPctAbsAdaptive, fmtPctAdaptive, fmtPrice,
-  pegColor, rangeColor, roeColor, rsiColor, scoreColor, signalColor,
-  sma200Color, sma50Color,
+  fcfYieldColor, fmtMarketCap, fmtNum, fmtNumAdaptive, fmtPctAbsAdaptive,
+  fmtPctAdaptive, fmtPrice, pegColor, rangeColor, roeColor, rsiColor,
+  scoreColor, signalColor, sma200Color, sma50Color,
 } from "../../lib/format";
 
 // ── Sort ──────────────────────────────────────────────────────────────────────
