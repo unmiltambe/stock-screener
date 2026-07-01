@@ -102,22 +102,33 @@ AAPL    Apple     $213   $3.4T   ...                         ...                
 ← watchlists  /  Tech Leaders                  [ticker input]  [Add]
 
 [chart panel — full width, 280px tall — shows when a row is clicked]
- Left (208px): ticker, price, F/T/C badges, signal, 4 key metrics
+ Left (208px): ticker, price, Fundamental + Technical score bars, Overall
+   verdict card (signal + score + bar), 4 key metrics (PEG, FCF Yield, RSI,
+   vs 200d — each with a tooltip)
  Right (flex): period toggle (1W/1M/3M/6M/1Y/5Y/10Y) + Recharts chart
 
                     ┌── Fundamental Metrics ──┐ ┌── Technical Metrics ──┐ ┌─── Scores ───┐
-Ticker  Company  Price  MktCap  P/E  FwdP/E  PEG  FCFYld  ROE  RSI  vs200d  vs50d  52WRange  Fund  Tech  Combined  Signal
-NVDA    NVIDIA   $875   $2.1T   ...  color-coded metrics ...                                    81    91      86      Buy   ×(hover)
+Ticker  Company  Price  MktCap  P/E  FwdP/E  PEG  FCFYld  ROE  RSI  vs200d  vs50d  52WRange  Fundamental  Technical  Overall  Signal
+NVDA    NVIDIA   $875   $2.1T   ...  color-coded metrics ...                                        81         91        86     Buy   ×(hover)
 ```
 
 **Columns (17 + remove):**
 - Info: Ticker, Company, Price, Market Cap
-- Fundamental Metrics group (green header): P/E, Fwd P/E, PEG, FCF Yield, ROE
-- Technical Metrics group (blue header): RSI, vs 200d, vs 50d, 52W Range (with RangeBar)
-- Scores group (grey header): Fund Score, Tech Score, Combined Score, Signal
+- Fundamental Metrics group: P/E, Fwd P/E, PEG, FCF Yield, ROE
+- Technical Metrics group: RSI, vs 200d, vs 50d, 52W Range (with RangeBar)
+- Scores group: Fundamental, Technical, Overall, Signal
 
-**Two-level header:** group row (colour-coded) sits above individual column names.
-Vertical dividers at group boundaries run through both header rows and data rows.
+**Two-level header:** group row sits above individual column names; all three group
+labels use the amber/brown accent (matching the SMA-50 line in the chart). Vertical
+dividers at group boundaries run through both header rows and data rows.
+
+**Number formatting:** fundamental + technical metric values drop decimals once the
+absolute value reaches 10 (e.g. `24`, `+18%`) to reduce clutter; smaller values keep
+their precision (e.g. `3.5`, `0.63`). Purely presentational — scores are unaffected.
+
+**Shared component:** this table + chart panel are one component
+([`TickerTable.tsx`](../apps/web/src/features/watchlists/TickerTable.tsx)); S2 and S1b
+differ only in what they pass via props (S2 → remove button; S1b → Watchlists column).
 
 **Actions:**
 - Click row → chart panel slides in above table; click same row again (or ×) to dismiss

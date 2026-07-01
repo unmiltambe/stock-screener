@@ -44,14 +44,17 @@ score cache demonstrably prevents repeat upstream fetches (FR-3.3).
 
 **Exit:** two test users cannot see each other's data.
 
-## Phase 3 — Web frontend  ◑ deployed (watchlists + auth); leaderboard/discovery UI pending
+## Phase 3 — Web frontend  ◑ deployed (watchlists + leaderboard + auth); comments/discovery UI pending
 
 **Goal:** replace the prototype UI for end users.
 
-**Status:** SPA (watchlists, All Symbols, charts, ticker detail) live on AWS
-CloudFront + S3 (unified origin), with guest sessions **and** Cognito Hosted-UI
-sign-in (guest→account migration on first login). Remaining: leaderboard +
-comments screens; `/packages/view-logic` extraction. See
+**Status:** SPA (watchlists, All Symbols, Leaderboard, charts, ticker detail,
+profile/account) live on AWS CloudFront + S3 (unified origin), with guest sessions
+**and** Cognito Hosted-UI sign-in (guest→account migration on first login). The
+watchlist/All-Symbols table + chart panel are now a single shared component
+([`TickerTable.tsx`](../apps/web/src/features/watchlists/TickerTable.tsx), [P9](constitution.md)),
+with the chart-panel sidebar showing a Fundamental/Technical breakdown + an Overall
+verdict card. Remaining: comments screen; `/packages/view-logic` extraction. See
 [deployments.md](deployments.md).
 
 - Stand up the [monorepo](design.md#7-monorepo-layout-p4) packages; move

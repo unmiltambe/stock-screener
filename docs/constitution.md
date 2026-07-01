@@ -86,11 +86,53 @@ deployed endpoint — not a later phase. Secrets (any data-provider API keys) li
 a managed secrets store, never in the repo or client code. A public URL with
 personal data and no auth is the one thing we will not ship.
 
+## P9 — No UI component duplication across feature files
+
+Before adding any component, helper function, or constant that already exists (or
+nearly exists) in another feature file, extract it to a shared location first.
+Feature-specific variations are handled via **props or render-prop slots** — not
+separate copies of the file.
+
+*Why:* we've been burned by this twice. `WatchlistDetailPage` and `AllSymbolsPage`
+independently accumulated identical `RangeBar`, `Th`, `ChartPanel`,
+`TickerTableRow`, `TIPS`, `ACCESSORS`, `makeTickFmt`, `PanelTooltip`, and chart
+constants. A change to one (font, color, label) didn't propagate to the other
+because there was nothing to enforce sharing.
+
+*Rule:* if you find yourself copying a component out of one feature file into
+another, stop. Extract it to a shared file (`TickerTable.tsx`, `lib/`, etc.) and
+import it in both places. The two views then differ only in what they pass via
+props. Search the codebase before writing any new component.
+
+*Smell to catch in review:* two files with the same function or component name and
+similar implementations.
+
+## P10 — The client renders correctly in every async state
+
+A view that reads server data must render safely for **all** of loading, empty,
+guest, authenticated, and error — not just the happy path where data is present.
+Data fetches gate on the state they depend on (e.g. don't fetch user data until
+auth has resolved), and no render path assumes data that may still be `undefined`.
+
+*Why:* we've been burned twice. A non-null assertion (`data!.length`) on a pending
+query blanked the page; and user watchlists flashed guest data on refresh because
+the fetch fired before the auth token was set. Both were a *missing state*, not a
+logic error — the happy path worked fine in dev.
+
+*Rule:* when adding a query-backed view, enumerate its states before writing the
+markup. Gate the query (`enabled`) on its prerequisites; guard every render on
+`isLoading` / `!data`; give empty and error their own branch. Effect **ordering**
+matters — a value another effect depends on (an auth token) belongs in
+`useLayoutEffect`, which runs before `useEffect` fetch triggers.
+
+*Smell to catch in review:* a `!` non-null assertion on query data, or a fetch
+with no `enabled` guard that depends on auth or route state.
+
 ---
 
 ## How to use this document
 
-- A new feature or PR should be expressible without violating P1–P8. If it can't,
+- A new feature or PR should be expressible without violating P1–P10. If it can't,
   open an ADR explaining the exception.
 - Principles are ordered by how expensive they are to retrofit. P1, P2, P3 are
   foundational — getting them wrong means a rewrite. P5–P7 can be tightened

@@ -18,8 +18,19 @@ for the mathematical derivation of the composite scores.
 Ticker | Company | Price | Mkt Cap
   ↳ Fundamental inputs: P/E | Fwd P/E | PEG | FCF Yield | ROE
   ↳ Technical inputs:   RSI | vs 200d  | vs 50d | 52W Range
-  ↳ Scores:             Fundamental Score | Technical Score | Combined Score | Signal
+  ↳ Scores:             Fundamental | Technical | Overall | Signal
 ```
+
+> **Display labels vs concept names.** The score columns render as **Fundamental /
+> Technical / Overall** in the UI (compact headers); this doc keeps the fuller
+> concept names (Fundamental Score / Technical Score / Combined Score) in the
+> section headings below. Same columns, shorter labels.
+
+> **Adaptive decimals.** Fundamental + technical metric values drop to whole numbers
+> once `|value| ≥ 10` (e.g. `24`, `+18%`, `45%`); below that they keep their normal
+> precision (`3.5`, `0.63`, `+7.2%`). Purely presentational (`fmtNumAdaptive` /
+> `fmtPctAdaptive` / `fmtPctAbsAdaptive` in `lib/format.ts`) — score inputs are the
+> full-precision values, unaffected.
 
 ---
 
@@ -74,7 +85,7 @@ PEG ratio = Fwd P/E ÷ earnings growth rate. Adjusts valuation for growth.
 | > 2.0 | 🔴 Red | Expensive relative to growth |
 | null | Dim | Not available (pre-profit, negative growth) |
 
-**Tooltip:** "Adjusts P/E for growth — are you paying a fair price for the growth you're getting? < 1 getting more growth than you're paying for | 1–2 fair | > 2 expensive relative to growth"
+**Tooltip:** "Is it cheap? Adjusts P/E for growth — are you paying a fair price for the growth you're getting? < 1 getting more growth than you're paying for | 1–2 fair | > 2 expensive relative to growth"
 
 > **Why not Fwd P/E alone:** PEG subsumes Fwd P/E. PEG = Fwd P/E ÷ growth rate,
 > so including both in the score would double-count the same valuation signal.
@@ -94,7 +105,7 @@ heavy stock-based comp or working capital drag).
 | < 0% | 🔴 Red | Burning cash — earnings not converting to cash |
 | null | Dim | Not available (banks, ETFs) |
 
-**Tooltip:** "Free cash flow as % of market cap. How much real cash the business generates vs what you're paying. Catches companies where earnings look good but cash conversion is weak. < 0% burning cash | ~4% S&P 500 average | > 8% very strong"
+**Tooltip:** "Is it generating cash? Free cash flow as % of market cap. How much real cash the business generates vs what you're paying. Catches companies where earnings look good but cash conversion is weak. < 0% burning cash | ~4% S&P 500 average | > 8% very strong"
 
 > **Known limitation:** Mega-cap companies ($3T+) are structurally penalised
 > because FCF Yield = FCF ÷ Market Cap. NVDA, AAPL, MSFT, AMZN, GOOGL will
@@ -135,7 +146,7 @@ Measures whether a stock has been pushed too far in one direction recently.
 | 30–70 | Dim | Neutral momentum |
 | > 70 | 🔴 Red | Overbought — stretched, avoid chasing |
 
-**Tooltip:** "14-day momentum oscillator — has the stock been pushed too far in one direction? < 30 oversold — potential entry | 30–70 neutral | > 70 overbought — stretched"
+**Tooltip:** "Is momentum healthy? 14-day momentum oscillator — has the stock been pushed too far in one direction? < 30 oversold — potential entry | 30–70 neutral | > 70 overbought — stretched"
 
 ### vs 200d (Price vs SMA-200)
 Distance of the current price from the 200-day simple moving average, as a
@@ -151,7 +162,7 @@ entry zone — the long-term trend is confirmed without the stock being stretche
 | > 30% | 🔴 Red | Stretched — avoid chasing |
 | < 0% | 🔴 Red | Below 200d MA — downtrend |
 
-**Tooltip:** "Distance from the 200-day moving average — is the long-term trend healthy? Positive = above (uptrend) | Negative = below (downtrend). 0–15% above is the ideal entry zone: confirmed uptrend, not yet stretched."
+**Tooltip:** "Is the trend intact? Distance from the 200-day moving average. Positive = above (uptrend) | Negative = below (downtrend). 0–15% above is the ideal entry zone: confirmed uptrend, not yet stretched."
 
 ### vs 50d (Price vs SMA-50)
 Distance from the 50-day SMA, as a signed percentage. Medium-term supporting

@@ -2,7 +2,8 @@
 
 Guidance for an AI agent or new contributor working in this repo. Documents intent
 and guardrails; not a substitute for [docs/constitution.md](docs/constitution.md)
-and [docs/design.md](docs/design.md).
+and [docs/design.md](docs/design.md). For *how to work* (think first, keep changes
+surgical, verify before done) see [CLAUDE.md](CLAUDE.md).
 
 ## What this project is
 
@@ -35,7 +36,7 @@ Don't add them without an explicit decision (they were intentionally excluded).
 - Identify which **phase** of the [roadmap](docs/roadmap.md) the work belongs to.
   Don't pull later-phase concerns forward (e.g. don't build discovery before the
   core + API exist).
-- Check the change against [P1–P8](docs/constitution.md). If it requires breaking a
+- Check the change against [P1–P10](docs/constitution.md). If it requires breaking a
   principle, write an ADR in `docs/decisions/` rather than doing it silently.
 
 ## Conventions
