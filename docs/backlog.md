@@ -255,6 +255,48 @@ across devices/sessions, not a session-only slider.
 
 ---
 
+## Ops / Admin
+
+### 10. Usage analytics — signups, DAU, feature usage  🟡
+
+**Intent:** know how many people have signed up, how many are active daily, and
+which features (watchlists vs leaderboard vs chart vs discovery once it ships) get
+used. Motivated by opening the repo/site up beyond a handful of friends.
+
+**Open questions**
+- **AWS built-in vs custom.** Two tiers of effort:
+  - *Built-in, ~zero build:* **Cognito** already reports user-pool metrics
+    (sign-ups, sign-ins) in CloudWatch out of the box — no code, just a CloudWatch
+    dashboard/console view. Covers signups + auth activity, not feature-level usage.
+  - *Feature-level usage* (which screens/actions people use) needs either
+    (a) **CloudWatch custom metrics** emitted from the Lambda handlers (cheap,
+    stays within [P6](constitution.md)/[P7](constitution.md) — still IaC, still
+    near-zero cost at low traffic), or (b) a lightweight analytics service
+    (PostHog, Plausible, Amplitude free tier) if a nicer UI than raw CloudWatch
+    matters more than staying AWS-native.
+  - A **custom admin login + view** (the "nice to have" option) is the most work:
+    a protected `/admin` route, backend aggregation queries over DynamoDB (or a
+    metrics table), and its own auth gate (reuse Cognito with an admin group/claim
+    rather than a separate login).
+- **Recommended sequencing:** start with the Cognito CloudWatch metrics (free,
+  no code) for signup/DAU-ish numbers immediately after going public. Only build
+  the custom admin dashboard if the built-in view proves insufficient for
+  feature-level breakdowns.
+- Privacy consideration: per-feature usage tracking on friends'/strangers' data
+  should be aggregate counts, not per-user activity logs, unless there's a clear
+  need — keep this in mind if/when actually implemented.
+
+**Rough approach**
+- Phase 1: check Cognito's CloudWatch metrics dashboard for sign-up/sign-in counts
+  — likely already available with zero new code, just enable/view it.
+- Phase 2 (if needed): emit custom CloudWatch metrics (`PutMetricData` or embedded
+  metric format in Lambda logs) tagged by endpoint/feature; build a CloudWatch
+  dashboard from those.
+- Phase 3 (if still needed): custom `/admin` page — Cognito group-gated route,
+  small aggregation endpoint reading DynamoDB or the metrics store.
+
+---
+
 ## Quick wins vs bigger bets
 
 | Item | Effort | Notes |
@@ -267,4 +309,5 @@ across devices/sessions, not a session-only slider.
 | 9 — fund/tech weight slider | 🟡 medium | decision made (persist per-user); Signal-table question still open |
 | 5 — interactive chart | 🟡→🔴 | likely a charting-library decision |
 | 3 — related suggestions | 🔴 | phased; leans on Phase 4 universe + new data |
+| 10 — usage analytics/admin | 🟡 medium | start with free Cognito CloudWatch metrics; custom admin view only if needed |
 | 8 — re-evaluate Tech Score / MACD | 🔴 | deliberate analysis session, not a quick decision; SCORING.md explicitly gates this |
