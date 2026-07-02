@@ -3,7 +3,7 @@ import WatchlistsPage from './features/watchlists/WatchlistsPage'
 import WatchlistDetailPage from './features/watchlists/WatchlistDetailPage'
 import AllSymbolsPage from './features/watchlists/AllSymbolsPage'
 import TickerDetailPage from './features/tickers/TickerDetailPage'
-import { ExternalLink, SquareActivity } from 'lucide-react'
+import { ExternalLink, MessageSquarePlus, SquareActivity } from 'lucide-react'
 import AuthControls from './auth/AuthControls'
 import CallbackPage from './auth/CallbackPage'
 import ThemeToggle from './components/ThemeToggle'
@@ -12,6 +12,8 @@ import ProfilePage from './features/account/ProfilePage'
 import LeaderboardPage from './features/watchlists/LeaderboardPage'
 
 const DOCS_URL = "https://github.com/unmiltambe/stock-screener/tree/main/docs";
+// Tally form ID for the feedback popup (ADR-0010); from tally.so/r/XxgZee.
+const TALLY_FORM_ID = "XxgZee";
 
 export default function App() {
   return (
@@ -43,14 +45,25 @@ export default function App() {
 
       <footer className="border-t border-line px-6 py-3 flex items-center justify-between text-xs text-dim">
         <span>Bellwether Stock Screener — read the signal, not the noise.</span>
-        <a
-          href={DOCS_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="hover:text-accent transition-colors inline-flex items-center gap-1"
-        >
-          Docs <ExternalLink size={12} strokeWidth={1.75} />
-        </a>
+        <div className="flex items-center gap-4">
+          <button
+            type="button"
+            data-tally-open={TALLY_FORM_ID}
+            data-tally-layout="modal"
+            data-tally-width="540"
+            className="hover:text-accent transition-colors inline-flex items-center gap-1 cursor-pointer"
+          >
+            <MessageSquarePlus size={12} strokeWidth={1.75} /> Report a bug / request a feature
+          </button>
+          <a
+            href={DOCS_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-accent transition-colors inline-flex items-center gap-1"
+          >
+            Docs <ExternalLink size={12} strokeWidth={1.75} />
+          </a>
+        </div>
       </footer>
     </div>
   )
