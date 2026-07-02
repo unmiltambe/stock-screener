@@ -18,7 +18,7 @@ captured.
 |------|--------|-------|
 | 2 — multi-ticker add | 🟢 small | decision made (spaces **and** commas) |
 | 6 — SMA 50/200 toggles | 🟢 small | decision made (independent toggles); likely frontend-only if SMA series already in chart payload |
-| 15 — in-app feedback link | 🟢→🟡 | **wanted early**; start with a GitHub-issue link (near-zero), custom form later |
+| 15 — in-app feedback link | ✅ done | shipped as an embedded Tally popup ([ADR-0010](decisions/0010-feedback-channel.md)) |
 | 12 — today's movers (sort) | 🟢→🟡 | cheapest version is just a sortable column on #11's data |
 | 1 — autocomplete + validation | 🟡 medium | needs a symbol universe (shared with Phase 4) |
 | 4 — watchlist column filters | 🟡 medium | client-side view-logic, no backend; UX-shape decision open |
@@ -476,7 +476,12 @@ used. Motivated by opening the repo/site up beyond a handful of friends.
 - Phase 3 (if still needed): custom `/admin` page — Cognito group-gated route,
   small aggregation endpoint reading DynamoDB or the metrics store.
 
-### 15. In-app "report a bug / request a feature" link  🟢→🟡
+### 15. In-app "report a bug / request a feature" link  ✅ done
+
+**Status: shipped** — a footer link opens an embedded [Tally](https://tally.so)
+feedback popup (Tier 2 below). Decision + rationale recorded in
+[ADR-0010](decisions/0010-feedback-channel.md). The tier analysis below is kept as
+the record of what was considered.
 
 **Intent:** an easy, always-available way to send bug reports and feature requests
 directly from the site. **Wanted early** — the point is to get real feedback from
@@ -529,8 +534,10 @@ questions, since each tier handles them differently:**
     ([P6](constitution.md)/[P7](constitution.md)), and the feedback store could feed
     #14's analytics later.
 
-**Recommendation:** ship **Tier 1 now** (near-zero effort, reuses the issue
-templates, real notifications, GitHub handles abuse) to start collecting feedback
-immediately. If GitHub-account friction visibly blocks non-technical friends from
-reporting, graduate to **Tier 3** (custom form + Discord/Slack webhook + Turnstile)
-— or Tier 2 if a hosted board is preferred over building one.
+**Outcome — chose Tier 2 (Tally), not Tier 1.** Tier 1 was rejected as the primary
+channel because filing a GitHub issue requires a logged-in GitHub account and our
+guest session doesn't carry over — that wall blocks exactly the non-technical
+friends whose feedback we want. Tier 2 (embedded Tally popup) buys the same
+login-free UX with no backend. Tier 3 (custom in-app form) remains the on-platform
+upgrade path if the third-party dependency becomes unwanted. Full reasoning in
+[ADR-0010](decisions/0010-feedback-channel.md).
