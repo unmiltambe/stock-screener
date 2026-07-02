@@ -27,6 +27,14 @@ def _fundamentals(sym: str) -> Optional[Fundamentals]:
         mktcap = info.get("marketCap")
         fcf = info.get("freeCashflow")
         roe = info.get("returnOnEquity")
+        # Daily change vs the previous regular-session close. Yahoo's price/prev-close
+        # already track today while the market is open and the last completed session
+        # once closed, so no market-hours logic is needed here (see specs/day-change.md).
+        prev_close = info.get("regularMarketPreviousClose") or info.get("previousClose")
+        day_change = round(price - prev_close, 2) if price and prev_close else None
+        day_change_pct = (
+            round((price - prev_close) / prev_close * 100, 2) if price and prev_close else None
+        )
         return Fundamentals(
             name=info.get("longName") or info.get("shortName") or "",
             sector=info.get("sector"),
@@ -39,6 +47,8 @@ def _fundamentals(sym: str) -> Optional[Fundamentals]:
             peg=info.get("pegRatio"),
             fcf_yield=round(fcf / mktcap * 100, 1) if fcf and mktcap else None,
             roe=round(roe * 100, 1) if roe is not None else None,
+            day_change=day_change,
+            day_change_pct=day_change_pct,
         )
 
     return with_retry(fetch, on_exhausted=None, label=f"fundamentals[{sym}]")

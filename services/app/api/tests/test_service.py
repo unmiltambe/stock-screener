@@ -104,3 +104,31 @@ def test_etf_with_no_pe_is_cached():
     svc.scored_rows(["SPY"])
     svc.scored_rows(["SPY"])  # should be cached
     assert market.calls == 1  # only fetched once
+
+
+def test_day_change_surfaces_in_row():
+    """day_change / day_change_pct from fundamentals reach the wire row (backlog #11)."""
+
+    class DayChangeMarket:
+        def fetch(self, symbols, years=2):
+            return {
+                s: MarketSnapshot(
+                    fundamentals=Fundamentals(
+                        name="Corp", price=102.0, day_change=2.0, day_change_pct=2.0
+                    ),
+                    closes=[float(i) for i in range(300)],
+                )
+                for s in symbols
+            }
+
+    row = _svc(DayChangeMarket()).scored_rows(["AAPL"])[0]
+    assert row["dayChange"] == 2.0
+    assert row["dayChangePct"] == 2.0
+
+
+def test_day_change_absent_is_none():
+    """A ticker with no previous-close data surfaces null day change, not an error."""
+    market = _CountingMarketData(first_call_closes=True, first_call_price=True)
+    row = _svc(market).scored_rows(["AAPL"])[0]
+    assert row["dayChange"] is None
+    assert row["dayChangePct"] is None
