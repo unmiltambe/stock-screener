@@ -115,16 +115,33 @@ holds on Render too ([ADR-0007](decisions/0007-dual-deploy-portability.md) /
 5. `cdk bootstrap` (one-time per account/region).
 
 **B. Deploy the infrastructure**
-6. `cdk deploy -c basic_auth_pass='YOUR_PASS'` → note the outputs: `FrontendUrl`,
-   `FrontendBucket`, `DistributionId`, `ApiUrl`, `TableName`, `UserPoolId`,
-   `UserPoolClientId`, `HostedUiBaseUrl`.
+
+> ⚠️ **Always `cdk diff` before `cdk deploy`, and confirm the *only* change is the
+> intended one** (for a code-only ship, that's the `AWS::Lambda::Function` image
+> URI). Never blind-apply. Two stack inputs are **not stored in CloudFormation** and
+> are re-derived from context each deploy — omitting either silently reverts live
+> state, and the diff is where you catch it:
+> - **`basic_auth_pass`** (secret) — gates the interim `/ui`; omitting resets it to
+>   empty. Read it from the live Lambda into a shell var (never echo it).
+> - **`frontend_url`** — appended to the Cognito Hosted-UI **callback/logout URLs**;
+>   omitting **drops the production CloudFront callback and breaks sign-in**. This is
+>   now pinned in [`cdk.json`](../services/deploy/aws/cdk/cdk.json) `context` so a
+>   normal deploy keeps it automatically; only override with `-c frontend_url=…` when
+>   standing up a *new* distribution whose domain isn't known yet.
+
+6. Deploy — read the secret without printing it, diff, then apply:
+   ```bash
+   cd services/deploy/aws/cdk && source .venv/bin/activate
+   PASS=$(aws lambda get-function-configuration \
+     --function-name <ApiFunctionName> \
+     --query 'Environment.Variables.BASIC_AUTH_PASS' --output text)   # never echo $PASS
+   cdk diff   -c basic_auth_pass="$PASS"     # review: only the Lambda image should change
+   cdk deploy -c basic_auth_pass="$PASS"     # frontend_url comes from cdk.json context
+   ```
+   Note the outputs: `FrontendUrl`, `FrontendBucket`, `DistributionId`, `ApiUrl`,
+   `TableName`, `UserPoolId`, `UserPoolClientId`, `HostedUiBaseUrl`.
    - The Lambda is a **container image**, so a Docker daemon must be running
      (Docker Desktop, or `colima start`).
-   - `basic_auth_pass` only gates the interim `/ui`. **Re-passing it on every
-     deploy matters** — omitting it resets the value to empty. To preserve the
-     current one without printing it, read it from the live Lambda into a shell
-     var first (`aws lambda get-function-configuration … --query
-     'Environment.Variables.BASIC_AUTH_PASS'`).
 
 **B2. Publish the frontend (SPA → S3 → CloudFront)**
 7. Build and upload, then bust the CDN cache:
@@ -146,6 +163,17 @@ holds on Render too ([ADR-0007](decisions/0007-dual-deploy-portability.md) /
    curl <FrontendUrl>/v1/watchlists                             # 401 (no token, no guest id)
    curl <FrontendUrl>/watchlists/_all -o /dev/null -w '%{http_code}\n'  # 200 (SPA deep-link)
    ```
+   **Post-deploy smoke check — verify the two silent-revert footguns held:**
+   ```bash
+   # 1. Cognito callbacks still include the prod domain (sign-in intact):
+   aws cognito-idp describe-user-pool-client --user-pool-id <UserPoolId> \
+     --client-id <UserPoolClientId> --query 'UserPoolClient.CallbackURLs' --output text
+   #    → must contain https://<dist>.cloudfront.net/callback
+   # 2. A fresh (uncached) ticker returns the fields your change shipped:
+   curl -s -H "X-Guest-Id: $(uuidgen)" '<FrontendUrl>/v1/scores?tickers=WSO' | python3 -m json.tool
+   ```
+   Popular tickers may serve stale (pre-deploy) rows for up to 15 min (score-cache
+   TTL) — use an uncommon symbol for an immediate read.
 
 **D. (Optional) Create a Cognito user + get a JWT** — for the authenticated path
    (sign-in UI is still pending; guests don't need this):

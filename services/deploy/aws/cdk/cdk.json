@@ -6,6 +6,7 @@
   },
   "context": {
     "region": "us-east-1",
-    "basic_auth_user": "admin"
+    "basic_auth_user": "admin",
+    "frontend_url": "https://d29r5u77l543g9.cloudfront.net"
   }
 }

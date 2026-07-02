@@ -68,3 +68,7 @@ Don't add them without an explicit decision (they were intentionally excluded).
 - Don't abstract UI across web and native ([ADR-0002](docs/decisions/0002-web-mobile-sharing.md)
   rejected this).
 - Don't score the discovery universe on the request path ([ADR-0003](docs/decisions/0003-discovery-engine.md)).
+- Don't `cdk deploy` without a reviewed `cdk diff` — confirm the only change is the
+  intended one. Two context values (`basic_auth_pass`, `frontend_url`) silently
+  revert live state (the `/ui` password; the prod Cognito callback → broken sign-in)
+  if omitted ([deploy-aws.md](docs/deploy-aws.md)).
