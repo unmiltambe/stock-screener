@@ -36,6 +36,8 @@ class TickerRow(BaseModel):
     ticker: str
     name: str = ""
     price: Optional[float] = None
+    dayChange: Optional[float] = None      # vs previous close, in dollars
+    dayChangePct: Optional[float] = None   # same change as percent
     scores: ScoresOut = ScoresOut()
     signal: Optional[str] = None
     metrics: MetricsOut = MetricsOut()
@@ -108,6 +110,8 @@ def row_from_scored(
         "ticker": scored.ticker,
         "name": f.name,
         "price": f.price,
+        "dayChange": f.day_change,
+        "dayChangePct": f.day_change_pct,
         "scores": {"fund": s.fund, "tech": s.tech, "combined": s.combined},
         "signal": scored.signal.value if scored.signal else None,
         "metrics": {
@@ -125,6 +129,7 @@ def error_row(ticker: str, lists: Optional[List[str]] = None) -> Dict:
     """A ticker whose market data could not be fetched (FR-3.5)."""
     return {
         "ticker": ticker, "name": "", "price": None,
+        "dayChange": None, "dayChangePct": None,
         "scores": {"fund": None, "tech": None, "combined": None},
         "signal": None, "metrics": {}, "lists": lists or [],
         "stale": True,

@@ -63,6 +63,12 @@ export function signalColor(s: string | null): string {
   return "text-warn";
 }
 
+/** Daily change: up = green, down = red, flat/unknown = dim. */
+export function dayChangeColor(v: number | null): string {
+  if (v == null || v === 0) return "text-dim";
+  return v > 0 ? "text-pos" : "text-neg";
+}
+
 // ── Fundamental metric colors ──────────────────────────────────────────────
 // Source: prototype SPEC.md §6.1, docs/ui-columns.md
 

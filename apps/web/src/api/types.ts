@@ -48,6 +48,8 @@ export interface TickerRow {
   ticker: string;
   name: string;
   price: number | null;
+  dayChange: number | null;      // vs previous close, in dollars
+  dayChangePct: number | null;   // same change as percent
   scores: Scores;
   signal: string | null;
   metrics: Metrics;

@@ -43,6 +43,8 @@ class Fundamentals:
     peg: Optional[float] = None
     fcf_yield: Optional[float] = None   # percent, e.g. 7.6 == 7.6%
     roe: Optional[float] = None         # percent, e.g. 48.5 == 48.5%
+    day_change: Optional[float] = None      # price change vs previous close, in dollars
+    day_change_pct: Optional[float] = None  # same change as percent, e.g. 1.8 == +1.8%
 
 
 @dataclass(frozen=True)

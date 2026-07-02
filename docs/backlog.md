@@ -8,7 +8,7 @@ Grouped by category so related work stays together regardless of when it was
 captured.
 
 > Status legend: 🟢 small / well-understood · 🟡 medium / a decision or two ·
-> 🔴 needs brainstorming or new data.
+> 🔴 needs brainstorming or new data · ✅ done · ◑ partially done.
 
 ---
 
@@ -19,12 +19,12 @@ captured.
 | 2 — multi-ticker add | 🟢 small | decision made (spaces **and** commas) |
 | 6 — SMA 50/200 toggles | 🟢 small | decision made (independent toggles); likely frontend-only if SMA series already in chart payload |
 | 15 — in-app feedback link | ✅ done | shipped as an embedded Tally popup ([ADR-0010](decisions/0010-feedback-channel.md)) |
-| 12 — today's movers (sort) | 🟢→🟡 | cheapest version is just a sortable column on #11's data |
+| 12 — today's movers (sort) | ◑ partial | sortable Chg % column shipped; dedicated movers strip still open |
 | 1 — autocomplete + validation | 🟡 medium | needs a symbol universe (shared with Phase 4) |
 | 4 — watchlist column filters | 🟡 medium | client-side view-logic, no backend; UX-shape decision open |
 | 7 — MACD on graph | 🟡 medium | decision made (separate panel); needs backend MACD computation |
 | 10 — fund/tech weight slider | 🟡 medium | decision made (persist per-user); Signal-table question still open |
-| 11 — day change ($/%) | 🟡 medium | needs new backend fields (adapter → model → schema); UI toggle decision made |
+| 11 — day change ($/%) | ◑ partial | % column + chart sidebar shipped ([spec](specs/day-change.md)); $/% toggle deferred (frontend-only) |
 | 5 — interactive chart | 🟡→🔴 | likely a charting-library decision |
 | 8 — intraday (1D) chart | 🟡→🔴 | needs a new intraday data source, not the existing daily-close fetch |
 | 3 — related suggestions | 🔴 | phased; leans on Phase 4 universe + new data |
@@ -363,7 +363,16 @@ across devices/sessions, not a session-only slider.
 > Three related but separable pieces of the same idea — see each item for why
 > they're split rather than one feature.
 
-### 11. Day change — absolute ($) and percentage, with a toggle  🟡
+### 11. Day change — absolute ($) and percentage, with a toggle  ◑ partial
+
+**Status: minimal version shipped** — a signed **"Chg %" column** right after Price
+(sortable, sign-coloured) and the same value in the chart-panel sidebar, backed by
+new `dayChange`/`dayChangePct` fields end to end. See
+[specs/day-change.md](specs/day-change.md). One refinement to the scoping below: the
+percent is **computed from `price − previousClose`** (not Yahoo's ambiguous
+`regularMarketChangePercent`), which keeps it coherent with the displayed price.
+**Remaining (deferred):** the $/% toggle — both `$` and `%` already flow over the
+wire, so it's a frontend-only add — and surfacing it on `TickerDetailPage`.
 
 **Intent:** show each stock's change for the current (or most recently completed)
 trading session — both in dollars and percent — with a way to switch between the
@@ -399,7 +408,12 @@ button-group.
   next to Price; a small button-group toggle (à la `PERIODS`) to switch $ ↔ %.
   Also surface on `TickerDetailPage.tsx` beside the large price display.
 
-### 12. "Today's movers" — quick-glance sort for biggest gainers/losers  🟢→🟡
+### 12. "Today's movers" — quick-glance sort for biggest gainers/losers  ◑ partial
+
+**Status: sortable-column version shipped** — the `Chg %` column is sortable (via
+`BASE_ACCESSORS`), so sorting by it surfaces the day's biggest movers with no extra
+UI. Delivered as part of #11. **Remaining:** the dedicated always-visible "Today's
+Movers" strip (the 🟡 nicer version below) — still open.
 
 **Intent:** the actual reason for #11 — during market hours, quickly see which
 watchlist stocks have moved the most (up or down) *today*, without manually

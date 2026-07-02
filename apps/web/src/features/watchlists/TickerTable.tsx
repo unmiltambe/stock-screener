@@ -14,7 +14,7 @@ import { useChartColors } from "../../lib/chartColors";
 import { useTickerChart, useTickerScores } from "../../api/tickers";
 import type { TickerRow } from "../../api/types";
 import {
-  fcfYieldColor, fmtMarketCap, fmtNum, fmtNumAdaptive, fmtPctAbsAdaptive,
+  dayChangeColor, fcfYieldColor, fmtMarketCap, fmtNum, fmtNumAdaptive, fmtPctAbsAdaptive,
   fmtPctAdaptive, fmtPrice, pegColor, rangeColor, roeColor, rsiColor,
   scoreColor, signalColor, sma200Color, sma50Color,
 } from "../../lib/format";
@@ -24,10 +24,11 @@ import {
 export type SortDir = "asc" | "desc";
 
 export const BASE_ACCESSORS: Record<string, (r: TickerRow) => number | string | null> = {
-  ticker:    r => r.ticker,
-  company:   r => r.name,
-  price:     r => r.price,
-  marketCap: r => r.metrics.marketCap,
+  ticker:      r => r.ticker,
+  company:     r => r.name,
+  price:       r => r.price,
+  dayChangePct: r => r.dayChangePct,
+  marketCap:   r => r.metrics.marketCap,
   pe:        r => r.metrics.pe,
   fwdPe:     r => r.metrics.fwdPe,
   peg:       r => r.metrics.peg,
@@ -71,6 +72,7 @@ export const TIPS = {
   ticker:   "Stock ticker symbol.",
   company:  "Full company name.",
   price:    "Current market price.",
+  dayChange: "Change since the previous close.\n\nDuring market hours this is today's move so far; outside hours it's the last completed session.",
   mktCap:   "Market capitalisation.\n\nLarger = more established.\nSmaller = more growth potential but higher risk.",
   pe:       "Trailing P/E — price vs last 12 months of actual earnings.\n\nFor reference only. Fwd P/E is more useful for growth companies.\n\n< 15 cheap  |  15–25 fair  |  > 25 expensive",
   fwdPe:    "Price vs next 12 months of expected earnings.\n\nMore useful than trailing P/E for growth companies.\n\n< 15 cheap  |  15–25 fair  |  > 25 expensive",
@@ -234,7 +236,10 @@ export function ChartPanel({ ticker, watchlistId, onClose }: {
             {row && (
               <>
                 <p className="text-dim text-xs leading-snug mb-2">{row.name}</p>
-                <div className="font-mono font-semibold text-2xl mb-2">{fmtPrice(row.price)}</div>
+                <div className="flex items-baseline gap-2 mb-2">
+                  <span className="font-mono font-semibold text-2xl">{fmtPrice(row.price)}</span>
+                  <span className={`font-mono text-sm font-medium ${dayChangeColor(row.dayChangePct)}`}>{fmtPctAdaptive(row.dayChangePct)}</span>
+                </div>
                 <div className="space-y-1 mb-2">
                   {([
                     { label: "Fundamental", v: row.scores.fund },
@@ -368,6 +373,7 @@ export function TickerTableRow({ r, isSelected, onClick, extraCell }: {
       </td>
       <td className="pr-4 text-dim whitespace-nowrap">{(r.name ?? "").slice(0, 26)}</td>
       <td className="pr-4 text-right font-mono whitespace-nowrap">{fmtPrice(r.price)}</td>
+      <td className={`pr-4 text-right font-mono whitespace-nowrap ${dayChangeColor(r.dayChangePct)}`}>{fmtPctAdaptive(r.dayChangePct)}</td>
       <td className="pr-4 text-right font-mono text-dim whitespace-nowrap">{fmtMarketCap(m.marketCap)}</td>
       <td className="pr-3 text-right font-mono text-dim whitespace-nowrap border-l border-line/40 pl-3">{fmtNumAdaptive(m.pe, 1)}</td>
       <td className="pr-3 text-right font-mono text-dim whitespace-nowrap">{fmtNumAdaptive(m.fwdPe, 1)}</td>
@@ -401,7 +407,7 @@ export function TickerTableHead({ sort, onSort, extraGroupHeader, extraHeader }:
   return (
     <thead>
       <tr className="text-[10px] uppercase tracking-wider border-b border-line/40">
-        <th colSpan={4} className="pb-1" />
+        <th colSpan={5} className="pb-1" />
         <th colSpan={5} className="pb-1 text-center border-l border-line/40 pl-3 pr-4 text-warn">
           Fundamental Metrics
         </th>
@@ -417,6 +423,7 @@ export function TickerTableHead({ sort, onSort, extraGroupHeader, extraHeader }:
         <Th tip={TIPS.ticker}   sortK="ticker"    {...thProps} className="pr-3 pt-1">Ticker</Th>
         <Th tip={TIPS.company}  sortK="company"   {...thProps} className="pr-4 pt-1">Company</Th>
         <Th tip={TIPS.price}    sortK="price"     {...thProps} className="pr-4 pt-1 text-right">Price</Th>
+        <Th tip={TIPS.dayChange} sortK="dayChangePct" {...thProps} className="pr-4 pt-1 text-right">Chg %</Th>
         <Th tip={TIPS.mktCap}   sortK="marketCap" {...thProps} className="pr-4 pt-1 text-right">Mkt Cap</Th>
         <Th tip={TIPS.pe}       sortK="pe"        {...thProps} className="pr-3 pt-1 text-right border-l border-line/40 pl-3">P/E</Th>
         <Th tip={TIPS.fwdPe}    sortK="fwdPe"     {...thProps} className="pr-3 pt-1 text-right">Fwd P/E</Th>

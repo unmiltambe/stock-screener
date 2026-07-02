@@ -15,7 +15,7 @@ for the mathematical derivation of the composite scores.
 ## Column order
 
 ```
-Ticker | Company | Price | Mkt Cap
+Ticker | Company | Price | Chg % | Mkt Cap
   ↳ Fundamental inputs: P/E | Fwd P/E | PEG | FCF Yield | ROE
   ↳ Technical inputs:   RSI | vs 200d  | vs 50d | 52W Range
   ↳ Scores:             Fundamental | Technical | Overall | Signal
@@ -47,6 +47,14 @@ Full company name, truncated at ~26 characters to avoid layout overflow.
 ### Price
 Current market price, formatted as `$213.07`.  
 **Tooltip:** "Current market price."
+
+### Chg %
+Daily change as a signed percentage vs the previous close (`+1.8%` / `-7.4%`).
+During market hours this is today's move so far; outside hours it's the last
+completed regular session. Green when positive, red when negative, dim at zero/`—`.
+Adaptive decimals (`+7.4%`, `-17%`). Sortable — sort by it for the day's biggest
+movers. Computed from `price − previousClose`; see [specs/day-change.md](specs/day-change.md).  
+**Tooltip:** "Change since the previous close. During market hours this is today's move so far; outside hours it's the last completed session."
 
 ### Mkt Cap
 Market capitalisation, formatted as `$2.1T` / `$450B` / `$12B`.  
