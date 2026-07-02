@@ -40,3 +40,26 @@ Before declaring a frontend change done:
 
 Report outcomes honestly. If something is untested, say so; don't imply
 verification that didn't happen.
+
+## 5. Record decisions, not just code
+
+Surfacing a tradeoff in chat (§1) is not the same as capturing it. A recommendation
+spoken in conversation is gone the next session; a future contributor sees the
+resulting code with no idea what else was considered or why. **Persist the decision
+to a doc as part of the work, not as an afterthought someone has to ask for.**
+
+Write an ADR (`docs/decisions/NNNN-title.md`) — or a short spec for a larger feature
+— when a change does any of:
+- introduces an external/third-party dependency (a SaaS, a new library, a hosted service);
+- sends user data off-platform, or changes where data lives;
+- is a user-facing feature with more than one reasonable approach;
+- picks among alternatives that carry real, lasting tradeoffs.
+
+This trigger is **independent of the P1–P10 check** in [AGENTS.md](AGENTS.md): a
+change can violate no principle and still deserve a recorded decision (the principles
+don't watch for external dependencies or data residency). Don't wait to be asked.
+
+And reassess mid-flight: a change that *started* as a one-liner but has accumulated
+several decisions across a few turns has outgrown "trivial" — stop and write it up
+before finishing. ADR = the decision + rationale + alternatives rejected; spec = the
+plan for a bigger feature. When unsure which, an ADR is the cheaper default.

@@ -38,13 +38,22 @@ Don't add them without an explicit decision (they were intentionally excluded).
   core + API exist).
 - Check the change against [P1–P10](docs/constitution.md). If it requires breaking a
   principle, write an ADR in `docs/decisions/` rather than doing it silently.
+- **Record significant decisions before/while you build, not only when a principle
+  breaks.** Write an ADR (or a short spec for a larger feature) when the change
+  introduces an external/third-party dependency, sends user data off-platform, is a
+  user-facing feature with more than one reasonable approach, or picks among
+  alternatives with real tradeoffs. This is broader than the principle check above
+  and doesn't wait to be asked — see [CLAUDE.md §5](CLAUDE.md). A change that grows
+  from "trivial" into several decisions has crossed the line; stop and write it up.
+  **ADR** = the decision + rationale + rejected alternatives; **spec** = the plan for
+  a bigger feature.
 
 ## Conventions
 
 - **Requirements** referenced by ID (e.g. `FR-6.3`) from
   [requirements.md](docs/requirements.md). Cite them in PRs and tests.
-- **Decisions** are ADRs in `docs/decisions/NNNN-title.md`. New significant choices
-  get a new numbered ADR; don't edit accepted ones — supersede them.
+- **Decisions** are ADRs in `docs/decisions/NNNN-title.md` (see the trigger under
+  "Before you start a change"). Don't edit accepted ones — supersede them.
 - **Tests** live with the code; the pure core has the highest coverage (cheapest to
   test).
 - **Secrets** never enter the repo (`.gitignore` blocks `*credentials*.json`, `.env`).
