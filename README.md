@@ -27,7 +27,7 @@ Three things to try in 30 seconds:
 
 ## Quickstart (local, ~2 min)
 
-**Prerequisites:** Python 3.11+, Node 18+, Git.
+**Prerequisites:** Python 3.9+, Node 18+, Git.
 
 ```bash
 git clone git@github.com:unmiltambe/stock-screener.git
@@ -70,7 +70,7 @@ for full options (offline fixture data, DynamoDB Local, etc.).
 ## What it does
 
 **Available now (live):**
-- **Watchlists** — create lists, add/remove tickers, each scored on fundamentals + technicals.
+- **Watchlists** — create lists, add/remove tickers, each scored on fundamentals + technicals, with a day-change (% vs. previous close) column.
 - **All Symbols** — a built-in consolidated view across every watchlist, sortable by any metric or score.
 - **Interactive charts** — price with SMA-50/200 overlays, 1W → 10Y, on every ticker.
 - **Guest sessions** — full use with zero friction, no login required ([ADR-0009](docs/decisions/0009-guest-session-before-login.md)).
@@ -118,6 +118,13 @@ Start with the [docs index](docs/README.md) → [constitution](docs/constitution
 for the principles, then [requirements](docs/requirements.md) and
 [design](docs/design.md). The build sequence is in [roadmap](docs/roadmap.md);
 running the backend locally is in [local-dev](docs/local-dev.md).
+
+## Contributing & license
+
+Contributions welcome — see [CONTRIBUTING.md](CONTRIBUTING.md) for the workflow
+(open an issue first for anything larger than a small fix; CI runs tests + build on
+every PR). Or send feedback straight from the app via the **Report a bug / request
+a feature** link in the footer. Licensed under [MIT](LICENSE).
 
 ## Live deployments
 
