@@ -17,18 +17,20 @@ captured.
 | Item | Effort | Notes |
 |------|--------|-------|
 | 2 — multi-ticker add | 🟢 small | decision made (spaces **and** commas) |
-| 5 — SMA 50/200 toggles | 🟢 small | decision made (independent toggles); likely frontend-only if SMA series already in chart payload |
-| 11 — today's movers (sort) | 🟢→🟡 | cheapest version is just a sortable column on #10's data |
+| 6 — SMA 50/200 toggles | 🟢 small | decision made (independent toggles); likely frontend-only if SMA series already in chart payload |
+| 15 — in-app feedback link | 🟢→🟡 | **wanted early**; start with a GitHub-issue link (near-zero), custom form later |
+| 12 — today's movers (sort) | 🟢→🟡 | cheapest version is just a sortable column on #11's data |
 | 1 — autocomplete + validation | 🟡 medium | needs a symbol universe (shared with Phase 4) |
-| 6 — MACD on graph | 🟡 medium | decision made (separate panel); needs backend MACD computation |
-| 9 — fund/tech weight slider | 🟡 medium | decision made (persist per-user); Signal-table question still open |
-| 10 — day change ($/%) | 🟡 medium | needs new backend fields (adapter → model → schema); UI toggle decision made |
-| 4 — interactive chart | 🟡→🔴 | likely a charting-library decision |
-| 7 — intraday (1D) chart | 🟡→🔴 | needs a new intraday data source, not the existing daily-close fetch |
+| 4 — watchlist column filters | 🟡 medium | client-side view-logic, no backend; UX-shape decision open |
+| 7 — MACD on graph | 🟡 medium | decision made (separate panel); needs backend MACD computation |
+| 10 — fund/tech weight slider | 🟡 medium | decision made (persist per-user); Signal-table question still open |
+| 11 — day change ($/%) | 🟡 medium | needs new backend fields (adapter → model → schema); UI toggle decision made |
+| 5 — interactive chart | 🟡→🔴 | likely a charting-library decision |
+| 8 — intraday (1D) chart | 🟡→🔴 | needs a new intraday data source, not the existing daily-close fetch |
 | 3 — related suggestions | 🔴 | phased; leans on Phase 4 universe + new data |
-| 13 — usage analytics/admin | 🟡 medium | start with free Cognito CloudWatch metrics; custom admin view only if needed |
-| 8 — re-evaluate Tech Score / MACD | 🔴 | deliberate analysis session, not a quick decision; SCORING.md explicitly gates this |
-| 12 — movers beyond watchlist | 🔴 | deferred; depends on Phase 4 universe + batch infra |
+| 14 — usage analytics/admin | 🟡 medium | start with free Cognito CloudWatch metrics; custom admin view only if needed |
+| 9 — re-evaluate Tech Score / MACD | 🔴 | deliberate analysis session, not a quick decision; SCORING.md explicitly gates this |
+| 13 — movers beyond watchlist | 🔴 | deferred; depends on Phase 4 universe + batch infra |
 
 ---
 
@@ -97,11 +99,63 @@ same theme/"space", or "talked about together."
 - v3: co-mention/embedding similarity — defer; ties into a broader data effort.
 - Strongly synergistic with **Phase 4 discovery** (same universe + scoring).
 
+### 4. Watchlist column filters  🟡
+
+**Intent:** filter a watchlist down to only the stocks matching per-column criteria
+(e.g. "combined score > 60", "signal = Buy", "sector = Technology", "day change
+> +2%"). Must be **user-friendly and hidden by default** — a novice sees a clean
+table; the filtering affordance is discoverable but doesn't clutter the default view.
+
+**Confirmed — client-side only, no backend.** A watchlist's rows are already fully
+loaded in the browser, and per [P1](constitution.md)/[P4](constitution.md) filtering
+is presentation logic, not an API concern. This is pure `view-logic` layered on the
+data the table already has — the same place the existing sort lives. Lives in the
+shared [`TickerTable.tsx`](../apps/web/src/features/watchlists/TickerTable.tsx), so
+it benefits both watchlist detail **and** All Symbols for free (All Symbols has a
+larger N but still client-side-filterable without issue).
+
+**Filter types by column**
+- Numeric (price, scores, day change, vs-SMA %, FCF, ROE): range / comparator
+  (min–max, or > / < a value).
+- Categorical (signal Buy/Neutral/Trim, sector): multi-select.
+- Text (ticker / name): substring match.
+
+**Open questions — the UX shape is the main decision**
+- **Reveal pattern (the "hidden by default" ask), two common idioms:**
+  - *(a) Single "Filters" toggle → filter bar.* One unobtrusive button in the table
+    toolbar; clicking reveals a compact filter row/bar, hidden again when off.
+    Simplest to build; one clear entry point; least overwhelming for novices.
+  - *(b) Per-column funnel icon → popover.* A small filter icon in each column
+    header opens a popover scoped to that column, with a subtle dot/badge marking
+    active filters. More scalable and is the data-grid convention (Airtable/Notion),
+    but more UI surface and more to build.
+  - Lean **(a)** for v1 — matches "hidden, not overwhelming" most directly and is
+    the smaller build; graduate to (b) if per-column feels needed later.
+- Composition with existing **sort** — filters narrow the set, sort orders it; they
+  should stack cleanly (filter first, then sort the remainder).
+- **Empty state** ([P10](constitution.md)): "No stocks match your filters" with a
+  one-click "Clear filters" — must not look like an empty/broken watchlist.
+- Persist active filters per-watchlist (`localStorage`, like the SMA-toggle
+  preference in #6) or reset on navigation? Lean local-only, low stakes.
+- An active-filter count chip + "clear all" so a filtered view is never a confusing
+  "where did my stocks go?" moment.
+
+**Rough approach**
+- Add filter state (per-column predicates) local to `TickerTable.tsx`; apply as a
+  `.filter()` before the existing sort in the row-derivation path.
+- v1 UI: a single toolbar toggle revealing a filter bar with one control per
+  filterable column (range inputs for numeric, multi-select for categorical, text
+  input for name/ticker).
+- Reuse existing formatting/threshold `view-logic` so filter inputs speak the same
+  units the columns display.
+- Pairs with #11 (day change): once `dayChangePct` is a column, "only show today's
+  gainers/losers past ±X%" becomes a natural filter — related to #12 (movers).
+
 ---
 
 ## Chart / Graph
 
-### 4. Apple-Stocks-style interactive chart  🟡→🔴
+### 5. Apple-Stocks-style interactive chart  🟡→🔴
 
 **Intent:** make the chart explorable like Apple's Stocks app:
 - **Pan** left/right and **zoom** in/out across the series.
@@ -126,7 +180,7 @@ same theme/"space", or "talked about together."
   hovered point and show `Δ$ / Δ%` between anchor and cursor; clear on pointer-up/leave.
 - Pair the % readout with the existing voice (concise, e.g. "+4.2% · 3 mo").
 
-### 5. SMA 50 / SMA 200 line toggles  🟢
+### 6. SMA 50 / SMA 200 line toggles  🟢
 
 **Intent:** let the user show/hide the SMA-50 and SMA-200 overlay lines on the price
 chart independently, instead of them being (or not being) always-on.
@@ -139,8 +193,8 @@ trend but not the noisier 50-day line" and vice versa.
 - Default state: both on (current implied behavior, if SMAs are already drawn) vs
   both off until opted in? Lean toward both-on to match today's chart at a glance.
 - Persist the toggle per-user, or session/local-only (`localStorage`)? Lower stakes
-  than #9's weight slider — likely fine as local-only unless it's cheap to fold into
-  the same per-user preferences blob if #9 adds one.
+  than #10's weight slider — likely fine as local-only unless it's cheap to fold into
+  the same per-user preferences blob if #10 adds one.
 
 **Rough approach**
 - Two checkbox/pill controls near the chart period toggle.
@@ -149,7 +203,7 @@ trend but not the noisier 50-day line" and vice versa.
 - Frontend-only change if the series already renders; otherwise confirm the chart
   data payload includes SMA series points, not just the summary "price vs SMA" %.
 
-### 6. MACD indicator on the graph  🟡
+### 7. MACD indicator on the graph  🟡
 
 **Intent:** add MACD (line, signal line, histogram) to the chart as a **separate
 panel below the price chart** (not overlaid — MACD's scale is unrelated to price).
@@ -178,20 +232,20 @@ follows the same shape — no new upstream call, no new dependency.
   response payload.
 - Frontend: new sub-panel under the price chart (Recharts `ComposedChart` or a
   second synced chart) — line for MACD, line for signal, bar for histogram.
-- Sequencing with #8 (tech-score re-evaluation): the *chart display* of MACD doesn't
-  need the scoring question resolved first — these can ship independently. If #8
+- Sequencing with #9 (tech-score re-evaluation): the *chart display* of MACD doesn't
+  need the scoring question resolved first — these can ship independently. If #9
   concludes MACD should feed the Tech Score, `macd_series()` added here is reused
   directly as that scoring input (same pattern as `sma()` already feeding both the
   chart and the Tech Score today).
 
-### 7. Intraday (1D) chart  🟡→🔴
+### 8. Intraday (1D) chart  🟡→🔴
 
 **Intent:** a same-day price chart (today's session, tick-by-tick or a few-minute
 resolution) — distinct from every existing chart period. **Today's daily-close
 chart infra is not intraday**: 1W/1M/etc. are built entirely from *daily closes*
 ([`TickerTable.tsx:141-148`](../apps/web/src/features/watchlists/TickerTable.tsx)),
 so even the shortest existing period only shows one point per day, never
-within-day movement. Motivated directly by #10 (day change) — once a user sees
+within-day movement. Motivated directly by #11 (day change) — once a user sees
 "+1.8% today" prominently, the natural next click is "show me the shape of that
 move," which nothing today can answer.
 
@@ -218,7 +272,7 @@ move," which nothing today can answer.
 - Cache with a short, market-hours-aware TTL.
 - Frontend: "1D" chart mode with its own render path (time-of-day x-axis) rather
   than folding into the existing `PERIODS`/`TRADING_DAYS` maps.
-- Natural pairing with #10: tapping the day-change value could jump straight into
+- Natural pairing with #11: tapping the day-change value could jump straight into
   the 1D chart.
 
 ---
@@ -229,7 +283,7 @@ move," which nothing today can answer.
 > be altered as a side effect of infrastructure or migration work." Both items below
 > are exactly the kind of *deliberate, reviewed* change that doc calls for.
 
-### 8. Re-evaluate the Technical Score formula, consider adding MACD  🔴
+### 9. Re-evaluate the Technical Score formula, consider adding MACD  🔴
 
 **Intent:** the current Tech Score (RSI 30% / SMA-200 30% / 52W range 30% / SMA-50
 10%, [SCORING.md](SCORING.md) §2) has no trend-momentum-crossover signal — MACD is
@@ -260,10 +314,10 @@ its own dedicated session rather than folded into this one.
   ticker's technical setup actually look more/less favorable with MACD folded in?").
 - Update SCORING.md with the new formula + anchors, matching the existing
   documentation style, once landed.
-- Depends on #6 if MACD computation is added to the backend there — reuse
+- Depends on #7 if MACD computation is added to the backend there — reuse
   `macd_series()` from `core/metrics.py` rather than recompute.
 
-### 9. User-adjustable Fundamental/Technical weight slider  🟡
+### 10. User-adjustable Fundamental/Technical weight slider  🟡
 
 **Intent:** today `Combined Score = Fund × 0.70 + Tech × 0.30` is fixed
 ([SCORING.md](SCORING.md) §3). Let a user shift that weighting to match their own
@@ -309,7 +363,7 @@ across devices/sessions, not a session-only slider.
 > Three related but separable pieces of the same idea — see each item for why
 > they're split rather than one feature.
 
-### 10. Day change — absolute ($) and percentage, with a toggle  🟡
+### 11. Day change — absolute ($) and percentage, with a toggle  🟡
 
 **Intent:** show each stock's change for the current (or most recently completed)
 trading session — both in dollars and percent — with a way to switch between the
@@ -336,7 +390,7 @@ button-group.
   session-only? Pure display state, no backend needed either way — lean
   `localStorage` for continuity across visits.
 - Default to % or $ first? Lean **%** — it's the unit that's comparable across
-  differently-priced stocks, which is exactly what #11 (movers) needs as its sort
+  differently-priced stocks, which is exactly what #12 (movers) needs as its sort
   key.
 
 **Rough approach**
@@ -345,26 +399,26 @@ button-group.
   next to Price; a small button-group toggle (à la `PERIODS`) to switch $ ↔ %.
   Also surface on `TickerDetailPage.tsx` beside the large price display.
 
-### 11. "Today's movers" — quick-glance sort for biggest gainers/losers  🟢→🟡
+### 12. "Today's movers" — quick-glance sort for biggest gainers/losers  🟢→🟡
 
-**Intent:** the actual reason for #10 — during market hours, quickly see which
+**Intent:** the actual reason for #11 — during market hours, quickly see which
 watchlist stocks have moved the most (up or down) *today*, without manually
 scanning a column.
 
 **Rough approach**
 - Cheapest version (🟢): make the new `dayChangePct` column sortable — the table
   already supports sortable columns via `BASE_ACCESSORS`. Sorting descending/
-  ascending surfaces the day's biggest movers with no new UI beyond #10.
+  ascending surfaces the day's biggest movers with no new UI beyond #11.
 - Nicer version (🟡): a dedicated compact "Today's Movers" strip (e.g. top 3
   gainers / top 3 losers across the watchlist) surfaced above or beside the table,
   visible without the user needing to sort manually.
 
 **Open question:** is the sortable column enough, or do you want the always-visible
 movers strip? Lean toward shipping the sortable column first (near-free, reuses
-#10's data exactly) and only building the dedicated widget if that doesn't feel
+#11's data exactly) and only building the dedicated widget if that doesn't feel
 sufficient in practice.
 
-### 12. Movers beyond the current watchlist (post-Phase 4)  🔴
+### 13. Movers beyond the current watchlist (post-Phase 4)  🔴
 
 **Intent:** once Phase 4 discovery's universe (S&P 500 initially) exists, extend
 "today's movers" past what's already being tracked — e.g. "here's what moved most
@@ -384,7 +438,7 @@ rankings, not a new live-fetch path.
 
 ## Ops / Admin
 
-### 13. Usage analytics — signups, DAU, feature usage  🟡
+### 14. Usage analytics — signups, DAU, feature usage  🟡
 
 **Intent:** know how many people have signed up, how many are active daily, and
 which features (watchlists vs leaderboard vs chart vs discovery once it ships) get
@@ -421,3 +475,62 @@ used. Motivated by opening the repo/site up beyond a handful of friends.
   dashboard from those.
 - Phase 3 (if still needed): custom `/admin` page — Cognito group-gated route,
   small aggregation endpoint reading DynamoDB or the metrics store.
+
+### 15. In-app "report a bug / request a feature" link  🟢→🟡
+
+**Intent:** an easy, always-available way to send bug reports and feature requests
+directly from the site. **Wanted early** — the point is to get real feedback from
+the friends already using it, so ship the cheapest useful version soon rather than
+waiting for the polished one.
+
+**Where it surfaces:** an unobtrusive "Feedback" / "Report a bug" link — footer or a
+header menu item, not a nagging widget.
+
+**Tiers of effort — this answers the "who gets notified / how to prevent abuse"
+questions, since each tier handles them differently:**
+
+- **Tier 1 — link to a prefilled GitHub issue (🟢, recommended start).** A link to
+  `https://github.com/unmiltambe/stock-screener/issues/new?template=bug_report.md`
+  (and one for `feature_request.md`) — reusing the issue templates already added in
+  [`.github/ISSUE_TEMPLATE/`](../.github/ISSUE_TEMPLATE/).
+  - *Notifications:* free and built-in — you plus any admin collaborators "watch"
+    the repo and get email/GitHub notifications on every new issue. No infra.
+  - *Abuse prevention:* handled entirely by GitHub (account requirement, spam
+    detection, rate limits). Nothing for us to build.
+  - *Cost:* effectively one anchor tag. Fits going-public naturally.
+  - *Downside:* requires the reporter to have a GitHub account — real friction for
+    non-technical friends. This is the main reason to consider a later tier.
+
+- **Tier 2 — hosted feedback form/board (🟢→🟡).** Link/embed a third-party form
+  (Google Form, Tally, Formspree) or a feature-request board with voting (Canny,
+  Frill free tier).
+  - *Notifications:* email / Slack / Discord per the service.
+  - *Abuse prevention:* the service provides CAPTCHA + spam controls.
+  - *Trade-off:* no GitHub account needed (lowest friction for friends), but adds a
+    SaaS dependency and feedback lives off-platform.
+
+- **Tier 3 — custom in-app form → backend (🟡).** A modal form → new
+  `POST /v1/feedback` endpoint → store in DynamoDB → notify.
+  - *Notifications:* an **SNS topic with admin email subscriptions**, or (simplest
+    for real-time) a **Slack/Discord incoming webhook** to an admin channel. SES
+    email also works. This is the direct answer to "where do admins get notified" —
+    a webhook to a shared channel is the least-friction, most-visible option.
+  - *Abuse prevention (the real work of this tier):*
+    - Attach the existing session/JWT (every user already has a guest or signed-in
+      identity) to each submission — no fully-anonymous posts.
+    - Rate-limit per user/IP (API Gateway throttling / usage plan, or a per-user
+      daily-count in DynamoDB).
+    - A CAPTCHA (**Cloudflare Turnstile** — free, privacy-friendly) or a honeypot
+      field to stop bots.
+    - Length caps + server-side sanitization; never render submissions as HTML.
+    - Optionally require sign-in to submit (raises the bar, at some friction cost
+      given guests are the default).
+  - *Trade-off:* most build effort, but keeps everything on-platform and AWS-native
+    ([P6](constitution.md)/[P7](constitution.md)), and the feedback store could feed
+    #14's analytics later.
+
+**Recommendation:** ship **Tier 1 now** (near-zero effort, reuses the issue
+templates, real notifications, GitHub handles abuse) to start collecting feedback
+immediately. If GitHub-account friction visibly blocks non-technical friends from
+reporting, graduate to **Tier 3** (custom form + Discord/Slack webhook + Turnstile)
+— or Tier 2 if a hosted board is preferred over building one.
