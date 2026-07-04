@@ -20,7 +20,7 @@ captured.
 | 6 — SMA 50/200 toggles | 🟢 small | decision made (independent toggles); likely frontend-only if SMA series already in chart payload |
 | 15 — in-app feedback link | ✅ done | shipped as an embedded Tally popup ([ADR-0010](decisions/0010-feedback-channel.md)) |
 | 12 — today's movers (sort) | ◑ partial | sortable Chg % column shipped; dedicated movers strip still open |
-| 1 — autocomplete + validation | 🟡 medium | needs a symbol universe (shared with Phase 4) |
+| 1 — autocomplete + validation | ◑ in progress | design decided ([ADR-0011](decisions/0011-symbol-universe.md), [spec](specs/ticker-autocomplete.md)); building on `feat/ticker-autocomplete` |
 | 4 — watchlist column filters | 🟡 medium | client-side view-logic, no backend; UX-shape decision open |
 | 7 — MACD on graph | 🟡 medium | decision made (separate panel); needs backend MACD computation |
 | 10 — fund/tech weight slider | 🟡 medium | decision made (persist per-user); Signal-table question still open |
@@ -31,23 +31,26 @@ captured.
 | 14 — usage analytics/admin | 🟡 medium | start with free Cognito CloudWatch metrics; custom admin view only if needed |
 | 9 — re-evaluate Tech Score / MACD | 🔴 | deliberate analysis session, not a quick decision; SCORING.md explicitly gates this |
 | 13 — movers beyond watchlist | 🔴 | deferred; depends on Phase 4 universe + batch infra |
+| 16 — international markets | 🔴 | enabled by [ADR-0011](decisions/0011-symbol-universe.md) abstraction; needs per-market sources + scoring sanity |
 
 ---
 
 ## Watchlist / Add Ticker
 
-### 1. Ticker autocomplete + validation on Add Ticker  🟡
+### 1. Ticker autocomplete + validation on Add Ticker  ◑ in progress
 
 **Intent:** today the Add Ticker box accepts any string, so non-tickers (typos,
 junk) get added and then render as empty rows. Validate against real symbols and
 offer type-ahead suggestions.
 
-**Open questions**
-- **Symbol source.** yfinance has no clean search API. Options: (a) a bundled
-  static symbol list (NASDAQ/NYSE/AMEX listings — a few MB, refreshed periodically);
-  (b) a small curated universe (e.g. S&P 500 + popular names) — overlaps with Phase 4;
-  (c) a third-party symbol-search API.
-- Validate *eagerly* (block unknown symbols on add) or *softly* (allow, but flag)?
+**Decided — see spec [ticker-autocomplete.md](specs/ticker-autocomplete.md) +
+[ADR-0011](decisions/0011-symbol-universe.md).** Universe = **full major-exchange
+list incl. ETFs** from NASDAQ Trader, **backend-owned** behind a runtime-selectable
+`SymbolUniversePort` (per-market), fetched once + cached, served via
+`GET /v1/symbols/search`. Validation is **eager** (reject unknowns on add). Building
+on `feat/ticker-autocomplete`.
+
+**Resolved open questions** (were: symbol source a/b/c; eager vs soft) — see ADR-0011.
 
 **Rough approach**
 - Backend `GET /v1/symbols/search?q=` over a symbol universe (name + ticker match),
@@ -555,3 +558,39 @@ friends whose feedback we want. Tier 2 (embedded Tally popup) buys the same
 login-free UX with no backend. Tier 3 (custom in-app form) remains the on-platform
 upgrade path if the third-party dependency becomes unwanted. Full reasoning in
 [ADR-0010](decisions/0010-feedback-channel.md).
+
+---
+
+## Markets / universe
+
+### 16. International symbol universes (India, Japan, …)  🔴
+
+**Intent:** extend the symbol universe (backlog #1) beyond US exchanges to markets
+like **India** (NSE/BSE) and **Japan** (JPX), so users can add and screen
+non-US tickers.
+
+**Enabled by [ADR-0011](decisions/0011-symbol-universe.md).** The universe is
+already behind a runtime-selectable `SymbolUniversePort` per market, so adding a
+market is a **new adapter impl + enabling it** — no change to the core, the
+`/v1/symbols/search` API shape, or the frontend.
+
+**Open questions**
+- **Per-market universe source** (the real work — each differs): US uses NASDAQ
+  Trader; India → NSE/BSE official symbol lists; Japan → JPX listings. Each needs a
+  parser + refresh.
+- **Market-data coverage.** yfinance already supports international tickers via
+  exchange suffixes (e.g. `RELIANCE.NS`, `7203.T`), so scoring/charts likely work
+  once a symbol resolves — but the **scoring model's assumptions** (currency,
+  reporting conventions, FCF/ROE availability, [SCORING.md](SCORING.md) caveats) need
+  a sanity pass per market before trusting scores.
+- **Mixing markets is already designed for** — watchlists store canonical
+  yfinance-style ids ([ADR-0011](decisions/0011-symbol-universe.md)), so US + non-US
+  symbols coexist in one list with no schema change. Remaining questions are
+  *display*, not data model: currency formatting, an exchange badge in the row, and
+  exchange hours (affects day-change #11's "today vs last session" per market).
+
+**Rough approach**
+- Add a `SymbolUniversePort` impl per market + enable via the market config.
+- Validate the scoring model against a handful of names per new market before
+  surfacing scores; suppress/flag where inputs are unreliable.
+- Ties to **Phase 5** (larger universe / broader coverage) in the [roadmap](roadmap.md).
