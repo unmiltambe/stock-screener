@@ -47,8 +47,12 @@ offer type-ahead suggestions.
 [ADR-0011](decisions/0011-symbol-universe.md).** Universe = **full major-exchange
 list incl. ETFs** from NASDAQ Trader, **backend-owned** behind a runtime-selectable
 `SymbolUniversePort` (per-market), fetched once + cached, served via
-`GET /v1/symbols/search`. Validation is **eager** (reject unknowns on add). Building
-on `feat/ticker-autocomplete`.
+`GET /v1/symbols/search`. Validation is **eager** (reject unknowns on add).
+
+**Implemented + verified** on `feat/ticker-autocomplete` — `SymbolUniversePort` +
+`UsSymbolUniverse` (11.7k symbols, common+ETF, Yahoo-normalized), `/v1/symbols/search`,
+and a reusable `TickerAutocomplete` (debounced type-ahead + eager validation). Merge/
+deploy pending (bundled with #2 multi-ticker).
 
 **Resolved open questions** (were: symbol source a/b/c; eager vs soft) — see ADR-0011.
 
