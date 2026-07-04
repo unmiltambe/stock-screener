@@ -16,11 +16,11 @@ captured.
 
 | Item | Effort | Notes |
 |------|--------|-------|
-| 2 — multi-ticker add | ◑ in progress | implemented + verified on branch; merge/deploy pending |
+| 2 — multi-ticker add | ✅ done | shipped: paste `AAPL MSFT NVDA` or `AAPL, MSFT` — splits, validates, partial errors |
 | 6 — SMA 50/200 toggles | 🟢 small | decision made (independent toggles); likely frontend-only if SMA series already in chart payload |
 | 15 — in-app feedback link | ✅ done | shipped as an embedded Tally popup ([ADR-0010](decisions/0010-feedback-channel.md)) |
 | 12 — today's movers (sort) | ◑ partial | sortable Chg % column shipped; dedicated movers strip still open |
-| 1 — autocomplete + validation | ◑ in progress | design decided ([ADR-0011](decisions/0011-symbol-universe.md), [spec](specs/ticker-autocomplete.md)); building on `feat/ticker-autocomplete` |
+| 1 — autocomplete + validation | ✅ done | shipped: [ADR-0011](decisions/0011-symbol-universe.md) + [spec](specs/ticker-autocomplete.md); 11.7k US symbols, debounced type-ahead, eager validation |
 | 4 — watchlist column filters | 🟡 medium | client-side view-logic, no backend; UX-shape decision open |
 | 7 — MACD on graph | 🟡 medium | decision made (separate panel); needs backend MACD computation |
 | 10 — fund/tech weight slider | 🟡 medium | decision made (persist per-user); Signal-table question still open |
@@ -37,7 +37,7 @@ captured.
 
 ## Watchlist / Add Ticker
 
-### 1. Ticker autocomplete + validation on Add Ticker  ◑ in progress
+### 1. Ticker autocomplete + validation on Add Ticker  ✅ done
 
 **Intent:** today the Add Ticker box accepts any string, so non-tickers (typos,
 junk) get added and then render as empty rows. Validate against real symbols and
@@ -49,10 +49,9 @@ list incl. ETFs** from NASDAQ Trader, **backend-owned** behind a runtime-selecta
 `SymbolUniversePort` (per-market), fetched once + cached, served via
 `GET /v1/symbols/search`. Validation is **eager** (reject unknowns on add).
 
-**Implemented + verified** on `feat/ticker-autocomplete` — `SymbolUniversePort` +
-`UsSymbolUniverse` (11.7k symbols, common+ETF, Yahoo-normalized), `/v1/symbols/search`,
-and a reusable `TickerAutocomplete` (debounced type-ahead + eager validation). Merge/
-deploy pending (bundled with #2 multi-ticker).
+**Shipped** — `SymbolUniversePort` + `UsSymbolUniverse` (11.7k symbols, common+ETF,
+Yahoo-normalized), `/v1/symbols/search`, and a reusable `TickerAutocomplete`
+(debounced type-ahead + eager validation). Deployed on AWS (bundled with #2).
 
 **Resolved open questions** (were: symbol source a/b/c; eager vs soft) — see ADR-0011.
 
@@ -64,7 +63,7 @@ deploy pending (bundled with #2 multi-ticker).
   resolve a price (covers ETFs/foreign tickers the static list may miss).
 - Shares the universe with Phase 4 discovery — build once.
 
-### 2. Multi-ticker entry (paste several at once)  ◑ in progress
+### 2. Multi-ticker entry (paste several at once)  ✅ done
 
 **Intent:** let users add several tickers in one go from the Add box.
 
@@ -73,10 +72,10 @@ on any run of `[,\s]+` is unambiguous and forgiving: `"AAPL, MSFT NVDA"` →
 `[AAPL, MSFT, NVDA]`. No reason to make commas mandatory. Uppercase, dedupe, drop
 blanks.
 
-**Implemented + verified** on `feat/ticker-autocomplete` — `parseSymbols` splits on
-`[,\s]+`; each is validated against the universe (#1); valid ones added via a batched
-`useAddTickers` (one refetch); the rest reported ("Added 2; couldn't find ZZZZZ").
-Autocomplete suppresses once the input holds a separator. Merge/deploy pending.
+**Shipped** — `parseSymbols` splits on `[,\s]+`; each validated against the universe
+(#1); valid ones added via a batched `useAddTickers` (one refetch); the rest reported
+("Added 2; couldn't find ZZZZZ"). Autocomplete suppresses once the input holds a
+separator. Deployed on AWS (bundled with #1).
 
 **Rough approach**
 - Parse on submit → list; add each (loop the existing PUT, or a small bulk endpoint

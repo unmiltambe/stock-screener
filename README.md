@@ -14,7 +14,7 @@ watchlists. A starter list is created for you automatically.
 Three things to try in 30 seconds:
 1. Open **All Symbols** — a scored table across every watchlist, sortable by fundamentals, technicals, or combined score.
 2. Click any row → an interactive **price + moving-average chart** (1W → 10Y).
-3. Hit **+ New watchlist**, add a ticker like `AAPL` or `NVDA`, and watch it get scored.
+3. Hit **+ New watchlist**, start typing a ticker like `AAPL` — autocomplete kicks in. Or paste several at once (`AAPL MSFT NVDA`) and they all get added and scored.
 
 > Want to keep your lists? **Sign in** (top-right) — your guest watchlists
 > migrate into the account automatically, saved across devices.
@@ -70,7 +70,7 @@ for full options (offline fixture data, DynamoDB Local, etc.).
 ## What it does
 
 **Available now (live):**
-- **Watchlists** — create lists, add/remove tickers, each scored on fundamentals + technicals, with a day-change (% vs. previous close) column.
+- **Watchlists** — create lists, add/remove tickers (type-ahead autocomplete over 11k+ US symbols; paste several at once), each scored on fundamentals + technicals, with a day-change (% vs. previous close) column.
 - **All Symbols** — a built-in consolidated view across every watchlist, sortable by any metric or score.
 - **Interactive charts** — price with SMA-50/200 overlays, 1W → 10Y, on every ticker.
 - **Guest sessions** — full use with zero friction, no login required ([ADR-0009](docs/decisions/0009-guest-session-before-login.md)).
