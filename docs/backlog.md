@@ -16,7 +16,7 @@ captured.
 
 | Item | Effort | Notes |
 |------|--------|-------|
-| 2 — multi-ticker add | 🟢 small | decision made (spaces **and** commas) |
+| 2 — multi-ticker add | ◑ in progress | implemented + verified on branch; merge/deploy pending |
 | 6 — SMA 50/200 toggles | 🟢 small | decision made (independent toggles); likely frontend-only if SMA series already in chart payload |
 | 15 — in-app feedback link | ✅ done | shipped as an embedded Tally popup ([ADR-0010](decisions/0010-feedback-channel.md)) |
 | 12 — today's movers (sort) | ◑ partial | sortable Chg % column shipped; dedicated movers strip still open |
@@ -64,7 +64,7 @@ deploy pending (bundled with #2 multi-ticker).
   resolve a price (covers ETFs/foreign tickers the static list may miss).
 - Shares the universe with Phase 4 discovery — build once.
 
-### 2. Multi-ticker entry (paste several at once)  🟢
+### 2. Multi-ticker entry (paste several at once)  ◑ in progress
 
 **Intent:** let users add several tickers in one go from the Add box.
 
@@ -72,6 +72,11 @@ deploy pending (bundled with #2 multi-ticker).
 on any run of `[,\s]+` is unambiguous and forgiving: `"AAPL, MSFT NVDA"` →
 `[AAPL, MSFT, NVDA]`. No reason to make commas mandatory. Uppercase, dedupe, drop
 blanks.
+
+**Implemented + verified** on `feat/ticker-autocomplete` — `parseSymbols` splits on
+`[,\s]+`; each is validated against the universe (#1); valid ones added via a batched
+`useAddTickers` (one refetch); the rest reported ("Added 2; couldn't find ZZZZZ").
+Autocomplete suppresses once the input holds a separator. Merge/deploy pending.
 
 **Rough approach**
 - Parse on submit → list; add each (loop the existing PUT, or a small bulk endpoint

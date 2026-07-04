@@ -14,7 +14,7 @@ export function TickerAutocomplete({
   onChange,
   onPick,
   disabled,
-  placeholder = "Add ticker…",
+  placeholder = "Add ticker(s)…",
 }: {
   value: string;
   onChange: (v: string) => void;
@@ -27,8 +27,11 @@ export function TickerAutocomplete({
   const [highlight, setHighlight] = useState(-1);
   const boxRef = useRef<HTMLDivElement>(null);
 
+  // Once the input holds a separator it's a multi-ticker entry (#2) — suppress
+  // type-ahead (there's no single symbol to complete) and let submit split+validate.
+  const isMulti = /[,\s]/.test(value);
   const debounced = useDebounced(value, 150);
-  const { data: matches = [], isFetching } = useSymbolSearch(open ? debounced : "");
+  const { data: matches = [], isFetching } = useSymbolSearch(open && !isMulti ? debounced : "");
 
   // Reset the highlight whenever the result set changes.
   useEffect(() => setHighlight(-1), [debounced]);
@@ -69,7 +72,7 @@ export function TickerAutocomplete({
     }
   }
 
-  const showDropdown = open && debounced.trim().length >= 1;
+  const showDropdown = open && !isMulti && debounced.trim().length >= 1;
 
   return (
     <div ref={boxRef} className="relative">
@@ -82,7 +85,7 @@ export function TickerAutocomplete({
         onFocus={() => setOpen(true)}
         onKeyDown={onKeyDown}
         placeholder={placeholder}
-        maxLength={12}
+        maxLength={120}
         disabled={disabled}
         autoComplete="off"
         spellCheck={false}

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import {
-  useAddTicker,
+  useAddTickers,
   useRemoveTicker,
   useWatchlist,
   useWatchlists,
@@ -11,7 +11,7 @@ import {
   BASE_ACCESSORS, ChartPanel, type SortDir, TickerTableHead, TickerTableRow, sortRows,
 } from "./TickerTable";
 import { TickerAutocomplete } from "./TickerAutocomplete";
-import { isKnownSymbol } from "../../api/symbols";
+import { parseSymbols, validateSymbols } from "../../api/symbols";
 
 const SORT_KEY_PREFIX = "wl-sort-";
 
@@ -27,7 +27,7 @@ export default function WatchlistDetailPage() {
   const { id = "" } = useParams();
   const { data, isLoading, error } = useWatchlist(id);
   const { data: watchlists } = useWatchlists();
-  const addTicker = useAddTicker(id);
+  const addTickers = useAddTickers(id);
   const removeTicker = useRemoveTicker(id);
 
   const [tickerInput, setTickerInput] = useState("");
@@ -53,22 +53,34 @@ export default function WatchlistDetailPage() {
     localStorage.setItem(SORT_KEY_PREFIX + id, JSON.stringify({ key, dir: newDir }));
   }
 
+  // Picked from the dropdown — already a valid symbol, add it directly.
   function add(symbol: string) {
     setAddError(null);
-    addTicker.mutate(symbol, { onSuccess: () => setTickerInput("") });
+    addTickers.mutate([symbol], { onSuccess: () => setTickerInput("") });
   }
 
-  // Typed-and-submitted (not picked from the dropdown): validate against the
-  // universe first so junk is rejected with a message rather than added blindly.
+  // Typed-and-submitted: parse one or many (split on commas/whitespace, #2),
+  // validate each against the universe, add the valid ones, report the rest.
   async function submitAdd(e: React.FormEvent) {
     e.preventDefault();
-    const symbol = tickerInput.trim().toUpperCase();
-    if (!symbol) return;
-    if (!(await isKnownSymbol(symbol))) {
-      setAddError(`${symbol} isn't a recognized US symbol`);
-      return;
+    const symbols = parseSymbols(tickerInput);
+    if (symbols.length === 0) return;
+    setAddError(null);
+    const { valid, unknown } = await validateSymbols(symbols);
+    if (valid.length) {
+      addTickers.mutate(valid, {
+        onSuccess: () => { if (unknown.length === 0) setTickerInput(""); },
+      });
     }
-    add(symbol);
+    if (unknown.length) {
+      setAddError(
+        valid.length
+          ? `Added ${valid.length}; couldn't find ${unknown.join(", ")}`
+          : unknown.length === 1
+            ? `${unknown[0]} isn't a recognized US symbol`
+            : `Couldn't find ${unknown.join(", ")}`,
+      );
+    }
   }
 
   if (isLoading) return <p className="text-dim">Loading…</p>;
@@ -93,14 +105,14 @@ export default function WatchlistDetailPage() {
               value={tickerInput}
               onChange={(v) => { setTickerInput(v); setAddError(null); }}
               onPick={add}
-              disabled={addTicker.isPending}
+              disabled={addTickers.isPending}
             />
             <button
               type="submit"
-              disabled={addTicker.isPending || !tickerInput.trim()}
+              disabled={addTickers.isPending || !tickerInput.trim()}
               className="text-sm px-3 py-1.5 rounded border border-line hover:border-accent text-accent transition-colors disabled:opacity-40"
             >
-              {addTicker.isPending ? "Adding…" : "Add"}
+              {addTickers.isPending ? "Adding…" : "Add"}
             </button>
           </form>
           {addError && <p className="text-neg text-xs">{addError}</p>}
