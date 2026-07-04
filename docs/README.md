@@ -3,6 +3,10 @@
 Specification for stock-screener. Conventions: **EARS** for requirements, **ADR**
 (Nygard format) for decisions, root **AGENTS.md** for contributor/agent guidance.
 
+> **Making a change?** Start with **[workflow.md](workflow.md)** — the single
+> change → verify → document → ship checklist (for agents and humans). The reference
+> docs below are what it links into.
+
 ## Reading order
 
 | # | Doc | Purpose |
