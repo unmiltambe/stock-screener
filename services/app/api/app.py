@@ -14,7 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from adapters.ports import is_guest
 
 from . import schemas
-from .deps import get_service, get_user_id
+from .deps import get_service, get_universe, get_user_id
 from .service import ScreenerService
 
 
@@ -175,6 +175,16 @@ def create_app() -> FastAPI:
         if result is None:
             raise HTTPException(status_code=404, detail=f"No chart data for {symbol}")
         return result
+
+    @v1.get("/symbols/search", response_model=List[schemas.SymbolOut])
+    def symbols_search(q: str = Query(..., min_length=1, description="ticker or name prefix"),
+            universe=Depends(get_universe),
+            user_id: str = Depends(get_user_id)):
+        from core.symbols import search_symbols
+        return [
+            {"symbol": s.symbol, "name": s.name, "exchange": s.exchange, "market": s.market}
+            for s in search_symbols(universe, q)
+        ]
 
     app.include_router(v1)
 

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional, Protocol, Sequence, runtime_checkable
 
-from core.models import MarketSnapshot, Watchlist
+from core.models import MarketSnapshot, SymbolInfo, Watchlist
 
 # Identity namespace for unauthenticated guest sessions (ADR-0009). A guest user
 # id is `GUEST#<uuid>`; authenticated users are the bare Cognito `sub`. Defined
@@ -31,6 +31,19 @@ class MarketDataPort(Protocol):
     """
 
     def fetch(self, symbols: Sequence[str], years: int = 2) -> Dict[str, Optional[MarketSnapshot]]:
+        ...
+
+
+@runtime_checkable
+class SymbolUniversePort(Protocol):
+    """Provides one market's tradable symbol list (ADR-0011). `market` is the code
+    (e.g. "US"); `fetch()` returns the full list — the caller caches it (fetched once,
+    served to all, never per user request, P5). Markets are additive: a registry
+    composes the enabled markets into one searchable set."""
+
+    market: str
+
+    def fetch(self) -> List[SymbolInfo]:
         ...
 
 

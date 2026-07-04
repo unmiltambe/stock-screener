@@ -48,6 +48,17 @@ class Fundamentals:
 
 
 @dataclass(frozen=True)
+class SymbolInfo:
+    """One tradable symbol in the universe (ADR-0011). `symbol` is the canonical
+    (yfinance/Yahoo) id — e.g. US `AAPL`/`BRK-B`, NSE `RELIANCE.NS` — so mixed-market
+    watchlists resolve through the existing data path."""
+    symbol: str
+    name: str
+    exchange: str            # display name, e.g. "NASDAQ", "NYSE"
+    market: str = "US"
+
+
+@dataclass(frozen=True)
 class MarketSnapshot:
     """An adapter's complete answer for one ticker: fundamentals + price history.
 
