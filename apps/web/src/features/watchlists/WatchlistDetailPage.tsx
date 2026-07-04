@@ -10,6 +10,8 @@ import {
 import {
   BASE_ACCESSORS, ChartPanel, type SortDir, TickerTableHead, TickerTableRow, sortRows,
 } from "./TickerTable";
+import { TickerAutocomplete } from "./TickerAutocomplete";
+import { isKnownSymbol } from "../../api/symbols";
 
 const SORT_KEY_PREFIX = "wl-sort-";
 
@@ -29,6 +31,7 @@ export default function WatchlistDetailPage() {
   const removeTicker = useRemoveTicker(id);
 
   const [tickerInput, setTickerInput] = useState("");
+  const [addError, setAddError] = useState<string | null>(null);
   const [selectedTicker, setSelectedTicker] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<string | null>(() => loadSort(id).key);
   const [sortDir, setSortDir] = useState<SortDir>(() => loadSort(id).dir);
@@ -50,11 +53,22 @@ export default function WatchlistDetailPage() {
     localStorage.setItem(SORT_KEY_PREFIX + id, JSON.stringify({ key, dir: newDir }));
   }
 
-  function submitAdd(e: React.FormEvent) {
+  function add(symbol: string) {
+    setAddError(null);
+    addTicker.mutate(symbol, { onSuccess: () => setTickerInput("") });
+  }
+
+  // Typed-and-submitted (not picked from the dropdown): validate against the
+  // universe first so junk is rejected with a message rather than added blindly.
+  async function submitAdd(e: React.FormEvent) {
     e.preventDefault();
     const symbol = tickerInput.trim().toUpperCase();
     if (!symbol) return;
-    addTicker.mutate(symbol, { onSuccess: () => setTickerInput("") });
+    if (!(await isKnownSymbol(symbol))) {
+      setAddError(`${symbol} isn't a recognized US symbol`);
+      return;
+    }
+    add(symbol);
   }
 
   if (isLoading) return <p className="text-dim">Loading…</p>;
@@ -73,22 +87,24 @@ export default function WatchlistDetailPage() {
           <span className="text-dim">/</span>
           <span className="font-semibold">{watchlistName}</span>
         </div>
-        <form onSubmit={submitAdd} className="flex gap-2">
-          <input
-            value={tickerInput}
-            onChange={(e) => setTickerInput(e.target.value.toUpperCase())}
-            placeholder="Add ticker…"
-            maxLength={10}
-            className="w-36 bg-bg border border-line rounded px-3 py-1.5 text-sm font-mono outline-none focus:border-accent transition-colors"
-          />
-          <button
-            type="submit"
-            disabled={addTicker.isPending || !tickerInput.trim()}
-            className="text-sm px-3 py-1.5 rounded border border-line hover:border-accent text-accent transition-colors disabled:opacity-40"
-          >
-            {addTicker.isPending ? "Adding…" : "Add"}
-          </button>
-        </form>
+        <div className="flex flex-col items-end gap-1">
+          <form onSubmit={submitAdd} className="flex gap-2">
+            <TickerAutocomplete
+              value={tickerInput}
+              onChange={(v) => { setTickerInput(v); setAddError(null); }}
+              onPick={add}
+              disabled={addTicker.isPending}
+            />
+            <button
+              type="submit"
+              disabled={addTicker.isPending || !tickerInput.trim()}
+              className="text-sm px-3 py-1.5 rounded border border-line hover:border-accent text-accent transition-colors disabled:opacity-40"
+            >
+              {addTicker.isPending ? "Adding…" : "Add"}
+            </button>
+          </form>
+          {addError && <p className="text-neg text-xs">{addError}</p>}
+        </div>
       </div>
 
       {data!.length === 0 ? (
