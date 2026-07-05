@@ -57,13 +57,16 @@ export function useDeleteWatchlist() {
   });
 }
 
-export function useAddTicker(watchlistId: string) {
+// Adds one or more tickers, then invalidates once (avoids N refetches on a
+// multi-ticker paste, backlog #2). A single add is just a one-element list.
+export function useAddTickers(watchlistId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (symbol: string) =>
-      api<void>(`/v1/watchlists/${watchlistId}/tickers/${symbol}`, {
-        method: "PUT",
-      }),
+    mutationFn: async (symbols: string[]) => {
+      for (const symbol of symbols) {
+        await api<void>(`/v1/watchlists/${watchlistId}/tickers/${symbol}`, { method: "PUT" });
+      }
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["watchlist", watchlistId] });
       qc.invalidateQueries({ queryKey: ["all-symbols"] });

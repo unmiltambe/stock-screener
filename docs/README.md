@@ -3,6 +3,10 @@
 Specification for stock-screener. Conventions: **EARS** for requirements, **ADR**
 (Nygard format) for decisions, root **AGENTS.md** for contributor/agent guidance.
 
+> **Making a change?** Start with **[workflow.md](workflow.md)** — the single
+> change → verify → document → ship checklist (for agents and humans). The reference
+> docs below are what it links into.
+
 ## Reading order
 
 | # | Doc | Purpose |
@@ -22,9 +26,10 @@ Specification for stock-screener. Conventions: **EARS** for requirements, **ADR*
 | 13 | [decisions/0008-app-level-cognito-jwt.md](decisions/0008-app-level-cognito-jwt.md) | ADR: app-level Cognito JWT validation + Hosted UI. |
 | 14 | [decisions/0009-guest-session-before-login.md](decisions/0009-guest-session-before-login.md) | ADR: guest session before login (try the app before signing in). |
 | 15 | [decisions/0010-feedback-channel.md](decisions/0010-feedback-channel.md) | ADR: in-app feedback via an embedded Tally form. |
-| 16 | [structure.md](structure.md) | Canonical project tree + how the two deploys are selected. |
-| 17 | [roadmap.md](roadmap.md) | Phased build sequence (0–5). |
-| 18 | [backlog.md](backlog.md) | Captured-but-unbuilt enhancements, with open questions + rough approaches. |
+| 16 | [decisions/0011-symbol-universe.md](decisions/0011-symbol-universe.md) | ADR: symbol universe — backend-owned, market-abstracted. |
+| 17 | [structure.md](structure.md) | Canonical project tree + how the two deploys are selected. |
+| 18 | [roadmap.md](roadmap.md) | Phased build sequence (0–5). |
+| 19 | [backlog.md](backlog.md) | Captured-but-unbuilt enhancements, with open questions + rough approaches. |
 
 ### Reference & operations
 

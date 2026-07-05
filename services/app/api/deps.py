@@ -75,6 +75,14 @@ def get_service() -> ScreenerService:
     return _build_service()
 
 
+def get_universe():
+    """The composed symbol universe across enabled markets (ADR-0011), cached
+    in-process with a TTL. A FastAPI dependency so tests can override it without
+    touching the network."""
+    from adapters.symbol_universe import load_universe
+    return load_universe()
+
+
 def _guest_id(x_guest_id: Optional[str]) -> Optional[str]:
     """Namespace a client-supplied guest id (ADR-0009). Validates it parses as a
     UUID so the header can't inject an arbitrary identity; returns None for a

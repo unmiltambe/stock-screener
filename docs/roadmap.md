@@ -90,9 +90,10 @@ their own holdings, served from precomputed rankings.
   ([ADR-0002](decisions/0002-web-mobile-sharing.md)).
 - News-sentiment factor (documented future enhancement).
 
-> **Smaller captured enhancements** (ticker autocomplete/validation, multi-ticker
-> add, related-ticker suggestions, chart interactivity, …) live in
-> [backlog.md](backlog.md) until they're scheduled into a phase.
+> **Smaller shipped enhancements** (ticker autocomplete/validation, multi-ticker add,
+> day-change % column) are tracked in [backlog.md](backlog.md) (marked ✅ done).
+> Unbuilt items (related-ticker suggestions, chart interactivity, SMA toggles, …)
+> live there until scheduled into a phase.
 
 ---
 

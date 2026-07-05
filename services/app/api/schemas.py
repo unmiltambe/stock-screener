@@ -45,6 +45,14 @@ class TickerRow(BaseModel):
     stale: bool = False
 
 
+class SymbolOut(BaseModel):
+    """One autocomplete match from the symbol universe (ADR-0011)."""
+    symbol: str
+    name: str
+    exchange: str
+    market: str
+
+
 class WatchlistSummary(BaseModel):
     id: str
     name: str

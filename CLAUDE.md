@@ -7,6 +7,11 @@ work*, not *what to build* — for the latter see [docs/constitution.md](docs/co
 Adapted from Karpathy's coding guidelines; the constitution's principles (P1–P10)
 take precedence where they overlap.
 
+> For the **end-to-end checklist** that sequences everything below through commit,
+> deploy, and post-deploy verification, see [docs/workflow.md](docs/workflow.md) —
+> the single go-to change → ship runbook. The sections here are the *how/why* it
+> links into.
+
 ## 1. Think before coding
 
 Don't assume, don't hide confusion, surface tradeoffs. If a request has more than
