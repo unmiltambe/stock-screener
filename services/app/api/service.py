@@ -16,8 +16,12 @@ SCORE_TTL_SECONDS = 900  # 15 minutes (FR-3.3/3.4)
 
 # Starter content for a brand-new user, so the first experience isn't empty
 # (FR-2.4). Generic — distinct from the owner's demo seed (seed_watchlists.json).
+# Deliberately spread across sectors and score profiles (tech, financials,
+# healthcare, consumer staples) so the built-in views + landing hero look alive
+# and show the scoring model's range on a first visit — not a wall of similar
+# tech names (backlog #18 / spec home-landing.md D8).
 STARTER_WATCHLISTS = {
-    "My Watchlist": ["AAPL", "AMZN", "GOOG", "MSFT", "NFLX", "NVDA", "TSLA", "AMD", "INTC"],
+    "Starter picks": ["NVDA", "AAPL", "BRK-B", "JNJ", "JPM", "WMT"],
 }
 
 

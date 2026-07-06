@@ -203,10 +203,13 @@ function VerdictCard({ score, signal }: { score: number | null; signal: string |
 
 // watchlistId is optional — when provided the detail link carries routing state
 // so the detail page can offer a "back" link to the originating watchlist.
-export function ChartPanel({ ticker, watchlistId, onClose }: {
+export function ChartPanel({ ticker, watchlistId, onClose, hideClose }: {
   ticker: string;
   watchlistId?: string;
   onClose: () => void;
+  // Landing hero embeds this always-on (spec home-landing.md D2) — no row to
+  // collapse back into, so the close affordance is suppressed there.
+  hideClose?: boolean;
 }) {
   const CHART_C = useChartColors();
   const [period, setPeriod] = useState<Period>("1Y");
@@ -230,7 +233,9 @@ export function ChartPanel({ ticker, watchlistId, onClose }: {
                   title="Full detail page"
                   className="text-dim hover:text-accent transition-colors"
                 ><ArrowUpRight size={15} strokeWidth={1.75} /></Link>
-                <button onClick={onClose} className="text-dim hover:text-ink transition-colors text-lg leading-none">×</button>
+                {!hideClose && (
+                  <button onClick={onClose} className="text-dim hover:text-ink transition-colors text-lg leading-none">×</button>
+                )}
               </div>
             </div>
             {row && (

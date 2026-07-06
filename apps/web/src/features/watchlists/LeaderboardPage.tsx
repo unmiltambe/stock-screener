@@ -57,7 +57,7 @@ export default function LeaderboardPage() {
           Add a few tickers to your watchlists and the rankings fill in here —
           best value, best momentum, and the ones worth a second look.
         </p>
-        <Link to="/" className="inline-flex items-center gap-1 mt-5 text-accent text-sm hover:underline">
+        <Link to="/watchlists" className="inline-flex items-center gap-1 mt-5 text-accent text-sm hover:underline">
           <ArrowLeft size={14} strokeWidth={1.75} /> Back to watchlists
         </Link>
       </div>

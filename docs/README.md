@@ -37,7 +37,7 @@ Specification for stock-screener. Conventions: **EARS** for requirements, **ADR*
 |-----|---------|
 | [voice.md](voice.md) | The UI design motto — warm, personal, a little witty — and where it shows up. |
 | [ui-columns.md](ui-columns.md) | Reference: every table column — definition, colour thresholds, tooltips, sort/persistence behaviour. |
-| [specs/](specs/) | Feature specs — the plan/decision record for a larger feature before/while it's built (e.g. [day-change.md](specs/day-change.md)). |
+| [specs/](specs/) | Feature specs — the plan/decision record for a larger feature before/while it's built (e.g. [day-change.md](specs/day-change.md), [home-landing.md](specs/home-landing.md)). |
 | [deployments.md](deployments.md) | **The environment map** — all four surfaces (local, Render, API Gateway, CloudFront), URLs, and how to retire the interim ones safely. |
 | [deploy-aws.md](deploy-aws.md) | AWS architecture, control flows, deploy steps. Live URLs at top. |
 | [deploy-render.md](deploy-render.md) | Deploy the interim demo to a public URL. Live URL at top. |
@@ -45,9 +45,9 @@ Specification for stock-screener. Conventions: **EARS** for requirements, **ADR*
 
 ## Status
 
-Active build. Backend (Phases 0–2) and the React web app (Phase 3 —
-watchlists, All Symbols, charts, ticker detail, leaderboard, profile/account) are
-deployed on AWS via CloudFront + S3 + API Gateway + Lambda + DynamoDB, with **both
-guest sessions and Cognito sign-in (guest→account migration) live**. Next up is
-Phase 4 (discovery / screener). The [deployments.md](deployments.md) map tracks
+Active build. Backend (Phases 0–2) and the React web app (Phase 3 — marketing
+landing, watchlists dashboard, All Symbols, charts, ticker detail, leaderboard,
+profile/account) are deployed on AWS via CloudFront + S3 + API Gateway + Lambda +
+DynamoDB, with **both guest sessions and Cognito sign-in (guest→account migration)
+live**. Next up is Phase 4 (discovery / screener). The [deployments.md](deployments.md) map tracks
 every environment; phased build order is in the [roadmap](roadmap.md).

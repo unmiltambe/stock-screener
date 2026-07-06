@@ -69,7 +69,7 @@ export default function ProfilePage() {
 
   return (
     <div className="max-w-lg mx-auto">
-      <Link to="/" className="text-accent text-sm hover:underline inline-flex items-center gap-1"><ArrowLeft size={14} strokeWidth={1.75} /> Back</Link>
+      <Link to="/watchlists" className="text-accent text-sm hover:underline inline-flex items-center gap-1"><ArrowLeft size={14} strokeWidth={1.75} /> Back</Link>
       <h1 className="text-lg font-semibold mt-2 mb-1">Your profile</h1>
       <p className="text-dim text-sm mb-6">
         Tell us what to call you — we'll keep it friendly.

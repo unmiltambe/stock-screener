@@ -51,7 +51,7 @@ def create_app() -> FastAPI:
                         user_id: str = Depends(get_user_id)):
         # Pure read — no seeding side-effect. New accounts are bootstrapped once via
         # POST /v1/session/init (below), so an eventually-consistent empty read can
-        # never trigger a write (which used to create duplicate 'My Watchlist's).
+        # never trigger a write (which used to create duplicate starter lists).
         return svc.list_watchlists(user_id)
 
     @v1.post("/watchlists", status_code=201, response_model=schemas.WatchlistOut)

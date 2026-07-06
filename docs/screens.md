@@ -15,18 +15,47 @@ we work from.
 
 **Status:** ✅ built
 
-- Persistent top header: app name + "stock screener" subtitle
-- Persistent footer: app name + **Docs ↗** link → GitHub docs
-- `<main>` flex-grows to fill viewport; pages control their own max-width
+- Persistent top header: **bellwether** wordmark (→ `/`, the landing) + a
+  **Watchlists** nav link (→ `/watchlists`, the dashboard) on the left; ThemeToggle +
+  Sign in / greeting on the right.
+- Persistent footer: tagline + **Report a bug / request a feature** (Tally popup,
+  [ADR-0010](decisions/0010-feedback-channel.md)) + **Docs ↗** link → GitHub docs.
+- `<main>` flex-grows to fill viewport; pages control their own max-width.
+- **Routing is idempotent** — every URL maps to one view regardless of auth
+  ([home-landing spec](specs/home-landing.md) D1): `/` is always the landing,
+  `/watchlists` always the dashboard. Auth only scopes *whose* data fills a
+  user-collection view.
 
 ---
 
-## S1 — Watchlists index
+## S0 — Landing (marketing home)
 
 **Route:** `/`
+**Status:** ✅ built ([home-landing spec](specs/home-landing.md), backlog #17)
+
+**Job:** for signed-out visitors, explain who Bellwether is for and what it does, then
+convert. Signed-in users navigate straight to `/watchlists` (the header link, and the
+post-sign-in callback).
+
+**Data:** `GET /v1/scores?tickers=…` for a **fixed showcase list** (a frontend
+constant mirroring the seed) — read-only and identical for every visitor, independent
+of anyone's watchlists. The hero chart reuses the live `ChartPanel`.
+
+**Sections (top→bottom):** hero (tagline + live chart + a 6-row scored
+`ShowcaseScoreTable`, row-click drives the chart) → pain points → how it works
+(Understand / Visualize / Act, with static visuals) → differentiation → final CTA.
+
+**Actions:** "Start free" → `/watchlists`; "Open my starter list" → the seeded
+"Starter picks" list (falls back to `/watchlists/_all` if the guest deleted it).
+
+---
+
+## S1 — Watchlists index (dashboard)
+
+**Route:** `/watchlists`
 **Status:** ✅ built
 
-**Job:** entry point; shows everything a user is tracking at a glance.
+**Job:** entry point for the app; shows everything a user is tracking at a glance.
 
 **Data:** `GET /v1/watchlists` → `[{id, name, count}]`
 
@@ -112,8 +141,8 @@ Ticker  Company  Price  MktCap  P/E  FwdP/E  PEG  FCFYld  ROE  RSI  vs200d  vs50
 NVDA    NVIDIA   $875   $2.1T   ...  color-coded metrics ...                                        81         91        86     Buy   ×(hover)
 ```
 
-**Columns (17 + remove):**
-- Info: Ticker, Company, Price, Market Cap
+**Columns (18 + remove):**
+- Info: Ticker, Company, Price, **Chg %** (day change vs previous close, sign-coloured), Market Cap
 - Fundamental Metrics group: P/E, Fwd P/E, PEG, FCF Yield, ROE
 - Technical Metrics group: RSI, vs 200d, vs 50d, 52W Range (with RangeBar)
 - Scores group: Fundamental, Technical, Overall, Signal
@@ -138,7 +167,7 @@ differ only in what they pass via props (S2 → remove button; S1b → Watchlist
 - Click any column header → sort (toggle asc/desc; nulls sink to bottom)
 - Period toggle in chart → 1W/1M/3M/6M/1Y fetches 1Y of data and slices; 5Y/10Y fetches full history
 
-**Sorting:** all 17 data columns are sortable. Recommended: Combined Score ↓ (best picks first).
+**Sorting:** all 18 data columns are sortable. Recommended: Combined Score ↓ (best picks first).
 See [ui-columns.md](ui-columns.md) for full column definitions, color thresholds, and tooltips.
 
 ---
@@ -220,8 +249,8 @@ migrate their data when they sign in.
 
 **Header (built):**
 ```
-Bellwether  stock screener                         [Sign in]      ← signed out
-Bellwether  stock screener        you@example.com  [Sign out]     ← signed in
+bellwether  Watchlists                       ☀  [Sign in]        ← signed out
+bellwether  Watchlists                Hi, Alex  ☀  [Sign out]    ← signed in
 ```
 
 **Not yet built:** the proactive "💡 Sign in to keep your lists" nudge banner after
@@ -263,6 +292,7 @@ the name powers the S5 greeting.
 
 | # | Screen/feature | Status |
 |---|----------------|--------|
+| S0 | Landing (marketing home) | ✅ done |
 | S1 | Watchlists index (CRUD) | ✅ done |
 | S1b | All Symbols built-in view | ✅ done |
 | S2 | Watchlist detail (full table, chart panel, sort) | ✅ done |

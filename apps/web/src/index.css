@@ -35,6 +35,18 @@
   --color-accent: #e56515;
 }
 
+/* Landing "how it works" — a slow left-to-right reveal so the price + SMA lines
+   appear to draw in, showing how the averages lag/react to price changes. Honors
+   reduced-motion (no animation → chart just shows fully). */
+@keyframes chart-sweep {
+  0%        { clip-path: inset(0 100% 0 0); }
+  65%, 100% { clip-path: inset(0 0 0 0); }
+}
+.chart-sweep { animation: chart-sweep 4.5s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .chart-sweep { animation: none; }
+}
+
 html, body, #root {
   height: 100%;
 }
