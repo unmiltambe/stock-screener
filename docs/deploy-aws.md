@@ -10,7 +10,7 @@ API Gateway endpoint behind CloudFront; handy for `curl`/debugging.
 - `/v1/...` — JSON API (via CloudFront *or* the direct API Gateway URL)
 - `/ui` — interim Swagger demo, Basic-Auth gated (direct API Gateway URL only)
 
-How the stack runs on AWS, the control flows, and the step-by-step to deploy it.
+How the stack runs on AWS, the control flows, and how to deploy it.
 Implemented by the [CDK app](../services/deploy/aws/cdk/) (Python). See
 [deployments.md](deployments.md) for how this fits with Render + local. Decisions:
 [ADR-0001](decisions/0001-backend-and-stack.md) (serverless),
@@ -31,6 +31,75 @@ Implemented by the [CDK app](../services/deploy/aws/cdk/) (Python). See
    Param Store / Secrets         ─ Phase 2 ─  ✗  password via deploy-time context
 ```
 
+The DynamoDB data model is [design.md §5](design.md#5-data-model-dynamodb-single-table)
+(universe rankings arrive in Phase 4).
+
+## The runbook — `deploy.sh`
+
+All deploys go through [`services/deploy/aws/deploy.sh`](../services/deploy/aws/deploy.sh),
+which encodes every footgun below so it can't be forgotten. It resolves all resource
+ids from the live CloudFormation stack (nothing hardcoded to drift):
+
+```bash
+cd services/deploy/aws
+bash deploy.sh diff        # backend cdk diff — REVIEW before backend/all
+bash deploy.sh backend     # cdk deploy the Lambda (after reviewing the diff)
+bash deploy.sh frontend    # build SPA → S3 sync → CloudFront invalidation
+bash deploy.sh smoke       # post-deploy checks (health, Cognito callbacks, fresh fields)
+bash deploy.sh all         # backend + frontend + smoke (only after reviewing diff)
+```
+
+**Which parts to deploy:** a change touching `services/app/**` needs `backend`
+**first**, then `frontend` — a frontend-only deploy of a full-stack feature ships a
+UI that renders against the *old* API (fields come back `null`). A pure UI change
+needs only `frontend`. Always finish with `smoke`.
+
+**Prerequisites per run:** AWS credentials configured; a Docker daemon running for
+`backend` (container-image Lambda — Docker Desktop or `colima start`); the CDK venv
+under `services/deploy/aws/cdk/.venv` (created in one-time setup below).
+
+### The footguns `deploy.sh` encodes (why it exists)
+
+Never blind-apply `cdk deploy`. Two stack inputs are **not stored in
+CloudFormation** and are re-derived from context each deploy — omitting either
+silently reverts live state:
+
+- **`basic_auth_pass`** (secret) — gates the interim `/ui`; omitting resets it to
+  empty. The script reads it from the live Lambda into a shell variable and **never
+  prints it**; it aborts if the read fails.
+- **`frontend_url`** — appended to the Cognito Hosted-UI **callback/logout URLs**;
+  omitting used to **drop the production CloudFront callback and break sign-in**.
+  Now pinned in [`cdk.json`](../services/deploy/aws/cdk/cdk.json) `context`; only
+  override with `-c frontend_url=…` when standing up a *new* distribution.
+
+`deploy.sh diff` shows the pending change with both values held constant — for a
+code-only ship, the **only** diff line should be the `AWS::Lambda::Function` image
+URI, and Cognito callback URLs must **not** appear.
+
+### Post-deploy smoke (`deploy.sh smoke`)
+
+Checks, in order:
+1. `GET <FrontendUrl>/health` → `{"status":"ok"}`.
+2. Cognito `CallbackURLs` still contain `https://<dist>.cloudfront.net/callback`
+   (sign-in intact — the `frontend_url` footgun held).
+3. A **fresh, uncached ticker** (`/v1/scores?tickers=WSO` with a new guest id)
+   returns the fields the change shipped. Popular tickers can serve stale rows for
+   up to 15 min (score-cache TTL) — that's why an uncommon symbol is used.
+
+Then load the live app in a browser and confirm the change is visible.
+
+## One-time account setup
+
+1. Create the AWS account; an admin IAM Identity Center user (or IAM user).
+2. **Set a Billing Budget alert (~$5)** — before anything else.
+3. Install Node, the AWS CDK CLI (`npm i -g aws-cdk`), and configure AWS creds.
+4. `cd services/deploy/aws/cdk && python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt`
+5. `cdk bootstrap` (one-time per account/region).
+6. First deploy of a fresh account: `cdk deploy` directly (there's no live stack for
+   `deploy.sh` to read yet), then note the outputs (`FrontendUrl`, `FrontendBucket`,
+   `DistributionId`, `ApiUrl`, `TableName`, `UserPoolId`, `UserPoolClientId`,
+   `HostedUiBaseUrl`) and use `deploy.sh` from then on.
+
 ## Control flow 1 — deploy time (code → infrastructure)
 
 ```
@@ -45,15 +114,15 @@ Implemented by the [CDK app](../services/deploy/aws/cdk/) (Python). See
                   5. Cognito user pool + app client + Hosted-UI domain
                   6. S3 bucket (private) + CloudFront distribution:
                        / → S3 (SPA, OAC);  /v1/* + /health → API Gateway (no cache)
-                → Outputs: ApiUrl, FrontendUrl, FrontendBucket, DistributionId,
-                           TableName, UserPoolId, UserPoolClientId, HostedUiBaseUrl
   build SPA   → apps/web: npm run build  →  dist/
   aws s3 sync → upload dist/ to the FrontendBucket
   invalidate  → CloudFront /* so the new build is served immediately
 ```
 
 CDK provisions infra; the SPA artifacts are published separately (S3 sync +
-invalidation) because they change far more often than the infrastructure.
+invalidation) because they change far more often than the infrastructure. The SPA
+uses **relative** API paths, so no rebuild is needed per environment — CloudFront
+routes `/v1/*` to the API on the same origin.
 
 CDK is the single source of truth (P6): one command builds it, one tears it down,
 all reviewable in git. No console click-ops.
@@ -62,7 +131,7 @@ all reviewable in git. No console click-ops.
 
 ```
   Browser / curl
-      │  HTTPS  GET /v1/watchlists/{id}   (Authorization: Basic ...)
+      │  HTTPS  GET /v1/watchlists/{id}   (Authorization: Bearer ...)
       ▼
   API Gateway (HTTP API)                  ← TLS, public endpoint
       │  Lambda proxy integration (whole request passed through)
@@ -81,14 +150,15 @@ all reviewable in git. No console click-ops.
 The Lambda is stateless (P2); all state is in DynamoDB. Idle = nothing runs,
 nothing bills (P7).
 
-## Control flow 3 — auth (Phase 2: app-level Cognito JWT, ADR-0008)
+## Control flow 3 — auth (app-level Cognito JWT, ADR-0008)
 
 ```
   login:    user → Cognito Hosted UI → verify email → login → JWT
   request:  client ─Bearer JWT─► API Gateway → Lambda → FastAPI
                                   validates JWT in-app (works on AWS *and* Render)
             userId = verified `sub`
-  /ui demo: still gated by interim Basic Auth (retired with the React app, Phase 3)
+  guests:   X-Guest-Id: <uuid> → GUEST#<uuid> (ADR-0009; 7-day TTL; migrates on sign-in)
+  /ui demo: still gated by interim Basic Auth (retire per deployments.md)
   /health:  open
 ```
 
@@ -96,96 +166,17 @@ JWT is validated **in the app**, not at the API Gateway edge — so the same aut
 holds on Render too ([ADR-0007](decisions/0007-dual-deploy-portability.md) /
 [ADR-0008](decisions/0008-app-level-cognito-jwt.md)).
 
-## Data model (DynamoDB single table — design.md §5)
+## (Optional) Create a Cognito user + get a JWT from the CLI
 
-| Entity | PK | SK | Notes |
-|--------|----|----|-------|
-| Watchlist | `USER#<sub>` | `WL#<id>` | attrs `name`, `tickers` (ADR-0004) |
-| Score cache | `CACHE#<sym>` | `SCORE` | global; `ttl` epoch → 15-min expiry |
+For exercising the authenticated path without the UI:
 
-(Universe rankings for discovery, design.md §5, arrive in Phase 4.)
-
-## Step-by-step
-
-**A. One-time account setup (you)**
-1. Create the AWS account; an admin IAM Identity Center user (or IAM user).
-2. **Set a Billing Budget alert (~$5)** — before anything else.
-3. Install Node, the AWS CDK CLI (`npm i -g aws-cdk`), and configure AWS creds.
-4. `cd services/deploy/aws/cdk && python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt`
-5. `cdk bootstrap` (one-time per account/region).
-
-**B. Deploy the infrastructure**
-
-> ⚠️ **Always `cdk diff` before `cdk deploy`, and confirm the *only* change is the
-> intended one** (for a code-only ship, that's the `AWS::Lambda::Function` image
-> URI). Never blind-apply. Two stack inputs are **not stored in CloudFormation** and
-> are re-derived from context each deploy — omitting either silently reverts live
-> state, and the diff is where you catch it:
-> - **`basic_auth_pass`** (secret) — gates the interim `/ui`; omitting resets it to
->   empty. Read it from the live Lambda into a shell var (never echo it).
-> - **`frontend_url`** — appended to the Cognito Hosted-UI **callback/logout URLs**;
->   omitting **drops the production CloudFront callback and breaks sign-in**. This is
->   now pinned in [`cdk.json`](../services/deploy/aws/cdk/cdk.json) `context` so a
->   normal deploy keeps it automatically; only override with `-c frontend_url=…` when
->   standing up a *new* distribution whose domain isn't known yet.
-
-6. Deploy — read the secret without printing it, diff, then apply:
-   ```bash
-   cd services/deploy/aws/cdk && source .venv/bin/activate
-   PASS=$(aws lambda get-function-configuration \
-     --function-name <ApiFunctionName> \
-     --query 'Environment.Variables.BASIC_AUTH_PASS' --output text)   # never echo $PASS
-   cdk diff   -c basic_auth_pass="$PASS"     # review: only the Lambda image should change
-   cdk deploy -c basic_auth_pass="$PASS"     # frontend_url comes from cdk.json context
-   ```
-   Note the outputs: `FrontendUrl`, `FrontendBucket`, `DistributionId`, `ApiUrl`,
-   `TableName`, `UserPoolId`, `UserPoolClientId`, `HostedUiBaseUrl`.
-   - The Lambda is a **container image**, so a Docker daemon must be running
-     (Docker Desktop, or `colima start`).
-
-**B2. Publish the frontend (SPA → S3 → CloudFront)**
-7. Build and upload, then bust the CDN cache:
-   ```bash
-   cd apps/web && npm run build
-   aws s3 sync dist/ s3://<FrontendBucket>/ --delete
-   aws cloudfront create-invalidation --distribution-id <DistributionId> --paths '/*'
-   ```
-   The SPA uses **relative** API paths, so no rebuild is needed per environment —
-   CloudFront routes `/v1/*` to the API on the same origin. `FrontendUrl` is the app.
-
-**C. Verify the app (guest mode — no login needed)**
-8. Open `FrontendUrl` in a browser → the SPA loads; create watchlists, add tickers,
-   view charts. The SPA auto-sends `X-Guest-Id`, so you get your own guest session.
-9. Same-origin API checks:
-   ```bash
-   curl <FrontendUrl>/health                                   # {"status":"ok"}
-   curl -H "X-Guest-Id: $(uuidgen)" <FrontendUrl>/v1/watchlists # 200 + seeded starter
-   curl <FrontendUrl>/v1/watchlists                             # 401 (no token, no guest id)
-   curl <FrontendUrl>/watchlists/_all -o /dev/null -w '%{http_code}\n'  # 200 (SPA deep-link)
-   ```
-   **Post-deploy smoke check — verify the two silent-revert footguns held:**
-   ```bash
-   # 1. Cognito callbacks still include the prod domain (sign-in intact):
-   aws cognito-idp describe-user-pool-client --user-pool-id <UserPoolId> \
-     --client-id <UserPoolClientId> --query 'UserPoolClient.CallbackURLs' --output text
-   #    → must contain https://<dist>.cloudfront.net/callback
-   # 2. A fresh (uncached) ticker returns the fields your change shipped:
-   curl -s -H "X-Guest-Id: $(uuidgen)" '<FrontendUrl>/v1/scores?tickers=WSO' | python3 -m json.tool
-   ```
-   Popular tickers may serve stale (pre-deploy) rows for up to 15 min (score-cache
-   TTL) — use an uncommon symbol for an immediate read.
-
-**D. (Optional) Create a Cognito user + get a JWT** — for the authenticated path
-   (sign-in UI is still pending; guests don't need this):
-10. Sign up via the Hosted UI (`<HostedUiBaseUrl>/login?client_id=<UserPoolClientId>&response_type=token&scope=openid+email&redirect_uri=http://localhost:3000/callback`) and confirm the email — or, fastest, via CLI:
-    ```bash
-    aws cognito-idp sign-up --client-id <UserPoolClientId> --username you@example.com --password 'Passw0rd!' --user-attributes Name=email,Value=you@example.com
-    aws cognito-idp admin-confirm-sign-up --user-pool-id <UserPoolId> --username you@example.com
-    TOKEN=$(aws cognito-idp initiate-auth --client-id <UserPoolClientId> --auth-flow USER_PASSWORD_AUTH \
-      --auth-parameters USERNAME=you@example.com,PASSWORD='Passw0rd!' --query AuthenticationResult.IdToken --output text)
-    ```
-11. `curl -H "Authorization: Bearer $TOKEN" <FrontendUrl>/v1/watchlists` → that user's lists.
-    Hit a watchlist twice → second call fast (score cache, no upstream fetch).
+```bash
+aws cognito-idp sign-up --client-id <UserPoolClientId> --username you@example.com --password 'Passw0rd!' --user-attributes Name=email,Value=you@example.com
+aws cognito-idp admin-confirm-sign-up --user-pool-id <UserPoolId> --username you@example.com
+TOKEN=$(aws cognito-idp initiate-auth --client-id <UserPoolClientId> --auth-flow USER_PASSWORD_AUTH \
+  --auth-parameters USERNAME=you@example.com,PASSWORD='Passw0rd!' --query AuthenticationResult.IdToken --output text)
+curl -H "Authorization: Bearer $TOKEN" <FrontendUrl>/v1/watchlists
+```
 
 ## Defaults chosen
 
@@ -197,7 +188,7 @@ holds on Render too ([ADR-0007](decisions/0007-dual-deploy-portability.md) /
 
 ~$0 for the first year (free tier), ~$0–1/month steady-state — Lambda, DynamoDB,
 API Gateway, CloudFront, S3, and CloudWatch all sit within always-free allowances
-at this volume. See the cost breakdown discussion; set the budget alert regardless.
+at this volume. Set the budget alert regardless.
 
 ## Known limitations
 
@@ -207,8 +198,7 @@ at this volume. See the cost breakdown discussion; set the budget alert regardle
   fine.
 - **Cold starts:** container Lambda cold start adds ~1–2s occasionally; acceptable
   for a cached personal tool.
-- **Auth:** `/v1` accepts a Cognito JWT (`sub`) or a guest id (`GUEST#<uuid>`,
-  ADR-0009); Hosted-UI sign-in + `migrate-guest` + 7-day guest TTL are **live**.
+- **Auth:** Hosted-UI sign-in + `migrate-guest` + 7-day guest TTL are **live**.
   Still pending: the proactive "sign in to save" nudge and silent token renewal
   (session ~1h, Cognito default). The interim `/ui` keeps Basic Auth until it's
   retired (see [deployments.md](deployments.md) § Retirement guidance).

@@ -1,9 +1,9 @@
 # Deployments — the environment map
 
-One page that tracks **every place this app runs**, why each exists, and how to
-retire the interim ones safely. Detailed per-platform guides:
-[deploy-aws.md](deploy-aws.md) · [deploy-render.md](deploy-render.md) ·
-[local-dev.md](local-dev.md). The dual-host portability rationale is
+One page that tracks **every place this app runs**, why each exists, how each is
+deployed, and how to retire the interim ones safely. The AWS runbook is
+[deploy-aws.md](deploy-aws.md); running locally is [local-dev.md](local-dev.md).
+The dual-host portability rationale is
 [ADR-0007](decisions/0007-dual-deploy-portability.md); the interim demo is
 [ADR-0005](decisions/0005-interim-demo-deployment.md).
 
@@ -44,6 +44,11 @@ work on any `jwt` surface (persisted on AWS, ephemeral on Render's memory store)
   **portability forcing function** — proves the app runs unchanged off AWS and that
   auth is validated *in the app*, not at an AWS edge; (b) a zero-cost public demo.
 - **Free-tier note:** sleeps after ~15 min idle; first request wakes it (~seconds).
+- **Deploying:** auto-deploys from GitHub pushes once set up. One-time setup:
+  Render dashboard → New → Blueprint → connect the repo; Render reads
+  [`render.yaml`](../render.yaml) and proposes the service. Set `BASIC_AUTH_USER`
+  / `BASIC_AUTH_PASS` when prompted (`sync: false` secrets — **required**, or `/ui`
+  is open to anyone).
 
 ### 3. AWS API Gateway (direct) — *backend, now secondary*
 - **What:** HTTP API → Lambda (container, FastAPI via Mangum) → DynamoDB. This is the

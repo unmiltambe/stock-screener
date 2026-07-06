@@ -136,7 +136,7 @@ a feature** link in the footer. Licensed under [MIT](LICENSE).
 
 Full environment map, configs, and safe-retirement plan for the interim surfaces:
 [docs/deployments.md](docs/deployments.md). Deploy steps:
-[docs/deploy-aws.md](docs/deploy-aws.md) · [docs/deploy-render.md](docs/deploy-render.md).
+[docs/deploy-aws.md](docs/deploy-aws.md) (Render deploy is covered in the environment map).
 
 ## Build status
 

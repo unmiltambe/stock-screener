@@ -59,7 +59,6 @@ stock-screener/
     ├── structure.md              ← this file
     ├── deployments.md            environment map (local, Render, API GW, CloudFront)
     ├── deploy-aws.md             AWS deploy (architecture, control flows, steps)
-    ├── deploy-render.md          Render deploy (the portability mirror)
     ├── local-dev.md              run & test locally
     ├── roadmap.md                phases 0–5
     ├── backlog.md                captured-but-unbuilt enhancements

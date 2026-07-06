@@ -56,21 +56,17 @@ is **not done** ([AGENTS.md §4](../AGENTS.md)).
 
 ## 5. Deploy to AWS
 
-> Full runbook + exact commands: [deploy-aws.md](deploy-aws.md). The rules below are
-> the ones we've been bitten by.
+> All deploys go through [`deploy.sh`](../services/deploy/aws/deploy.sh), which
+> encodes the footguns (secret preserved + never echoed, Cognito callback pinned,
+> diff forced before apply). Runbook + rationale: [deploy-aws.md](deploy-aws.md).
 
-- [ ] **Frontend-only or full-stack?** A change touching `services/app/**` (models, adapters, schemas, api) needs the **backend (Lambda via `cdk deploy`)**, not just the S3 sync. A frontend-only S3 deploy of a full-stack feature ships a UI that renders against the *old* API (fields come back `null`). Deploy **backend first**, then frontend.
-- [ ] **Backend — never blind-apply.** `cdk diff` first; confirm the **only** change is the intended one (for a code ship, the `AWS::Lambda::Function` image URI). Two context values silently revert live state if omitted:
-  - `basic_auth_pass` (secret) — read from the live Lambda into a shell var, **never echo it**; omitting resets the `/ui` password.
-  - `frontend_url` — now pinned in [cdk.json](../services/deploy/aws/cdk/cdk.json) `context`; omitting used to drop the prod Cognito callback → **broken sign-in**. Only override for a brand-new distribution.
-  - Docker daemon must be running (container-image Lambda).
-- [ ] **Frontend:** `npm run build` → `aws s3 sync dist/ s3://<FrontendBucket>/ --delete` → CloudFront invalidation `--paths '/*'`.
+- [ ] **Frontend-only or full-stack?** A change touching `services/app/**` needs `deploy.sh backend` **first**, then `frontend` — a frontend-only deploy of a full-stack feature renders against the *old* API (fields come back `null`).
+- [ ] `deploy.sh diff` — review: for a code ship, the **only** change is the Lambda image URI; Cognito callbacks must not appear. Docker daemon running (`colima start`).
+- [ ] `deploy.sh backend` and/or `deploy.sh frontend`.
 
 ## 6. Post-deploy verification
 
-- [ ] `curl <FrontendUrl>/health` → `{"status":"ok"}`; live `index.html` references the **new** bundle hash; invalidation `Completed`.
-- [ ] **Fresh-ticker API check** — `curl -H "X-Guest-Id: $(uuidgen)" '<FrontendUrl>/v1/scores?tickers=WSO'` returns the fields your change shipped. Popular tickers can serve **stale rows for up to 15 min** (score-cache TTL) — use an uncommon symbol for an immediate read.
-- [ ] **Cognito callbacks intact** — `describe-user-pool-client … --query CallbackURLs` still contains `https://<dist>.cloudfront.net/callback`.
+- [ ] `deploy.sh smoke` — health, Cognito callbacks intact, fresh-ticker fields present (popular tickers can serve **stale rows up to 15 min** — the script uses an uncommon symbol).
 - [ ] Load the live app; confirm the change is visible and correct.
 
 ---

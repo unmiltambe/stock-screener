@@ -40,7 +40,6 @@ Specification for stock-screener. Conventions: **EARS** for requirements, **ADR*
 | [specs/](specs/) | Feature specs — the plan/decision record for a larger feature before/while it's built (e.g. [day-change.md](specs/day-change.md), [home-landing.md](specs/home-landing.md)). |
 | [deployments.md](deployments.md) | **The environment map** — all four surfaces (local, Render, API Gateway, CloudFront), URLs, and how to retire the interim ones safely. |
 | [deploy-aws.md](deploy-aws.md) | AWS architecture, control flows, deploy steps. Live URLs at top. |
-| [deploy-render.md](deploy-render.md) | Deploy the interim demo to a public URL. Live URL at top. |
 | [local-dev.md](local-dev.md) | Run & test the backend + SPA locally. |
 
 ## Status
