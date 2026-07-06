@@ -17,7 +17,7 @@ captured.
 | Item | Effort | Notes |
 |------|--------|-------|
 | 17 — new-user landing page | ◑ in progress | marketing home for signed-out visitors (audience → pain → how → differentiation); [spec](specs/home-landing.md) + `feat/home-landing` |
-| 18 — curated starter watchlist | 🟡 medium | seed guests with ~10 diverse names so built-in views look alive on first visit; enables #17's live hero |
+| 18 — curated starter watchlist | ✅ done | seed renamed "Starter picks" — 9 names across tech/financials/healthcare/staples so built-in views + #17 hero look alive |
 | 2 — multi-ticker add | ✅ done | shipped: paste `AAPL MSFT NVDA` or `AAPL, MSFT` — splits, validates, partial errors |
 | 6 — SMA 50/200 toggles | 🟢 small | decision made (independent toggles); likely frontend-only if SMA series already in chart payload |
 | 15 — in-app feedback link | ✅ done | shipped as an embedded Tally popup ([ADR-0010](decisions/0010-feedback-channel.md)) |
@@ -644,24 +644,19 @@ fixed public "showcase" watchlist read endpoint. Depends on #18.
 - Static-but-animated media for the "how" loops; captured once from the app.
 - Depends on **#18** for the built-in views to look compelling on arrival.
 
-### 18. Curated starter watchlist (seed list)  🟡
+### 18. Curated starter watchlist (seed list)  ✅ done
 
-**Intent:** today a new guest is seeded with `["AAPL","AMZN","GOOG","MSFT","NFLX",
-"NVDA","TSLA","AMD","INTC"]` (all tech, heavy overlap) — so All Symbols and the
-Leaderboard look thin/monotone on first visit. Seed a **diverse ~10-name starter**
-spanning sectors and score profiles (e.g. AAPL · NVDA · MSFT · BRK-B · JNJ · COST ·
-META · JPM · WMT) so the built-in views immediately demonstrate the scoring model's
-range — "Riding strong trends: NVDA" alongside "Best value: BRK-B."
+**Intent:** the old guest seed was `["AAPL","AMZN","GOOG","MSFT","NFLX","NVDA",
+"TSLA","AMD","INTC"]` (all tech, heavy overlap) — so All Symbols and the Leaderboard
+looked thin/monotone on first visit.
 
-**Why it matters:** directly powers #17's live hero + built-in views. A curious
-first-timer seeing a leaderboard that already looks *insightful* is the temptation
-loop that converts a visit into a trial.
+**Shipped** — `STARTER_WATCHLISTS` in
+[`service.py`](../services/app/api/service.py) is now **"Starter picks"** =
+`["AAPL","NVDA","MSFT","META","BRK-B","JPM","JNJ","COST","WMT"]`, spread across tech,
+financials, healthcare, and consumer staples so the built-in views + #17 hero
+demonstrate the scoring model's range on a first visit. Seeding tests updated
+([test_seeding.py](../services/app/api/tests/test_seeding.py)); full suite green. The
+user can add/remove freely — it's a starting point, not a lock-in.
 
-**Open questions**
-- Rename the seeded list from "My Watchlist" to something warmer ("Starter picks")?
-- Backend-only change ([`service.py`](../services/app/api/service.py) `_STARTER_SEED`);
-  the user can add/remove freely, so it's a starting point, not a lock-in.
-
-**Rough approach**
-- Update the seed constant in `service.py`; add/adjust a seeding test
-  ([`test_seeding.py`](../services/app/api/tests/test_seeding.py)).
+**Why it mattered:** directly powers #17's live hero + built-in views — a leaderboard
+that already looks *insightful* is the temptation loop that converts a visit.

@@ -1,7 +1,7 @@
 """Starter-watchlist seeding is once-only and race-safe (no duplicate lists).
 
 Regression for the bug where ensure_seeded ran on every watchlist fetch and,
-under eventually-consistent reads, re-seeded "My Watchlist" repeatedly.
+under eventually-consistent reads, re-seeded "Starter picks" repeatedly.
 """
 from __future__ import annotations
 
@@ -21,7 +21,7 @@ def test_repeated_ensure_seeded_creates_exactly_one_starter():
     svc = _svc()
     for _ in range(25):                      # mimic many watchlist fetches in a session
         svc.ensure_seeded("user-1")
-    assert _names(svc, "user-1") == ["My Watchlist"]
+    assert _names(svc, "user-1") == ["Starter picks"]
 
 
 def test_ensure_seeded_skips_when_user_already_has_lists():
@@ -47,7 +47,7 @@ def test_account_deletion_allows_reseed():
     svc.ensure_seeded("user-1")
     svc.delete_user_data("user-1")             # clears lists + seed marker
     svc.ensure_seeded("user-1")
-    assert _names(svc, "user-1") == ["My Watchlist"]
+    assert _names(svc, "user-1") == ["Starter picks"]
 
 
 # ── init_session: bootstrap exactly once (the dup-on-every-sign-in fix) ─────────
@@ -56,7 +56,7 @@ def test_init_session_seeds_once_over_many_calls():
     svc = _svc()
     for _ in range(10):                         # mimic many app loads / refreshes
         svc.init_session("user-1")
-    assert _names(svc, "user-1") == ["My Watchlist"]
+    assert _names(svc, "user-1") == ["Starter picks"]
 
 
 def test_init_session_migrates_then_never_recopies_guest_starter():
@@ -73,11 +73,11 @@ def test_init_session_migrates_then_never_recopies_guest_starter():
     svc._seed_starter("GUEST#g2")
     r2 = svc.init_session("user-1", "g2")
     assert r2["bootstrapped"] is False          # marker already set → no-op
-    assert _names(svc, "user-1") == ["My Picks"]  # NO duplicate 'My Watchlist'
+    assert _names(svc, "user-1") == ["My Picks"]  # NO duplicate 'Starter picks'
 
 
 def test_init_session_seeds_guest_once():
     svc = _svc()
     svc.init_session("GUEST#abc")
     svc.init_session("GUEST#abc")
-    assert _names(svc, "GUEST#abc") == ["My Watchlist"]
+    assert _names(svc, "GUEST#abc") == ["Starter picks"]

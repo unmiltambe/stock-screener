@@ -102,5 +102,5 @@ class WatchlistRepo(Protocol):
         """Atomically claim the one-time seed for this user. Returns True for the
         single caller that set the marker, False if it already existed — so starter
         seeding happens exactly once even under concurrent, eventually-consistent
-        reads (the dedup that prevents duplicate 'My Watchlist' lists)."""
+        reads (the dedup that prevents duplicate starter lists)."""
         ...
