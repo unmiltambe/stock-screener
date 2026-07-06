@@ -16,7 +16,7 @@ captured.
 
 | Item | Effort | Notes |
 |------|--------|-------|
-| 17 — new-user landing page | ◑ in progress | marketing home for signed-out visitors (audience → pain → how → differentiation); spec + `feat/home-landing` |
+| 17 — new-user landing page | ◑ in progress | marketing home for signed-out visitors (audience → pain → how → differentiation); [spec](specs/home-landing.md) + `feat/home-landing` |
 | 18 — curated starter watchlist | 🟡 medium | seed guests with ~10 diverse names so built-in views look alive on first visit; enables #17's live hero |
 | 2 — multi-ticker add | ✅ done | shipped: paste `AAPL MSFT NVDA` or `AAPL, MSFT` — splits, validates, partial errors |
 | 6 — SMA 50/200 toggles | 🟢 small | decision made (independent toggles); likely frontend-only if SMA series already in chart payload |
@@ -617,7 +617,7 @@ for **signed-out visitors**, with a proper marketing landing that carries a clea
 narrative: **who it's for → the pain → the solution (shown) → why it's different**.
 Signed-in users keep a clean dashboard (no marketing).
 
-**Design frozen (spec pending in [specs/](specs/)).** Full-page vertical narrative:
+**Design frozen — see [spec](specs/home-landing.md).** Full-page vertical narrative:
 1. **Hero** — audience eyebrow ("For the self-directed investor") + tagline ("Read
    the signal, not the noise") + a **live, interactive** chart-and-scored-table
    panel (reuses the real `ChartPanel`/`TickerTable`, not a screenshot, so it never
