@@ -51,7 +51,8 @@ the loop on it *as part of finishing*: update its status (✅ done / ◑ partial
 link the spec/ADR, and record what was deliberately deferred. A shipped feature
 whose backlog entry still says "planned" is not done — and a doc that claims to
 list "every column" / "every ADR" is stale the moment your change adds one. Update
-the reference docs your change touches ([ui-columns.md](docs/ui-columns.md), the
+the reference docs your change touches ([ui-columns.md](docs/ui-columns.md),
+[screens.md](docs/screens.md) for any screen/route/nav change, the
 [docs index](docs/README.md), etc.) in the same breath, not when someone notices.
 
 ## 5. Record decisions, not just code

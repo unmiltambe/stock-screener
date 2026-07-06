@@ -46,6 +46,7 @@ is **not done** ([CLAUDE.md §4](../CLAUDE.md)).
 - [ ] **ADR / spec**: written (or updated) if §0 flagged one. ADRs in [decisions/](decisions/), specs in [specs/](specs/).
 - [ ] **Reference docs your change touched** — a doc claiming "every X" is stale the moment you add one:
   - added/changed a **table column** → [ui-columns.md](ui-columns.md) (definition, color, tooltip, sort) **and** the column-order diagram;
+  - added/changed a **screen, route, nav element, or a screen's data/actions/layout** → [screens.md](screens.md) (the affected S-entry, the nav-shell section, and the build-order table);
   - added an **ADR/spec/doc** → [docs/README.md](README.md) index;
   - changed a **user-facing feature list, prereq, or setup step** → root [README.md](../README.md).
 - [ ] Voice check on any user-facing copy ([voice.md](voice.md)).
@@ -85,6 +86,7 @@ is **not done** ([CLAUDE.md §4](../CLAUDE.md)).
 | Backlog not updated when a feature shipped | §3 backlog checkbox; [CLAUDE.md §4](../CLAUDE.md) |
 | ADR/spec written only when asked, not proactively | §0 ADR/spec trigger; [CLAUDE.md §5](../CLAUDE.md) |
 | `ui-columns.md` / docs index left stale after adding a column/ADR | §3 reference-docs checkbox |
+| `screens.md` updated only because the owner prompted a docs sweep (landing ship) — no checklist trigger named it | §3 screens.md checkbox |
 | Deployed frontend only for a change with backend fields | §5 frontend-only-or-full-stack |
 | Blind `cdk deploy` would have dropped the prod Cognito callback | §5 `cdk diff` first + pinned `frontend_url`; [AGENTS.md](../AGENTS.md) |
 | Verifying with `tsc`/build only, not the running app | §2 browser verify |
