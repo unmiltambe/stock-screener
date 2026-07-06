@@ -21,3 +21,16 @@ export function useTickerScores(symbol: string) {
     enabled: Boolean(symbol),
   });
 }
+
+// Scores for a fixed set of symbols, independent of any watchlist. `/v1/scores` is
+// a pure function of the tickers (scores are global per symbol), so this returns the
+// same read-only rows for every visitor — used for the landing showcase.
+export function useScores(symbols: string[]) {
+  const key = symbols.join(",");
+  return useQuery({
+    queryKey: ["scores-list", key],
+    queryFn: () => api<TickerRow[]>(`/v1/scores?tickers=${encodeURIComponent(key)}`),
+    enabled: symbols.length > 0,
+    staleTime: 5 * 60 * 1000,
+  });
+}

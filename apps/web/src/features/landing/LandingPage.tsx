@@ -9,18 +9,31 @@
 // (build task #6). Sections are kept local for now; split into the spec's file layout
 // if they grow.
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowUpDown, Eye, HelpCircle, Layers, LayoutGrid, RefreshCw, Trophy, Zap } from "lucide-react";
-import { useAllSymbols } from "../../api/watchlists";
+import { ArrowUpDown, Eye, HelpCircle, Layers, LayoutGrid, MousePointer2, RefreshCw, Trophy, Zap } from "lucide-react";
+import { useWatchlists } from "../../api/watchlists";
+import { useScores } from "../../api/tickers";
 import { ChartPanel } from "../watchlists/TickerTable";
 import { ShowcaseScoreTable } from "./ShowcaseScoreTable";
 
+// Fixed, read-only showcase for the hero — the same six names for every visitor,
+// independent of their watchlists (so editing/deleting a list never changes the
+// landing). Mirrors STARTER_WATCHLISTS in services/app/api/service.py so the pitch
+// previews exactly what a new guest gets seeded.
+const SHOWCASE_TICKERS = ["NVDA", "AAPL", "BRK-B", "JNJ", "JPM", "WMT"];
+
 export default function LandingPage() {
-  const { data: rows, isLoading } = useAllSymbols();
-  const showcase = useMemo(() => rows.slice(0, 6), [rows]);
+  const { data: showcase = [], isLoading } = useScores(SHOWCASE_TICKERS);
   const [selected, setSelected] = useState<string | null>(null);
   const active = selected ?? showcase[0]?.ticker ?? null;
+
+  // "Open my starter list" goes straight into the seeded list; if the guest has
+  // removed it, fall back to the always-valid All Symbols view. "Starter picks"
+  // mirrors STARTER_WATCHLISTS in services/app/api/service.py.
+  const { data: watchlists } = useWatchlists();
+  const starter = watchlists?.find((w) => w.name === "Starter picks");
+  const openHref = starter ? `/watchlists/${starter.id}` : "/watchlists/_all";
 
   return (
     <div className="max-w-5xl mx-auto">
@@ -66,7 +79,7 @@ export default function LandingPage() {
                 onSelect={setSelected}
               />
               <p className="text-[11px] text-dim text-center py-2 border-t border-line/50">
-                Live scores from a starter watchlist — pick a row to chart it.
+                A live sample, freshly scored — pick a row to chart it.
               </p>
             </>
           ) : (
@@ -109,7 +122,7 @@ export default function LandingPage() {
         <div className="grid gap-5 md:grid-cols-3">
           <HowStep n="01" label="Understand" title="See the math, not just a score"
             visual={<UnderstandVisual />}
-            body="Every score breaks into visible columns. Hover any number for a plain-English explanation of what drives it." />
+            body="Every score breaks into visible columns. Hover any column header to see how it's built — the inputs and how they're weighted." />
           <HowStep n="02" label="Visualize" title="Read the technical picture"
             visual={<VisualizeVisual />}
             body="Price with SMA-50 and SMA-200 overlays, 1W to 10Y. See the trend and where a stock sits in it." />
@@ -139,30 +152,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Live proof ── */}
-      <section className="py-10 border-t border-line">
-        <h2 className="text-2xl sm:text-3xl font-semibold text-center mb-2">See it working — right now.</h2>
-        <p className="text-dim text-sm text-center italic mb-6">
-          Your starter list comes pre-loaded, so these views are alive on your first visit.
-        </p>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Link to="/watchlists/_all" className="flex items-center justify-between rounded-lg border border-dashed border-accent/40 bg-accent/5 px-4 py-3 hover:border-accent/70 hover:bg-accent/10 transition-colors text-left">
-            <div>
-              <div className="font-medium">All Symbols</div>
-              <div className="text-dim text-sm mt-0.5">Every ticker you track, one sortable table</div>
-            </div>
-            <LayoutGrid className="text-accent shrink-0" size={20} strokeWidth={1.5} />
-          </Link>
-          <Link to="/leaderboard" className="flex items-center justify-between rounded-lg border border-dashed border-accent/40 bg-accent/5 px-4 py-3 hover:border-accent/70 hover:bg-accent/10 transition-colors text-left">
-            <div>
-              <div className="font-medium">Leaderboard</div>
-              <div className="text-dim text-sm mt-0.5">Best picks first — value, momentum &amp; second looks</div>
-            </div>
-            <Trophy className="text-accent shrink-0" size={20} strokeWidth={1.5} />
-          </Link>
-        </div>
-      </section>
-
       {/* ── Final CTA ── */}
       <section className="py-12 border-t border-line text-center">
         <h2 className="text-2xl sm:text-3xl font-semibold mb-3">Start reading the signal.</h2>
@@ -170,7 +159,7 @@ export default function LandingPage() {
           No account. No setup. Your first scored watchlist is already waiting.
         </p>
         <Link
-          to="/watchlists"
+          to={openHref}
           className="inline-block text-sm font-medium px-5 py-2.5 rounded-lg bg-accent text-bg hover:opacity-90 transition-opacity"
         >
           Open my starter list →
@@ -208,27 +197,35 @@ function HowStep({ n, label, title, body, visual }: { n: string; label: string; 
 
 // 01 — a mini scored table with one number "explained" by a tooltip callout.
 function UnderstandVisual() {
+  // The score tooltips live on the COLUMN HEADERS (hover a header → how that score is
+  // calculated), not on individual number cells — so the pointer sits on the
+  // "Fundamental" header and the tooltip explains its inputs/weights.
   return (
     <div className="relative h-full rounded-lg border border-line bg-panel p-2.5 overflow-hidden">
-      <div className="grid grid-cols-[1.4fr_1fr_1fr_1fr] gap-1 text-[8px] text-dim border-b border-line/60 pb-1">
+      <div className="grid grid-cols-[1.4fr_1.3fr_1fr_1fr] gap-1 text-[8px] text-dim border-b border-line/60 pb-1">
         <span>Ticker</span>
-        <span className="text-right">Fundamental</span>
+        <span className="text-right text-accent font-medium underline decoration-dashed underline-offset-2">Fundamental</span>
         <span className="text-right">Technical</span>
         <span className="text-right">Overall</span>
       </div>
       {[
-        { t: "NVDA", f: "71", tech: "84", o: "79", hl: true },
-        { t: "BRK-B", f: "88", tech: "52", o: "77", hl: false },
+        { t: "NVDA", f: "67", tech: "65", o: "66" },
+        { t: "BRK-B", f: "37", tech: "43", o: "39" },
       ].map((r) => (
-        <div key={r.t} className="grid grid-cols-[1.4fr_1fr_1fr_1fr] gap-1 text-[10px] font-mono py-1 border-b border-line/40">
+        <div key={r.t} className="grid grid-cols-[1.4fr_1.3fr_1fr_1fr] gap-1 text-[10px] font-mono py-1 border-b border-line/40">
           <span className="font-medium">{r.t}</span>
-          <span className={`text-right ${r.hl ? "text-accent underline decoration-dashed underline-offset-2" : "text-dim"}`}>{r.f}</span>
+          <span className="text-right text-dim">{r.f}</span>
           <span className="text-right text-dim">{r.tech}</span>
           <span className="text-right text-dim">{r.o}</span>
         </div>
       ))}
-      <div className="absolute left-6 top-[52px] bg-ink text-bg text-[8px] leading-relaxed rounded px-2 py-1 shadow-lg">
-        ROE 109% · FCF 2.3%<br />PEG 1.4 · Margin 55%
+      {/* pointer hovering the Fundamental header + the calc tooltip below it */}
+      <MousePointer2 size={13} strokeWidth={1.75} className="absolute left-[118px] top-2 text-ink" style={{ fill: "var(--color-bg)" }} />
+      <div className="absolute left-[52px] top-[26px] w-[204px] bg-ink text-bg rounded-md px-2.5 py-1.5 shadow-lg z-10">
+        <div className="text-[8.5px] font-medium mb-0.5">Fundamental · 0–100</div>
+        <div className="text-[8px] leading-snug opacity-90 whitespace-nowrap">
+          ROE 35% · FCF Yield 35% · PEG 30%<br />&gt; 60 undervalued · &lt; 35 overvalued
+        </div>
       </div>
     </div>
   );
