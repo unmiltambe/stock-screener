@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import { Routes, Route, Link } from 'react-router-dom'
+import { useAuth } from 'react-oidc-context'
 import WatchlistsPage from './features/watchlists/WatchlistsPage'
 import WatchlistDetailPage from './features/watchlists/WatchlistDetailPage'
 import AllSymbolsPage from './features/watchlists/AllSymbolsPage'
@@ -10,6 +12,21 @@ import ThemeToggle from './components/ThemeToggle'
 import WelcomeNamePrompt from './auth/WelcomeNamePrompt'
 import ProfilePage from './features/account/ProfilePage'
 import LeaderboardPage from './features/watchlists/LeaderboardPage'
+import LandingPage from './features/landing/LandingPage'
+
+const ENTERED_KEY = 'enteredApp'
+
+// Signed-out first-time visitors see the marketing landing; signed-in users and
+// guests who've clicked "Start free" get the dashboard (spec: home-landing.md D1).
+// The "entered" flag is session-scoped, mirroring the guestId semantics — a fresh
+// tab lands on the pitch again.
+function Home() {
+  const auth = useAuth()
+  const [entered, setEntered] = useState(() => !!sessionStorage.getItem(ENTERED_KEY))
+  if (auth.isLoading) return <p className="text-dim">Loading…</p>
+  if (auth.isAuthenticated || entered) return <WatchlistsPage />
+  return <LandingPage onStart={() => { sessionStorage.setItem(ENTERED_KEY, '1'); setEntered(true) }} />
+}
 
 const DOCS_URL = "https://github.com/unmiltambe/stock-screener/tree/main/docs";
 // Tally form ID for the feedback popup (ADR-0010); from tally.so/r/XxgZee.
@@ -33,7 +50,7 @@ export default function App() {
 
       <main className="flex-1 px-6 py-6">
         <Routes>
-          <Route path="/" element={<WatchlistsPage />} />
+          <Route path="/" element={<Home />} />
           <Route path="/watchlists/_all" element={<AllSymbolsPage />} />
           <Route path="/leaderboard" element={<LeaderboardPage />} />
           <Route path="/watchlists/:id" element={<WatchlistDetailPage />} />
