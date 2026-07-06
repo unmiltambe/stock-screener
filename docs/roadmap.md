@@ -48,9 +48,11 @@ score cache demonstrably prevents repeat upstream fetches (FR-3.3).
 
 **Goal:** replace the prototype UI for end users.
 
-**Status:** SPA (watchlists, All Symbols, Leaderboard, charts, ticker detail,
-profile/account) live on AWS CloudFront + S3 (unified origin), with guest sessions
-**and** Cognito Hosted-UI sign-in (guest→account migration on first login). The
+**Status:** SPA (marketing landing, watchlists dashboard, All Symbols, Leaderboard,
+charts, ticker detail, profile/account) live on AWS CloudFront + S3 (unified origin),
+with guest sessions **and** Cognito Hosted-UI sign-in (guest→account migration on first
+login). Routing is idempotent — `/` is always the landing, `/watchlists` the dashboard
+([home-landing spec](specs/home-landing.md)). The
 watchlist/All-Symbols table + chart panel are now a single shared component
 ([`TickerTable.tsx`](../apps/web/src/features/watchlists/TickerTable.tsx), [P9](constitution.md)),
 with the chart-panel sidebar showing a Fundamental/Technical breakdown + an Overall

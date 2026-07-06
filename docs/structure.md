@@ -9,9 +9,11 @@ stock-screener/
 ├── AGENTS.md                     guardrails for agents/contributors (→ repo root)
 ├── render.yaml                   Render blueprint — MUST stay at repo root (ADR-0005/0007)
 │
-├── apps/                         frontends (Phase 3+) — placeholders for now
-│   ├── web/                      React + Vite + TypeScript SPA (Phase 3)
-│   └── mobile/                   React Native / Expo (Phase 5)
+├── apps/                         frontends
+│   ├── web/                      React + Vite + TypeScript SPA — built & deployed (Phase 3)
+│   │                               features/: landing (marketing home), watchlists
+│   │                               (dashboard + shared TickerTable/ChartPanel), tickers, account
+│   └── mobile/                   React Native / Expo — placeholder (Phase 5)
 │
 ├── packages/                     shared TS for web↔mobile (Phase 3) — placeholders
 │   ├── shared-types/             API contract types
@@ -46,16 +48,23 @@ stock-screener/
 │
 └── docs/
     ├── README.md                 docs index (reading order)
-    ├── constitution.md           P1–P8 design principles
+    ├── workflow.md               single change→verify→document→ship checklist
+    ├── constitution.md           P1–P10 design principles
     ├── requirements.md           EARS functional/non-functional requirements
     ├── SCORING.md                scoring model — frozen
     ├── design.md                 target architecture
+    ├── screens.md                screen-by-screen UI spec (S0–S7)
+    ├── ui-columns.md             every table column — definitions, colours, tooltips
+    ├── voice.md                  UI voice & tone
     ├── structure.md              ← this file
+    ├── deployments.md            environment map (local, Render, API GW, CloudFront)
     ├── deploy-aws.md             AWS deploy (architecture, control flows, steps)
     ├── deploy-render.md          Render deploy (the portability mirror)
     ├── local-dev.md              run & test locally
     ├── roadmap.md                phases 0–5
-    └── decisions/                ADRs 0001–0007
+    ├── backlog.md                captured-but-unbuilt enhancements
+    ├── specs/                    feature specs (day-change, ticker-autocomplete, home-landing)
+    └── decisions/                ADRs 0001–0011
 ```
 
 ## The three categories (the mental model)
