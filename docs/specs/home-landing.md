@@ -41,13 +41,28 @@ Copy follows [voice.md](../voice.md) — market-literate warmth, brief, no hype.
 
 ## Design decisions (frozen)
 
-**D1 — Routing: signed-out landing, signed-in dashboard.**
-`/` renders the landing for signed-out visitors and the dashboard (today's
-`WatchlistsPage`) for signed-in users. Guests are the default no-login state, so the
-hero's **"Start free"** bootstraps a guest session and routes into the app — it does
-*not* require sign-in. Rejected: inlining the hero into `WatchlistsPage` (couples
-marketing to the dashboard, no clean signed-in view) and a separate `/welcome` route
-(an extra hop; `/` is the natural landing).
+**D1 — Routing: every URL is one view, independent of auth (idempotent).**
+No URL switches *page type* by login state:
+- `/` → **always the landing**, for everyone (signed-in included). No redirect, no flag.
+- `/watchlists` → **always the dashboard** (`WatchlistsPage`). Auth only scopes *whose*
+  watchlists fill it — the same user-collection semantics as any authed resource, not a
+  page swap.
+- `/watchlists/_all`, `/watchlists/:id`, `/leaderboard`, `/tickers/:symbol`, `/profile`
+  unchanged.
+
+The header carries the logo (→ `/`, the front page for all) **and a dedicated
+"Watchlists" link** (→ `/watchlists`) so every user type reaches the dashboard the same
+way. Members don't get dumped on marketing: after sign-in the Cognito callback routes
+to `/watchlists`, and all "back to watchlists" links + the landing CTAs
+("Start free", "Open my starter list", the live-proof cards) point at real routes
+(`/watchlists`, `/watchlists/_all`, `/leaderboard`).
+
+*Rejected:* (a) overloading `/` to show landing-or-dashboard via a session `entered`
+flag — non-idempotent; the same URL showed different pages, breaking the logo and five
+"back to watchlists" links for signed-out guests. (b) redirecting signed-in `/` →
+dashboard — still auth-dependent behavior at one URL. (c) inlining the hero into
+`WatchlistsPage`. The distinction that resolves it: auth-scoped *data* within a
+user-collection view is fine and inherent; auth-switched *page type* at a URL is not.
 
 **D2 — The hero is the real component, reused, not a screenshot.**
 The hero panel embeds the existing `ChartPanel` + `TickerTable` (read-only/showcase
@@ -121,9 +136,9 @@ apps/web/src/features/landing/
   media/                   captured webm loops (understand.webm, visualize.webm, act.webm)
 ```
 
-- **Routing (`App.tsx`):** at `/`, branch on auth — signed-in → `WatchlistsPage`
-  (dashboard); signed-out → `LandingPage`. "Start free" triggers guest bootstrap then
-  navigates to the dashboard.
+- **Routing (`App.tsx`):** `/` → `LandingPage`, `/watchlists` → `WatchlistsPage`,
+  fixed regardless of auth (D1). Header gains a "Watchlists" link; the Cognito callback
+  routes members to `/watchlists`. No `entered` flag.
 - **Showcase table (`ShowcaseScoreTable.tsx`):** new ~40–50-line presentational
   component rendering 5 columns from `TickerRow`, reusing `scoreColor`/`signalColor`/
   `fmtNum` from `lib/format` (D3). No change to the shared `TickerTable`.
@@ -152,8 +167,8 @@ first paint. Keep each under ~300 KB. Re-capture when the UI changes materially.
 
 1. ✅ **Showcase table** — `ShowcaseScoreTable` (5 cols) reusing `TickerRow` +
    `lib/format`. No change to the shared `TickerTable`.
-2. ✅ **Routing gate** — `App.tsx` branch at `/` on auth state; "Start free" →
-   session-scoped `entered` flag → dashboard.
+2. ✅ **Routing** — idempotent routes: `/` = landing, `/watchlists` = dashboard (D1);
+   header "Watchlists" link; callback → `/watchlists`; all back-links repointed.
 3. ✅ **Landing scaffold** — `LandingPage` + the six sections with frozen copy.
 4. ✅ **Hero** — live `ChartPanel` + `ShowcaseScoreTable`, light theme, row-click
    drives the chart.

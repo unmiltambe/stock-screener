@@ -10,12 +10,13 @@
 // if they grow.
 
 import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { ArrowUpDown, Eye, HelpCircle, Layers, LayoutGrid, RefreshCw, Trophy, Zap } from "lucide-react";
 import { useAllSymbols } from "../../api/watchlists";
 import { ChartPanel } from "../watchlists/TickerTable";
 import { ShowcaseScoreTable } from "./ShowcaseScoreTable";
 
-export default function LandingPage({ onStart }: { onStart: () => void }) {
+export default function LandingPage() {
   const { data: rows, isLoading } = useAllSymbols();
   const showcase = useMemo(() => rows.slice(0, 6), [rows]);
   const [selected, setSelected] = useState<string | null>(null);
@@ -43,12 +44,12 @@ export default function LandingPage({ onStart }: { onStart: () => void }) {
           <span><strong className="text-ink font-medium">No login</strong> needed</span>
         </div>
         <div className="flex items-center gap-3">
-          <button
-            onClick={onStart}
+          <Link
+            to="/watchlists"
             className="text-sm font-medium px-5 py-2.5 rounded-lg bg-accent text-bg hover:opacity-90 transition-opacity"
           >
             Start free →
-          </button>
+          </Link>
           <span className="text-xs text-dim">no account, 30 seconds</span>
         </div>
 
@@ -145,20 +146,20 @@ export default function LandingPage({ onStart }: { onStart: () => void }) {
           Your starter list comes pre-loaded, so these views are alive on your first visit.
         </p>
         <div className="grid gap-4 sm:grid-cols-2">
-          <button onClick={onStart} className="flex items-center justify-between rounded-lg border border-dashed border-accent/40 bg-accent/5 px-4 py-3 hover:border-accent/70 hover:bg-accent/10 transition-colors text-left">
+          <Link to="/watchlists/_all" className="flex items-center justify-between rounded-lg border border-dashed border-accent/40 bg-accent/5 px-4 py-3 hover:border-accent/70 hover:bg-accent/10 transition-colors text-left">
             <div>
               <div className="font-medium">All Symbols</div>
               <div className="text-dim text-sm mt-0.5">Every ticker you track, one sortable table</div>
             </div>
             <LayoutGrid className="text-accent shrink-0" size={20} strokeWidth={1.5} />
-          </button>
-          <button onClick={onStart} className="flex items-center justify-between rounded-lg border border-dashed border-accent/40 bg-accent/5 px-4 py-3 hover:border-accent/70 hover:bg-accent/10 transition-colors text-left">
+          </Link>
+          <Link to="/leaderboard" className="flex items-center justify-between rounded-lg border border-dashed border-accent/40 bg-accent/5 px-4 py-3 hover:border-accent/70 hover:bg-accent/10 transition-colors text-left">
             <div>
               <div className="font-medium">Leaderboard</div>
               <div className="text-dim text-sm mt-0.5">Best picks first — value, momentum &amp; second looks</div>
             </div>
             <Trophy className="text-accent shrink-0" size={20} strokeWidth={1.5} />
-          </button>
+          </Link>
         </div>
       </section>
 
@@ -168,12 +169,12 @@ export default function LandingPage({ onStart }: { onStart: () => void }) {
         <p className="text-dim text-base mb-6">
           No account. No setup. Your first scored watchlist is already waiting.
         </p>
-        <button
-          onClick={onStart}
-          className="text-sm font-medium px-5 py-2.5 rounded-lg bg-accent text-bg hover:opacity-90 transition-opacity"
+        <Link
+          to="/watchlists"
+          className="inline-block text-sm font-medium px-5 py-2.5 rounded-lg bg-accent text-bg hover:opacity-90 transition-opacity"
         >
           Open my starter list →
-        </button>
+        </Link>
       </section>
     </div>
   );

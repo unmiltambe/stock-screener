@@ -11,7 +11,8 @@ export default function CallbackPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (auth.isAuthenticated) navigate("/", { replace: true });
+    // Members land in the app after sign-in, never on the marketing page.
+    if (auth.isAuthenticated) navigate("/watchlists", { replace: true });
   }, [auth.isAuthenticated, navigate]);
 
   if (auth.error) {
@@ -27,7 +28,7 @@ export default function CallbackPage() {
         >
           Try again
         </button>
-        <Link to="/" className="block mt-3 text-dim text-sm hover:text-ink">
+        <Link to="/watchlists" className="block mt-3 text-dim text-sm hover:text-ink">
           Back to the app
         </Link>
       </div>

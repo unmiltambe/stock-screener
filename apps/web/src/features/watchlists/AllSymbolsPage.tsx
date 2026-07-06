@@ -47,7 +47,7 @@ export default function AllSymbolsPage() {
   return (
     <div className="max-w-[1400px] mx-auto">
       <div className="flex items-center gap-3 mb-4">
-        <Link to="/" className="text-accent text-sm inline-flex items-center gap-1">
+        <Link to="/watchlists" className="text-accent text-sm inline-flex items-center gap-1">
           <ArrowLeft size={14} strokeWidth={1.75} /> watchlists
         </Link>
         <span className="text-dim text-sm">/</span>

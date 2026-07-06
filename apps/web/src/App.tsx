@@ -1,6 +1,4 @@
-import { useState } from 'react'
 import { Routes, Route, Link } from 'react-router-dom'
-import { useAuth } from 'react-oidc-context'
 import WatchlistsPage from './features/watchlists/WatchlistsPage'
 import WatchlistDetailPage from './features/watchlists/WatchlistDetailPage'
 import AllSymbolsPage from './features/watchlists/AllSymbolsPage'
@@ -14,20 +12,10 @@ import ProfilePage from './features/account/ProfilePage'
 import LeaderboardPage from './features/watchlists/LeaderboardPage'
 import LandingPage from './features/landing/LandingPage'
 
-const ENTERED_KEY = 'enteredApp'
-
-// Signed-out first-time visitors see the marketing landing; signed-in users and
-// guests who've clicked "Start free" get the dashboard (spec: home-landing.md D1).
-// The "entered" flag is session-scoped, mirroring the guestId semantics — a fresh
-// tab lands on the pitch again.
-function Home() {
-  const auth = useAuth()
-  const [entered, setEntered] = useState(() => !!sessionStorage.getItem(ENTERED_KEY))
-  if (auth.isLoading) return <p className="text-dim">Loading…</p>
-  if (auth.isAuthenticated || entered) return <WatchlistsPage />
-  return <LandingPage onStart={() => { sessionStorage.setItem(ENTERED_KEY, '1'); setEntered(true) }} />
-}
-
+// Every route maps to exactly one view, independent of auth (spec home-landing.md
+// D1): `/` is always the landing, `/watchlists` is always the dashboard. Auth only
+// scopes WHOSE data fills a user-collection view (your watchlists) — it never
+// switches which page a URL shows.
 const DOCS_URL = "https://github.com/unmiltambe/stock-screener/tree/main/docs";
 // Tally form ID for the feedback popup (ADR-0010); from tally.so/r/XxgZee.
 const TALLY_FORM_ID = "XxgZee";
@@ -36,10 +24,15 @@ export default function App() {
   return (
     <div className="min-h-screen flex flex-col">
       <header className="border-b border-line px-6 py-3 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2.5">
-          <SquareActivity size={24} strokeWidth={1.5} className="text-accent shrink-0" />
-          <span className="text-2xl font-semibold tracking-tight leading-none">bellwether</span>
-        </Link>
+        <div className="flex items-center gap-6">
+          <Link to="/" className="flex items-center gap-2.5">
+            <SquareActivity size={24} strokeWidth={1.5} className="text-accent shrink-0" />
+            <span className="text-2xl font-semibold tracking-tight leading-none">bellwether</span>
+          </Link>
+          <Link to="/watchlists" className="text-sm text-dim hover:text-accent transition-colors">
+            Watchlists
+          </Link>
+        </div>
         <div className="flex items-center gap-3">
           <ThemeToggle />
           <AuthControls />
@@ -50,7 +43,8 @@ export default function App() {
 
       <main className="flex-1 px-6 py-6">
         <Routes>
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/watchlists" element={<WatchlistsPage />} />
           <Route path="/watchlists/_all" element={<AllSymbolsPage />} />
           <Route path="/leaderboard" element={<LeaderboardPage />} />
           <Route path="/watchlists/:id" element={<WatchlistDetailPage />} />
