@@ -16,7 +16,8 @@ captured.
 
 | Item | Effort | Notes |
 |------|--------|-------|
-| 17 — new-user landing page | ◑ in progress | marketing home for signed-out visitors (audience → pain → how → differentiation); [spec](specs/home-landing.md) + `feat/home-landing` |
+| 19 — legal notices & disclaimers | 🟢 small | investment disclaimer (not financial advice), data accuracy/delay note, privacy policy, terms of use; footer + landing hero + `/legal` pages |
+| 17 — new-user landing page | ✅ done | marketing home (audience → pain → how → differentiation); live hero (real ChartPanel + ShowcaseScoreTable), idempotent routing — see [spec](specs/home-landing.md) |
 | 18 — curated starter watchlist | ✅ done | seed renamed "Starter picks" — 6 varied names (tech/financials/healthcare/staples) so the #17 hero (shows 6) spans the score range |
 | 2 — multi-ticker add | ✅ done | shipped: paste `AAPL MSFT NVDA` or `AAPL, MSFT` — splits, validates, partial errors |
 | 6 — SMA 50/200 toggles | 🟢 small | decision made (independent toggles); likely frontend-only if SMA series already in chart payload |
@@ -609,40 +610,21 @@ market is a **new adapter impl + enabling it** — no change to the core, the
 
 ## Onboarding / first impression
 
-### 17. New-user landing page  ◑ in progress
+### 17. New-user landing page  ✅ done
 
-**Intent:** the current home page is a bare "Watchlists" heading — it tells a
-first-time visitor nothing about what Bellwether does or who it's for. Replace it,
-for **signed-out visitors**, with a proper marketing landing that carries a clear
-narrative: **who it's for → the pain → the solution (shown) → why it's different**.
-Signed-in users keep a clean dashboard (no marketing).
+**Shipped** on `feat/home-landing` (merged to main). Full vertical narrative:
+1. **Hero** — audience eyebrow + tagline + live `ChartPanel` + `ShowcaseScoreTable`
+   (6 tickers: NVDA/AAPL/BRK-B/JNJ/JPM/WMT — a fixed constant, not the user's
+   watchlist, so every visitor sees the same showcase).
+2. **Pain** — four frustrations of DIY research.
+3. **How it works** — Understand / Visualize / Act; static SVG visuals (inline JSX
+   stand-ins; animated chart-sweep on the Visualize step).
+4. **Differentiation** — four proof points with muted "instead of…" tags.
 
-**Design frozen — see [spec](specs/home-landing.md).** Full-page vertical narrative:
-1. **Hero** — audience eyebrow ("For the self-directed investor") + tagline ("Read
-   the signal, not the noise") + a **live, interactive** chart-and-scored-table
-   panel (reuses the real `ChartPanel`/`TickerTable`, not a screenshot, so it never
-   goes stale). Columns: Fundamental / Technical / Overall.
-2. **Pain** — four frustrations of DIY research (scattered tools, numbers without
-   meaning, manual comparison, always stale).
-3. **How it works** — three animated loops: **Understand** (score + tooltip math) →
-   **Visualize** (chart + SMA-50/200) → **Act** (leaderboard ranks). "Add" was
-   deliberately dropped as table-stakes.
-4. **Differentiation** — transparent scoring, fundamentals+technicals combined,
-   leaderboard ranks for you, zero-friction guest access. Muted "instead of…" tags.
-
-**Resolved in the [spec](specs/home-landing.md)** — routing (signed-out → landing,
-signed-in → dashboard; "Start free" bootstraps a guest); the hero reuses live data +
-`lib/format` via a small `ShowcaseScoreTable` rather than refactoring the shared
-`TickerTable` (regression risk not worth it for a 5-column need); loops as muted webm.
-
-**Still open:** live hero data source — the visitor's seeded starter list (#18) vs. a
-fixed public "showcase" watchlist read endpoint. Depends on #18.
-
-**Rough approach**
-- New `features/landing/` page + route; gate in `App.tsx` on auth state.
-- Reuse `ChartPanel` + `TickerTable` in a read-only/showcase mode for the hero.
-- Static-but-animated media for the "how" loops; captured once from the app.
-- Depends on **#18** for the built-in views to look compelling on arrival.
+**Routing is idempotent** — `/` is always LandingPage, `/watchlists` always the
+dashboard; auth only scopes data, never the page type (D1 in the spec). Guest
+sign-in bootstraps "Starter picks" (#18). See full decisions D1–D8 in the
+[spec](specs/home-landing.md).
 
 ### 18. Curated starter watchlist (seed list)  ✅ done
 
@@ -661,3 +643,50 @@ user can add/remove freely — it's a starting point, not a lock-in.
 
 **Why it mattered:** directly powers #17's live hero + built-in views — a leaderboard
 that already looks *insightful* is the temptation loop that converts a visit.
+
+### 19. Legal notices and disclaimers  🟢
+
+**Intent:** now that the site and repo are public, add the minimum legal surface
+required for a public financial-data app in the US. Four pieces, in priority order:
+
+1. **Investment disclaimer ("not financial advice")** — *required immediately.*
+   Bellwether shows algorithmic "Buy/Hold/Sell" signals and ranked scores. Without a
+   disclaimer, a user can argue they relied on these as professional advice. Providing
+   investment advice for compensation requires SEC registration as a Registered
+   Investment Advisor (RIA); a clear disclaimer establishes this is informational only.
+   Placement: site-wide footer (every page) + a line near the hero CTA on the landing
+   page. Also one sentence in the README.
+
+2. **Data accuracy / delay notice** — *required.* yfinance data is typically delayed
+   15 min and scores are cached (score-TTL is 15 min, fundamentals update quarterly).
+   A stale-data disclaimer limits liability if a user makes a trade based on a price
+   that no longer reflects market conditions. Bundle into the footer with the investment
+   disclaimer.
+
+3. **Privacy Policy** — *required before serious public use.* Cognito collects email
+   addresses; the app stores watchlists and session UUIDs. GDPR (any EU visitor) and
+   CCPA (California residents) require disclosure of what is collected, why, how long,
+   and how to delete it. A minimal policy for this data model is straightforward — a
+   static `/legal/privacy` page.
+
+4. **Terms of Use** — *recommended before monetization.* Limits liability, prohibits
+   scraping the API, sets expectations for commercial vs personal use. A static
+   `/legal/terms` page. Less urgent than the above; implement alongside or shortly after
+   the privacy policy.
+
+**Data source risk (separate from disclaimers):** yfinance scrapes Yahoo Finance.
+Yahoo's Terms of Service prohibit scraping for anything beyond personal use. For a
+pre-revenue personal project this is low practical risk, but it is the primary reason
+to evaluate a licensed data provider (Polygon.io, Tiingo, etc.) before monetizing.
+No user-facing disclaimer fixes this — it needs a data-source decision if/when the
+project goes commercial. Capture it here so it's not forgotten.
+
+**Rough approach**
+- Global `Footer` component added to `App.tsx` layout — one line of disclaimer +
+  "Privacy · Terms" links; visible on every page.
+- Small disclaimer line near the hero CTA on the landing page (`text-dim text-xs`).
+- `/legal/privacy` and `/legal/terms` routes → minimal static pages (plain prose,
+  no complex UI).
+- README: short "Disclaimer" section above the setup instructions.
+- Copy: boilerplate for this data model is well-established; a lawyer should review
+  the privacy policy before any commercial use.
