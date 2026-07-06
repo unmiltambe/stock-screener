@@ -81,9 +81,9 @@ column list means computing the grouped-header `colSpan`s and border boundaries 
 the visible set — the fiddly, bug-prone part — inside the single table that renders
 both busiest pages (watchlist detail + All Symbols, each with `extraCell`/
 `extraGroupHeader`/`extraHeader` injections). `tsc`/`vite build` can't catch a wrong
-`colSpan`, misaligned column, or broken sort ([CLAUDE.md §4](../../CLAUDE.md)), so it
+`colSpan`, misaligned column, or broken sort ([AGENTS.md §4](../../AGENTS.md)), so it
 carries real regression risk on the most-used screens for a one-panel need — the
-speculative generality [P2/§2](../../CLAUDE.md) warns against, with no second caller
+speculative generality [§2](../../AGENTS.md) warns against, with no second caller
 yet.
 
 *Chosen — a small `ShowcaseScoreTable` (~40–50 lines)* rendering only the 5 columns,

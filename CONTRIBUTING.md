@@ -8,7 +8,7 @@ to review and merge.
 
 - For anything beyond a small fix, open an issue first to align on approach —
   saves rework on both sides.
-- Read [CLAUDE.md](CLAUDE.md) and [docs/constitution.md](docs/constitution.md)
+- Read [AGENTS.md](AGENTS.md) and [docs/constitution.md](docs/constitution.md)
   (principles P1–P10) before larger changes. Architecture decisions here are
   deliberate, not accidental — PRs that go against a principle should say why in
   the description.

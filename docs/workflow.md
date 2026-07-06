@@ -5,8 +5,8 @@ and humans. It sequences the whole lifecycle and links out to the authoritative
 detail docs (it does not duplicate them). Every item here exists because we *missed*
 it at least once — treat the checkboxes as load-bearing, not decorative.
 
-> Detail docs: [CLAUDE.md](../CLAUDE.md) (how to work) · [AGENTS.md](../AGENTS.md)
-> (guardrails) · [constitution.md](constitution.md) (P1–P10) ·
+> Detail docs: [AGENTS.md](../AGENTS.md) (how to work + guardrails) ·
+> [constitution.md](constitution.md) (P1–P10) ·
 > [deploy-aws.md](deploy-aws.md) (deploy runbook) · [local-dev.md](local-dev.md)
 > (run locally).
 
@@ -16,17 +16,13 @@ it at least once — treat the checkboxes as load-bearing, not decorative.
 
 - [ ] Identify the **roadmap phase** this belongs to; don't pull later-phase work forward ([roadmap.md](roadmap.md)).
 - [ ] Check the change against **P1–P10** ([constitution.md](constitution.md)). If it must break one → ADR.
-- [ ] **Decide if it needs an ADR or spec _now_, not after** ([CLAUDE.md §5](../CLAUDE.md)). Triggers, independent of the P-check:
-  - introduces an external/third-party dependency, or sends user data off-platform;
-  - a user-facing feature with more than one reasonable approach;
-  - a choice among alternatives with real, lasting tradeoffs.
-  - ADR = decision + rationale + rejected alternatives · spec = plan for a bigger feature.
+- [ ] **Decide if it needs an ADR or spec _now_, not after** — the four triggers (external dependency, data off-platform, user-facing feature with alternatives, lasting tradeoffs) are in [AGENTS.md §5](../AGENTS.md); they're independent of the P-check.
 - [ ] Branch: small fix → off `main`; larger work → a feature branch tied to an issue.
 - [ ] Search before writing new components/helpers — extract shared, don't copy ([P9](constitution.md)).
 
 ## 1. While coding
 
-- [ ] Minimum code that solves it; nothing speculative ([CLAUDE.md §2](../CLAUDE.md)).
+- [ ] Minimum code that solves it; nothing speculative ([AGENTS.md §2](../AGENTS.md)).
 - [ ] Surgical — touch only what the task needs; match surrounding conventions.
 - [ ] Backend stays pure/isolated ([P3](constitution.md)); no presentation in the API ([P1](constitution.md)); no UI imports in `packages/*` ([P4](constitution.md)).
 - [ ] Every query-backed view renders for **loading / empty / guest / auth / error** ([P10](constitution.md)).
@@ -40,7 +36,7 @@ it at least once — treat the checkboxes as load-bearing, not decorative.
 ## 3. Document — "done" includes the paper trail
 
 The single biggest source of misses. A shipped change whose docs still say "planned"
-is **not done** ([CLAUDE.md §4](../CLAUDE.md)).
+is **not done** ([AGENTS.md §4](../AGENTS.md)).
 
 - [ ] **Backlog** ([backlog.md](backlog.md)): mark the item ✅ done / ◑ partial, link the ADR/spec, record what was deferred — in the prioritized list **and** the item body.
 - [ ] **ADR / spec**: written (or updated) if §0 flagged one. ADRs in [decisions/](decisions/), specs in [specs/](specs/).
@@ -83,8 +79,8 @@ is **not done** ([CLAUDE.md §4](../CLAUDE.md)).
 
 | Miss | Now caught by |
 |------|---------------|
-| Backlog not updated when a feature shipped | §3 backlog checkbox; [CLAUDE.md §4](../CLAUDE.md) |
-| ADR/spec written only when asked, not proactively | §0 ADR/spec trigger; [CLAUDE.md §5](../CLAUDE.md) |
+| Backlog not updated when a feature shipped | §3 backlog checkbox; [AGENTS.md §4](../AGENTS.md) |
+| ADR/spec written only when asked, not proactively | §0 ADR/spec trigger; [AGENTS.md §5](../AGENTS.md) |
 | `ui-columns.md` / docs index left stale after adding a column/ADR | §3 reference-docs checkbox |
 | `screens.md` updated only because the owner prompted a docs sweep (landing ship) — no checklist trigger named it | §3 screens.md checkbox |
 | Deployed frontend only for a change with backend fields | §5 frontend-only-or-full-stack |
