@@ -54,23 +54,40 @@ The hero panel embeds the existing `ChartPanel` + `TickerTable` (read-only/showc
 mode) fed by live data, so it can never go stale. Rejected: a static PNG (rots as the
 UI evolves; lies about current scores).
 
-**D3 — Column-configurable table (`columns` prop).**
-`TickerTable` today hardcodes ~18 columns across three grouped headers
-([TickerTable.tsx:407–444](../../apps/web/src/features/watchlists/TickerTable.tsx)).
-Refactor to a **column registry** keyed by id, each def carrying
-`{ id, group, label, tip, accessor, renderCell, className }`; head and row iterate a
-`columns: ColumnId[]` prop (defaulting to the full set — existing callers unchanged).
-The landing passes the subset `["ticker", "fundamental", "technical", "overall",
-"signal"]`; the grouped header row derives from the visible columns' groups (on the
-subset, only the Scores group survives, so it collapses cleanly). One generic
-component, two views — no duplication. This directly answers the "control columns via
-init params so the core stays generic" ask.
+**D3 — Hero uses a lightweight showcase table, not a refactor of the shared one.**
+The landing hero needs a **5-column** view (`Ticker · Fundamental · Technical ·
+Overall · Signal`). The shared `TickerTable` hardcodes ~18 columns four times over
+(`BASE_ACCESSORS`, `TIPS`, the `<td>` row, the `<Th>` head) plus a two-row grouped
+header with `colSpan`s (5/5/4/4) and group `border-left` separators
+([TickerTable.tsx:396–445](../../apps/web/src/features/watchlists/TickerTable.tsx)).
+
+*Rejected — full column registry / `columns` prop.* Making the head/row iterate a
+column list means computing the grouped-header `colSpan`s and border boundaries from
+the visible set — the fiddly, bug-prone part — inside the single table that renders
+both busiest pages (watchlist detail + All Symbols, each with `extraCell`/
+`extraGroupHeader`/`extraHeader` injections). `tsc`/`vite build` can't catch a wrong
+`colSpan`, misaligned column, or broken sort ([CLAUDE.md §4](../../CLAUDE.md)), so it
+carries real regression risk on the most-used screens for a one-panel need — the
+speculative generality [P2/§2](../../CLAUDE.md) warns against, with no second caller
+yet.
+
+*Chosen — a small `ShowcaseScoreTable` (~40–50 lines)* rendering only the 5 columns,
+no groups, no sort, no expandable chart row. It **reuses the same live data**
+(`TickerRow` via the same hooks — so it's real, never a stale screenshot, satisfying
+D2) **and the same `lib/format` color/formatter helpers** (`scoreColor`,
+`signalColor`, `fmtNum`) — so scoring/label logic is not duplicated, only the compact
+layout differs. Zero changes to the shared `TickerTable`, hence zero regression risk
+to the dashboard.
+
+*Future option:* if a second real caller needs configurable columns (e.g. a trimmed
+mobile view in Phase 5), revisit the registry then — build the abstraction when the
+second use case is concrete, not before.
 
 **D4 — Full-word score labels are canonical, site-wide.**
 Already true in the live table (`Fundamental` / `Technical` / `Overall`,
 [TickerTable.tsx:437–439](../../apps/web/src/features/watchlists/TickerTable.tsx)); the
-registry keeps these as the single source of truth so the landing and dashboard never
-drift. No abbreviations for the score columns anywhere.
+showcase table hardcodes the same three labels. No abbreviations for the score columns
+anywhere.
 
 **D5 — "How it works" is Understand → Visualize → Act; "Add" dropped.**
 Autocomplete is table-stakes and was over-weighted; the arc now leads with the
@@ -94,20 +111,22 @@ change) is a prerequisite for the "live proof" section to impress.
 
 ```
 apps/web/src/features/landing/
-  LandingPage.tsx        composes the six sections; gated in App.tsx on auth state
-  Hero.tsx               live ChartPanel + TickerTable(columns=subset) in a framed panel
-  PainSection.tsx        four pain cards (static)
-  HowItWorks.tsx         three <video> loops + captions
-  Differentiation.tsx    four "why" cards with muted contrast tags
-  LiveProof.tsx          links into All Symbols + Leaderboard
-  media/                 captured webm loops (understand.webm, visualize.webm, act.webm)
+  LandingPage.tsx          composes the six sections; gated in App.tsx on auth state
+  Hero.tsx                 live ChartPanel + ShowcaseScoreTable in a framed panel
+  ShowcaseScoreTable.tsx   compact 5-col live table (reuses TickerRow + lib/format)
+  PainSection.tsx          four pain cards (static)
+  HowItWorks.tsx           three <video> loops + captions
+  Differentiation.tsx      four "why" cards with muted contrast tags
+  LiveProof.tsx            links into All Symbols + Leaderboard
+  media/                   captured webm loops (understand.webm, visualize.webm, act.webm)
 ```
 
 - **Routing (`App.tsx`):** at `/`, branch on auth — signed-in → `WatchlistsPage`
   (dashboard); signed-out → `LandingPage`. "Start free" triggers guest bootstrap then
   navigates to the dashboard.
-- **Table refactor (`TickerTable.tsx`):** column registry + `columns` prop (D3). Keep
-  `extraCell`/`extraGroupHeader`/`extraHeader` slots working.
+- **Showcase table (`ShowcaseScoreTable.tsx`):** new ~40–50-line presentational
+  component rendering 5 columns from `TickerRow`, reusing `scoreColor`/`signalColor`/
+  `fmtNum` from `lib/format` (D3). No change to the shared `TickerTable`.
 - **Hero data:** reuse `useWatchlist`/`useAllSymbols` hooks against the visitor's
   seeded starter list (#18). If a public showcase list is preferred over per-guest
   data, that's a small read-only endpoint — deferred unless #18's timing forces it.
@@ -131,13 +150,12 @@ first paint. Keep each under ~300 KB. Re-capture when the UI changes materially.
 
 ## Build plan / task list
 
-1. **Table column registry** — refactor `TickerTable` to a column-def registry +
-   `columns` prop; default = full set. Verify dashboard + All Symbols render
-   identically (browser, not just build). *(largest task; touches a shared component)*
+1. **Showcase table** — new `ShowcaseScoreTable` (5 cols) reusing `TickerRow` +
+   `lib/format`. No change to the shared `TickerTable`, so no dashboard regression risk.
 2. **Routing gate** — `App.tsx` branch at `/` on auth state; "Start free" → guest
    bootstrap → dashboard.
 3. **Landing scaffold** — `LandingPage` + the six section components with frozen copy.
-4. **Hero** — embed live `ChartPanel` + `TickerTable(columns=subset)`; light theme.
+4. **Hero** — embed live `ChartPanel` + `ShowcaseScoreTable`; light theme.
 5. **Pain / Differentiation / Live proof** — static sections per the mockup.
 6. **How-it-works loops** — capture 3 webm loops from the live app; wire `<video>` +
    posters + reduced-motion.
@@ -150,7 +168,7 @@ first paint. Keep each under ~300 KB. Re-capture when the UI changes materially.
 
 - `cd apps/web && npm run build` green (`tsc -b` + `vite build`).
 - Signed-out `/` renders the landing; signed-in `/` renders the dashboard.
-- Dashboard + All Symbols columns unchanged after the table refactor.
+- Dashboard + All Symbols unchanged (the shared `TickerTable` isn't touched).
 - Hero chart/table show live data and update on row select.
 - Loops autoplay muted; poster shown under `prefers-reduced-motion`.
 - [ui-columns.md](../ui-columns.md) updated if any column label/behavior changed.

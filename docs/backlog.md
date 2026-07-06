@@ -630,18 +630,13 @@ Signed-in users keep a clean dashboard (no marketing).
 4. **Differentiation** — transparent scoring, fundamentals+technicals combined,
    leaderboard ranks for you, zero-friction guest access. Muted "instead of…" tags.
 
-**Open questions (for the spec)**
-- **Routing/gating:** signed-out → landing at `/`; signed-in → dashboard. Guests are
-  the default no-login state, so "Start free" bootstraps a guest and drops them into
-  the app. Exact gate: auth state vs. a "has engaged" flag.
-- **Reusing the real table** means the Fundamental/Technical/Overall labels are the
-  shared component's. Either (a) rename columns in `TickerTable` everywhere (cleaner,
-  but the dense dashboard has ~10 columns — width risk) or (b) a `verbose`/`showcase`
-  header mode for the landing. Leaning (b).
-- **Loops:** recorded from the live app; prefer muted autoplay-loop `<video>` (webm)
-  over true GIF (smaller, full-color). Needs a capture pass.
-- **Live hero data source:** the visitor's seeded starter list (#18) vs. a fixed
-  public "showcase" watchlist read endpoint. Depends on #18.
+**Resolved in the [spec](specs/home-landing.md)** — routing (signed-out → landing,
+signed-in → dashboard; "Start free" bootstraps a guest); the hero reuses live data +
+`lib/format` via a small `ShowcaseScoreTable` rather than refactoring the shared
+`TickerTable` (regression risk not worth it for a 5-column need); loops as muted webm.
+
+**Still open:** live hero data source — the visitor's seeded starter list (#18) vs. a
+fixed public "showcase" watchlist read endpoint. Depends on #18.
 
 **Rough approach**
 - New `features/landing/` page + route; gate in `App.tsx` on auth state.
