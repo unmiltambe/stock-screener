@@ -150,19 +150,21 @@ first paint. Keep each under ~300 KB. Re-capture when the UI changes materially.
 
 ## Build plan / task list
 
-1. **Showcase table** — new `ShowcaseScoreTable` (5 cols) reusing `TickerRow` +
-   `lib/format`. No change to the shared `TickerTable`, so no dashboard regression risk.
-2. **Routing gate** — `App.tsx` branch at `/` on auth state; "Start free" → guest
-   bootstrap → dashboard.
-3. **Landing scaffold** — `LandingPage` + the six section components with frozen copy.
-4. **Hero** — embed live `ChartPanel` + `ShowcaseScoreTable`; light theme.
-5. **Pain / Differentiation / Live proof** — static sections per the mockup.
-6. **How-it-works loops** — capture 3 webm loops from the live app; wire `<video>` +
-   posters + reduced-motion.
-7. **Seed (#18)** — land the curated starter list (separate PR/commit) so the built-in
-   views look alive.
-8. **Verify** — `npm run build`, then load `/` signed-out (landing) and signed-in
-   (dashboard); exercise loading/empty/error; check reduced-motion.
+1. ✅ **Showcase table** — `ShowcaseScoreTable` (5 cols) reusing `TickerRow` +
+   `lib/format`. No change to the shared `TickerTable`.
+2. ✅ **Routing gate** — `App.tsx` branch at `/` on auth state; "Start free" →
+   session-scoped `entered` flag → dashboard.
+3. ✅ **Landing scaffold** — `LandingPage` + the six sections with frozen copy.
+4. ✅ **Hero** — live `ChartPanel` + `ShowcaseScoreTable`, light theme, row-click
+   drives the chart.
+5. ✅ **Pain / Differentiation / Live proof** — static sections per the mockup.
+6. ◑ **How-it-works visuals** — crisp static JSX panels shipped as stand-ins
+   (`UnderstandVisual`/`VisualizeVisual`/`ActVisual`). **Still to do:** capture the
+   webm loops + `prefers-reduced-motion` handling.
+7. ✅ **Seed (#18)** — curated "Starter picks" list landed; seeding tests green.
+8. ◑ **Verify** — `npm run build` green; browser-verified landing (live data,
+   row-click), Start free → dashboard, dashboard table + chart panel unchanged. Still
+   to check: reduced-motion once loops land; deploy smoke.
 
 ## Verification
 
