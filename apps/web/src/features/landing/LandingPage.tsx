@@ -120,15 +120,15 @@ export default function LandingPage() {
           Add a ticker — or start with the ten we've loaded for you — then:
         </p>
         <div className="grid gap-5 md:grid-cols-3">
-          <HowStep n="01" label="Understand" title="See the math, not just a score"
+          <HowStep n="01" label="Understand" title="One number you can trust"
             visual={<UnderstandVisual />}
-            body="Every score breaks into visible columns. Hover any column header to see how it's built — the inputs and how they're weighted." />
-          <HowStep n="02" label="Visualize" title="Read the technical picture"
+            body="Each score distills a dozen metrics into one number — so you don't have to. No black box, though: hover any column header for the exact inputs and weights. Trust it at a glance, or dig into the math." />
+          <HowStep n="02" label="Visualize" title="See the trend for yourself"
             visual={<VisualizeVisual />}
-            body="Price with SMA-50 and SMA-200 overlays, 1W to 10Y. See the trend and where a stock sits in it." />
-          <HowStep n="03" label="Act" title="Let the leaderboard rank for you"
+            body="Price against its moving averages, so the trend reads at a glance — no chart degree required. New to it? Watch the shape. Fluent in SMAs? The crossovers are right there. Same picture that drives the technical score." />
+          <HowStep n="03" label="Act" title="Know where to look first"
             visual={<ActVisual />}
-            body="Best ideas surfaced by strength — trends, value, second looks. Sort any column to dig deeper." />
+            body="The leaderboard surfaces the strongest names — value, momentum, second looks — so you're never staring at a blank screen. Want the wheel? Sort any column and screen it yourself. Ranked by the same scores you can verify." />
         </div>
       </section>
 
@@ -232,25 +232,30 @@ function UnderstandVisual() {
 }
 
 // 02 — a mini price chart with SMA-50 / SMA-200 overlays (theme-aware via CSS vars).
+// Shaped to tell a story: a rally, a correction, then a recovery where SMA-50 crosses
+// up through SMA-200 (a "golden cross") — so the averages visibly react to the price.
+// The .chart-sweep reveal animates it drawing in (index.css; honors reduced-motion).
 function VisualizeVisual() {
   return (
     <div className="h-full rounded-lg border border-line bg-panel p-2.5">
       <div className="flex justify-between items-center text-[8px] mb-1">
-        <span className="font-medium">NVDA · 1Y</span>
+        <span className="font-medium">NVDA</span>
         <span className="flex gap-2">
           <span className="text-accent">— Price</span>
           <span className="text-warn">-- SMA 50</span>
           <span className="text-pos">·· SMA 200</span>
         </span>
       </div>
-      <svg viewBox="0 0 300 76" preserveAspectRatio="none" className="w-full" style={{ height: "76px" }}>
-        <path d="M0,64 C25,60 40,58 60,52 C85,45 95,47 115,40 C140,31 150,34 170,26 C200,16 215,18 235,11 C260,6 280,4 300,2"
-          fill="none" stroke="var(--color-accent)" strokeWidth="1.5" />
-        <path d="M0,66 C60,63 120,54 200,40 C245,31 285,18 300,13"
-          fill="none" stroke="var(--color-warn)" strokeWidth="1" strokeDasharray="5 3" />
-        <path d="M0,69 C80,68 160,63 235,55 C270,50 290,46 300,44"
-          fill="none" stroke="var(--color-pos)" strokeWidth="1" strokeDasharray="2 4" />
-      </svg>
+      <div className="chart-sweep">
+        <svg viewBox="0 0 300 76" preserveAspectRatio="none" className="w-full" style={{ height: "76px" }}>
+          <path d="M0,58 C60,57 120,54 180,49 C230,45 270,41 300,38"
+            fill="none" stroke="var(--color-pos)" strokeWidth="1" strokeDasharray="2 4" />
+          <path d="M0,62 C40,60 70,55 100,50 C120,47 140,44 160,41 C195,36 225,29 260,23 C280,20 292,19 300,18"
+            fill="none" stroke="var(--color-warn)" strokeWidth="1" strokeDasharray="5 3" />
+          <path d="M0,54 C20,50 45,44 65,40 C80,37 90,33 100,37 C115,42 125,53 145,56 C158,58 168,55 182,49 C205,41 225,28 255,18 C278,11 290,9 300,7"
+            fill="none" stroke="var(--color-accent)" strokeWidth="1.5" />
+        </svg>
+      </div>
     </div>
   );
 }
