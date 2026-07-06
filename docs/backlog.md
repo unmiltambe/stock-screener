@@ -16,6 +16,8 @@ captured.
 
 | Item | Effort | Notes |
 |------|--------|-------|
+| 17 — new-user landing page | ◑ in progress | marketing home for signed-out visitors (audience → pain → how → differentiation); spec + `feat/home-landing` |
+| 18 — curated starter watchlist | 🟡 medium | seed guests with ~10 diverse names so built-in views look alive on first visit; enables #17's live hero |
 | 2 — multi-ticker add | ✅ done | shipped: paste `AAPL MSFT NVDA` or `AAPL, MSFT` — splits, validates, partial errors |
 | 6 — SMA 50/200 toggles | 🟢 small | decision made (independent toggles); likely frontend-only if SMA series already in chart payload |
 | 15 — in-app feedback link | ✅ done | shipped as an embedded Tally popup ([ADR-0010](decisions/0010-feedback-channel.md)) |
@@ -602,3 +604,69 @@ market is a **new adapter impl + enabling it** — no change to the core, the
 - Validate the scoring model against a handful of names per new market before
   surfacing scores; suppress/flag where inputs are unreliable.
 - Ties to **Phase 5** (larger universe / broader coverage) in the [roadmap](roadmap.md).
+
+---
+
+## Onboarding / first impression
+
+### 17. New-user landing page  ◑ in progress
+
+**Intent:** the current home page is a bare "Watchlists" heading — it tells a
+first-time visitor nothing about what Bellwether does or who it's for. Replace it,
+for **signed-out visitors**, with a proper marketing landing that carries a clear
+narrative: **who it's for → the pain → the solution (shown) → why it's different**.
+Signed-in users keep a clean dashboard (no marketing).
+
+**Design frozen (spec pending in [specs/](specs/)).** Full-page vertical narrative:
+1. **Hero** — audience eyebrow ("For the self-directed investor") + tagline ("Read
+   the signal, not the noise") + a **live, interactive** chart-and-scored-table
+   panel (reuses the real `ChartPanel`/`TickerTable`, not a screenshot, so it never
+   goes stale). Columns: Fundamental / Technical / Overall.
+2. **Pain** — four frustrations of DIY research (scattered tools, numbers without
+   meaning, manual comparison, always stale).
+3. **How it works** — three animated loops: **Understand** (score + tooltip math) →
+   **Visualize** (chart + SMA-50/200) → **Act** (leaderboard ranks). "Add" was
+   deliberately dropped as table-stakes.
+4. **Differentiation** — transparent scoring, fundamentals+technicals combined,
+   leaderboard ranks for you, zero-friction guest access. Muted "instead of…" tags.
+
+**Open questions (for the spec)**
+- **Routing/gating:** signed-out → landing at `/`; signed-in → dashboard. Guests are
+  the default no-login state, so "Start free" bootstraps a guest and drops them into
+  the app. Exact gate: auth state vs. a "has engaged" flag.
+- **Reusing the real table** means the Fundamental/Technical/Overall labels are the
+  shared component's. Either (a) rename columns in `TickerTable` everywhere (cleaner,
+  but the dense dashboard has ~10 columns — width risk) or (b) a `verbose`/`showcase`
+  header mode for the landing. Leaning (b).
+- **Loops:** recorded from the live app; prefer muted autoplay-loop `<video>` (webm)
+  over true GIF (smaller, full-color). Needs a capture pass.
+- **Live hero data source:** the visitor's seeded starter list (#18) vs. a fixed
+  public "showcase" watchlist read endpoint. Depends on #18.
+
+**Rough approach**
+- New `features/landing/` page + route; gate in `App.tsx` on auth state.
+- Reuse `ChartPanel` + `TickerTable` in a read-only/showcase mode for the hero.
+- Static-but-animated media for the "how" loops; captured once from the app.
+- Depends on **#18** for the built-in views to look compelling on arrival.
+
+### 18. Curated starter watchlist (seed list)  🟡
+
+**Intent:** today a new guest is seeded with `["AAPL","AMZN","GOOG","MSFT","NFLX",
+"NVDA","TSLA","AMD","INTC"]` (all tech, heavy overlap) — so All Symbols and the
+Leaderboard look thin/monotone on first visit. Seed a **diverse ~10-name starter**
+spanning sectors and score profiles (e.g. AAPL · NVDA · MSFT · BRK-B · JNJ · COST ·
+META · JPM · WMT) so the built-in views immediately demonstrate the scoring model's
+range — "Riding strong trends: NVDA" alongside "Best value: BRK-B."
+
+**Why it matters:** directly powers #17's live hero + built-in views. A curious
+first-timer seeing a leaderboard that already looks *insightful* is the temptation
+loop that converts a visit into a trial.
+
+**Open questions**
+- Rename the seeded list from "My Watchlist" to something warmer ("Starter picks")?
+- Backend-only change ([`service.py`](../services/app/api/service.py) `_STARTER_SEED`);
+  the user can add/remove freely, so it's a starting point, not a lock-in.
+
+**Rough approach**
+- Update the seed constant in `service.py`; add/adjust a seeding test
+  ([`test_seeding.py`](../services/app/api/tests/test_seeding.py)).
