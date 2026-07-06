@@ -16,7 +16,7 @@ captured.
 
 | Item | Effort | Notes |
 |------|--------|-------|
-| 19 — legal notices & disclaimers | 🟢 small | investment disclaimer (not financial advice), data accuracy/delay note, privacy policy, terms of use; footer + landing hero + `/legal` pages |
+| 19 — legal notices & disclaimers | ◑ partial | README disclaimer shipped; still open: site footer line, landing-hero note, `/legal` privacy + terms pages |
 | 17 — new-user landing page | ✅ done | marketing home (audience → pain → how → differentiation); live hero (real ChartPanel + ShowcaseScoreTable), idempotent routing — see [spec](specs/home-landing.md) |
 | 18 — curated starter watchlist | ✅ done | seed renamed "Starter picks" — 6 varied names (tech/financials/healthcare/staples) so the #17 hero (shows 6) spans the score range |
 | 2 — multi-ticker add | ✅ done | shipped: paste `AAPL MSFT NVDA` or `AAPL, MSFT` — splits, validates, partial errors |
@@ -644,7 +644,11 @@ user can add/remove freely — it's a starting point, not a lock-in.
 **Why it mattered:** directly powers #17's live hero + built-in views — a leaderboard
 that already looks *insightful* is the temptation loop that converts a visit.
 
-### 19. Legal notices and disclaimers  🟢
+### 19. Legal notices and disclaimers  ◑ partial
+
+**Shipped so far:** the README "Disclaimer" section (informational only, not
+financial advice, delayed data). **Still open:** the site-wide footer line, the
+landing-hero note, and the `/legal` privacy + terms pages.
 
 **Intent:** now that the site and repo are public, add the minimum legal surface
 required for a public financial-data app in the US. Four pieces, in priority order:

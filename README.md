@@ -1,40 +1,78 @@
-# stock-screener
+# Bellwether — read the signal, not the noise
 
-A multi-user stock **dashboard, watchlist, and discovery engine**. Score the
-companies you follow, and surface new ones you don't — ranked by fundamentals,
-technicals, and the factors you care about.
+**Score every stock you follow — fundamentals, technicals, momentum — in one
+screen.** Bellwether is a multi-user stock dashboard, watchlist, and (soon)
+discovery engine for the self-directed investor: every ticker you track gets a
+transparent 0–100 score and a Buy / Neutral / Trim signal, so you know what's
+worth your attention — and can check the math behind it.
 
-## ▶ Try it live
+## ▶ Try it live — no signup, no install
 
 ### **https://d29r5u77l543g9.cloudfront.net**
 
-**No signup, no install.** You're in instantly as a guest with your own private
-watchlists. A starter list is created for you automatically.
+You're in instantly as a guest with your own private watchlists and a starter
+list created for you. Want to keep your lists? Sign in — your guest data
+migrates into the account automatically.
 
-Three things to try in 30 seconds:
-1. Open **All Symbols** — a scored table across every watchlist, sortable by fundamentals, technicals, or combined score.
-2. Click any row → an interactive **price + moving-average chart** (1W → 10Y).
-3. Hit **+ New watchlist**, start typing a ticker like `AAPL` — autocomplete kicks in. Or paste several at once (`AAPL MSFT NVDA`) and they all get added and scored.
+[![The landing page: live scored showcase + interactive chart](docs/images/landing-hero.png)](https://d29r5u77l543g9.cloudfront.net)
 
-> Want to keep your lists? **Sign in** (top-right) — your guest watchlists
-> migrate into the account automatically, saved across devices.
+## Why it exists
 
----
+Researching stocks yourself usually means five tabs: a quote page, a
+fundamentals table, a chart, a screener, and a spreadsheet to make them agree.
+Numbers everywhere, meaning nowhere. Bellwether folds that into one opinionated
+view:
 
-> Greenfield rewrite of an earlier single-user Streamlit prototype ("Bellwether").
-> This repo carries forward the **scoring model** ([docs/SCORING.md](docs/SCORING.md))
-> and starts clean on a multi-user, scale-to-zero cloud architecture.
+- **One score you can trust — because you can check it.** Fundamental (ROE, FCF
+  yield, PEG) and Technical (RSI, SMA-50/200, 52-week range) sub-scores combine
+  into an Overall score and signal. No black box: hover any column header for
+  the exact inputs and weights ([docs/SCORING.md](docs/SCORING.md) has the full
+  model).
+- **Everything you track, one sortable table.** All Symbols consolidates every
+  watchlist — 18 columns of scored, color-coded metrics, every column sortable,
+  with an inline price + SMA chart on any row:
+
+![All Symbols: 18-column scored table with the inline chart panel open](docs/images/all-symbols-chart.png)
+
+- **The leaderboard reads it for you.** Top opportunities, best value, best
+  momentum, and "worth a second look" — ranked by the same scores you can
+  verify:
+
+![Leaderboard: four ranked views across everything you track](docs/images/leaderboard.png)
+
+## Feature rundown
+
+**Live today:**
+- **Watchlists** — create lists; add tickers with type-ahead autocomplete over
+  11k+ US symbols, or paste several at once (`AAPL MSFT NVDA`); day-change %
+  on every row.
+- **All Symbols + Leaderboard** — the built-in views above.
+- **Interactive charts** — price with SMA-50/200 overlays, 1W → 10Y, on every
+  ticker.
+- **Guest sessions** — full app, zero friction ([ADR-0009](docs/decisions/0009-guest-session-before-login.md));
+  Cognito sign-in migrates guest data on first login.
+- **Your account** — set how you're addressed; delete your account + data any
+  time.
+
+**Next:** discovery / screener — surface stocks *beyond* your watchlists,
+ranked across a broad universe by configurable factors
+([ADR-0003](docs/decisions/0003-discovery-engine.md)). Phase status:
+[docs/roadmap.md](docs/roadmap.md) · item-level: [docs/backlog.md](docs/backlog.md).
+
+**Deliberately out of scope:** portfolio tracking, brokerage integration,
+automated trading.
 
 ## Quickstart (local, ~2 min)
 
-**Prerequisites:** Python 3.9+, Node 18+, Git.
+**Prerequisites:** Python 3.9+, Node 18+, Git. No AWS account, no Docker, no
+tokens — a demo user and starter watchlists are seeded automatically.
 
 ```bash
-git clone git@github.com:unmiltambe/stock-screener.git
+git clone https://github.com/unmiltambe/stock-screener.git
 cd stock-screener
 ```
 
-**Terminal 1 — backend (FastAPI, in-memory, real market data):**
+**Terminal 1 — backend (FastAPI, in-memory store, real market data):**
 ```bash
 cd services
 python3 -m venv .venv && source .venv/bin/activate
@@ -49,118 +87,77 @@ npm install
 npm run dev
 ```
 
-Open **http://localhost:5173**. The app is fully functional without any AWS account,
-Cognito token, or Docker. A demo user and a starter watchlist are seeded automatically.
-
-### Local architecture
-
-```
-Browser (localhost:5173)
-    └─► Vite dev server (React/TS/Tailwind)
-            └─► FastAPI (uvicorn, localhost:8000)   ← not Lambda locally
-                    ├─ STORE_BACKEND=memory          ← not DynamoDB
-                    ├─ DATA_BACKEND=yfinance         ← real prices via yfinance
-                    └─ AUTH_MODE=header              ← no Cognito; header X-User-Id
-```
-
-The same Python app runs on AWS Lambda (via Mangum) with DynamoDB + Cognito in
-production — the adapter swap is env-var driven. See [docs/local-dev.md](docs/local-dev.md)
-for full options (offline fixture data, DynamoDB Local, etc.).
-
-## What it does
-
-**Available now (live):**
-- **Watchlists** — create lists, add/remove tickers (type-ahead autocomplete over 11k+ US symbols; paste several at once), each scored on fundamentals + technicals, with a day-change (% vs. previous close) column.
-- **All Symbols** — a built-in consolidated view across every watchlist, sortable by any metric or score.
-- **Interactive charts** — price with SMA-50/200 overlays, 1W → 10Y, on every ticker.
-- **Guest sessions** — full use with zero friction, no login required ([ADR-0009](docs/decisions/0009-guest-session-before-login.md)).
-- **Sign in & save** — Cognito Hosted UI login; guest watchlists migrate into the account on first sign-in.
-- **Leaderboard** — curated "best picks first" board (top opportunities, value, momentum, second looks) alongside the full All Symbols table.
-- **Your account** — set how you're addressed (warm, personal greetings, [voice.md](docs/voice.md)) and delete your account + data any time.
-
-**Planned next:**
-- **Discovery / screener** *(the new direction)* — surface stocks beyond your watchlists, ranked across a broad universe by configurable factors ([ADR-0003](docs/decisions/0003-discovery-engine.md)).
-
-**Out of scope (for now):** no portfolio tracking, brokerage integration, or
-automated trading. The earlier prototype's Alpaca/leveraged-ETF trading is
-intentionally set aside and may return later as a separate concern.
+Open **http://localhost:5173**. Full options (offline fixture data, DynamoDB
+Local, auth modes): [docs/local-dev.md](docs/local-dev.md).
 
 ## Architecture at a glance
 
 API-first Python backend (FastAPI on AWS Lambda) + React/TypeScript SPA. In
 production, **CloudFront serves the SPA and proxies the API on one origin** (no
-CORS), backed by API Gateway → Lambda → DynamoDB, with Cognito JWT + guest auth.
-Scale-to-zero by design. Full detail in [docs/design.md](docs/design.md); every
-running environment is mapped in [docs/deployments.md](docs/deployments.md);
-rationale in [docs/decisions/0001-backend-and-stack.md](docs/decisions/0001-backend-and-stack.md).
+CORS), backed by API Gateway → Lambda → DynamoDB, with Cognito JWT + guest
+auth. Scale-to-zero by design — idle costs ~nothing.
 
 ```
-apps/web                  React + Vite + TypeScript (frontend — Phase 3)
-packages/*                shared TS: types, api-client, view-logic (Phase 3)
-services/
-  app/                    hosting-agnostic backend (core, adapters, api)
-    core/                 pure scoring logic (no IO, no framework)
-    adapters/             market-data + cache + persistence (memory, dynamo, yfinance)
-    api/                  FastAPI app + Mangum handler
-  deploy/
-    render/               Render container (Dockerfile + requirements)
-    aws/                  Lambda image + cdk/ (DynamoDB + Lambda + API Gateway + S3/CloudFront)
-render.yaml               Render blueprint (must live at repo root)
+Browser ──► CloudFront ──► S3 (SPA)
+                └─ /v1/* ──► API Gateway ──► Lambda (FastAPI/Mangum) ──► DynamoDB
+                                                │
+   Cognito (JWT + guest sessions) ◄─────────────┘        yfinance (15-min cache)
 ```
 
-The same app runs on either host; only `deploy/<platform>` config and a couple of
-env vars (`STORE_BACKEND`, the entrypoint) differ. Full annotated tree + how the
-two deploys are selected: [docs/structure.md](docs/structure.md).
+The backend is hosting-agnostic: the same app also runs on Render as a
+deliberate portability check ([ADR-0007](docs/decisions/0007-dual-deploy-portability.md)).
+Scoring is pure Python with no framework imports, so it's trivially tested and
+reused by the future batch screener. Full design: [docs/design.md](docs/design.md) ·
+annotated tree: [docs/structure.md](docs/structure.md) · principles:
+[docs/constitution.md](docs/constitution.md).
 
 ## Docs
 
-Start with the [docs index](docs/README.md) → [constitution](docs/constitution.md)
-for the principles, then [requirements](docs/requirements.md) and
-[design](docs/design.md). The build sequence is in [roadmap](docs/roadmap.md);
-running the backend locally is in [local-dev](docs/local-dev.md).
+[docs/README.md](docs/README.md) is the index with a reading order. Highlights:
+the [constitution](docs/constitution.md) (10 design principles every PR is
+checked against), [SCORING.md](docs/SCORING.md) (the frozen scoring model),
+[screens.md](docs/screens.md) (per-screen UI spec), and 11
+[ADRs](docs/decisions/) recording every significant decision with the
+alternatives that were rejected. Changes follow
+[docs/workflow.md](docs/workflow.md) — a change → verify → document → ship
+checklist.
 
-## Contributing & license
+## Contributing
 
-Contributions welcome — see [CONTRIBUTING.md](CONTRIBUTING.md) for the workflow
-(open an issue first for anything larger than a small fix; CI runs tests + build on
-every PR). Or send feedback straight from the app via the **Report a bug / request
-a feature** link in the footer. Licensed under [MIT](LICENSE).
+Contributions welcome — the codebase is deliberately approachable:
+
+- **Pick something:** [docs/backlog.md](docs/backlog.md) lists captured-but-unbuilt
+  items with context, open questions, and a rough approach for each. Open an
+  issue first for anything larger than a small fix.
+- **How to work here:** [AGENTS.md](AGENTS.md) (working style + guardrails) and
+  [CONTRIBUTING.md](CONTRIBUTING.md) (process). CI runs tests + build on every PR.
+- **Verify before you PR:** `cd services && pytest` and
+  `cd apps/web && npm run build`.
+
+Or skip the repo entirely — send feedback from the app via the **Report a bug /
+request a feature** link in the footer.
 
 ## Live deployments
 
 | Environment | URL | Role |
 |------------|-----|------|
-| **AWS CloudFront** | **https://d29r5u77l543g9.cloudfront.net** | **The app** — SPA + API on one origin (canonical) |
-| AWS API Gateway | https://7x1e7unmh5.execute-api.us-east-1.amazonaws.com | Backend API direct (`/ui` Swagger, Basic-Auth) |
-| Render | https://stock-screener-demo.onrender.com | Portability mirror / interim demo (spins down on idle) |
+| **AWS CloudFront** | **https://d29r5u77l543g9.cloudfront.net** | **The app** — SPA + API, one origin (canonical) |
+| AWS API Gateway | https://7x1e7unmh5.execute-api.us-east-1.amazonaws.com | Backend API direct (debugging) |
+| Render | https://stock-screener-demo.onrender.com | Portability mirror (spins down on idle) |
 
-Full environment map, configs, and safe-retirement plan for the interim surfaces:
-[docs/deployments.md](docs/deployments.md). Deploy steps:
-[docs/deploy-aws.md](docs/deploy-aws.md) (Render deploy is covered in the environment map).
+Environment map: [docs/deployments.md](docs/deployments.md) · AWS runbook:
+[docs/deploy-aws.md](docs/deploy-aws.md).
 
-## Build status
+## Disclaimer
 
-`✅ done · ◑ in progress · ⬜ not started`
+Bellwether is for **informational and educational purposes only** — nothing
+here is financial, investment, or trading advice. Scores and signals are
+algorithmic, based on delayed market data, and may be wrong. Do your own
+research before making any investment decision.
 
-```
-   ✅ React SPA ──► CloudFront ✅ ──► API Gateway ✅ ──► Lambda (FastAPI/Mangum) ✅
-   (Phase 3,        (SPA + /v1 proxy,    (+ ✅ Cognito JWT  ┌────────────────────┐
-    guest+sign-in)   one origin)           + guest, P2/P9)  │ ✅ core  (scoring) │
-                                                            │ ✅ adapters        │
-   ✅ Cognito (P2)                                          │ ✅ api  (/v1)      │
-                                                            └────────────────────┘
-   DynamoDB ✅ ◄────────────────────────────────────────────────┘  durable store
-   ⬜ EventBridge → discovery batch (Phase 4)
-```
+## License
 
-| Phase | Scope | Status |
-|-------|-------|--------|
-| 0 | Pure scoring core + adapter interfaces | ✅ done |
-| 1 | FastAPI backend + Lambda + API Gateway + DynamoDB | ✅ **deployed on AWS** |
-| 2 | Cognito auth (app-level JWT) + per-user seeding | ✅ **deployed on AWS** |
-| 3 | React SPA on CloudFront + S3; guest + sign-in, profile/account, leaderboard | ✅ **deployed**; discovery (Phase 4) still to come |
-| 4 | Discovery / screener (scheduled batch) | ⬜ |
-| 5 | Larger universe, sector-aware scoring, mobile | ⬜ |
-
-> The [design.md](docs/design.md) diagram shows the full target architecture.
-> See [roadmap](docs/roadmap.md) for per-phase detail.
+[MIT](LICENSE). This project is a greenfield rewrite of an earlier single-user
+Streamlit prototype; the scoring model ([docs/SCORING.md](docs/SCORING.md)) is
+carried forward, everything else was rebuilt for multi-user, scale-to-zero
+cloud.

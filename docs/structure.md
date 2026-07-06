@@ -62,6 +62,7 @@ stock-screener/
     ├── local-dev.md              run & test locally
     ├── roadmap.md                phases 0–5
     ├── backlog.md                captured-but-unbuilt enhancements
+    ├── images/                   README screenshots (captured from the running app)
     ├── specs/                    feature specs (day-change, ticker-autocomplete, home-landing)
     └── decisions/                ADRs 0001–0011
 ```
