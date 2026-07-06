@@ -107,10 +107,13 @@ export default function LandingPage({ onStart }: { onStart: () => void }) {
         </p>
         <div className="grid gap-5 md:grid-cols-3">
           <HowStep n="01" label="Understand" title="See the math, not just a score"
+            visual={<UnderstandVisual />}
             body="Every score breaks into visible columns. Hover any number for a plain-English explanation of what drives it." />
           <HowStep n="02" label="Visualize" title="Read the technical picture"
+            visual={<VisualizeVisual />}
             body="Price with SMA-50 and SMA-200 overlays, 1W to 10Y. See the trend and where a stock sits in it." />
           <HowStep n="03" label="Act" title="Let the leaderboard rank for you"
+            visual={<ActVisual />}
             body="Best ideas surfaced by strength — trends, value, second looks. Sort any column to dig deeper." />
         </div>
       </section>
@@ -186,16 +189,96 @@ function PainCard({ icon, title, body }: { icon: React.ReactNode; title: string;
   );
 }
 
-function HowStep({ n, label, title, body }: { n: string; label: string; title: string; body: string }) {
+function HowStep({ n, label, title, body, visual }: { n: string; label: string; title: string; body: string; visual: React.ReactNode }) {
   return (
     <div>
       <div className="text-[10px] font-medium text-accent mb-2">{n} · {label.toUpperCase()}</div>
-      {/* Placeholder for the captured webm loop (build task #6). */}
-      <div className="rounded-lg border border-line bg-bg h-28 mb-3 flex items-center justify-center text-dim text-[11px]">
-        {label} — demo loop
-      </div>
+      {/* Static stand-in for the captured webm loop (build task #6). */}
+      <div className="h-32 mb-3">{visual}</div>
       <div className="font-medium text-sm mb-1">{title}</div>
       <div className="text-dim text-xs leading-relaxed">{body}</div>
+    </div>
+  );
+}
+
+// ── Static "how it works" visuals ──────────────────────────────────────────────
+// Crisp, theme-aware stand-ins built from the app's own tokens (no raster assets),
+// standing in until the webm loops are captured (spec home-landing.md task #6).
+
+// 01 — a mini scored table with one number "explained" by a tooltip callout.
+function UnderstandVisual() {
+  return (
+    <div className="relative h-full rounded-lg border border-line bg-panel p-2.5 overflow-hidden">
+      <div className="grid grid-cols-[1.4fr_1fr_1fr_1fr] gap-1 text-[8px] text-dim border-b border-line/60 pb-1">
+        <span>Ticker</span>
+        <span className="text-right">Fundamental</span>
+        <span className="text-right">Technical</span>
+        <span className="text-right">Overall</span>
+      </div>
+      {[
+        { t: "NVDA", f: "71", tech: "84", o: "79", hl: true },
+        { t: "BRK-B", f: "88", tech: "52", o: "77", hl: false },
+      ].map((r) => (
+        <div key={r.t} className="grid grid-cols-[1.4fr_1fr_1fr_1fr] gap-1 text-[10px] font-mono py-1 border-b border-line/40">
+          <span className="font-medium">{r.t}</span>
+          <span className={`text-right ${r.hl ? "text-accent underline decoration-dashed underline-offset-2" : "text-dim"}`}>{r.f}</span>
+          <span className="text-right text-dim">{r.tech}</span>
+          <span className="text-right text-dim">{r.o}</span>
+        </div>
+      ))}
+      <div className="absolute left-6 top-[52px] bg-ink text-bg text-[8px] leading-relaxed rounded px-2 py-1 shadow-lg">
+        ROE 109% · FCF 2.3%<br />PEG 1.4 · Margin 55%
+      </div>
+    </div>
+  );
+}
+
+// 02 — a mini price chart with SMA-50 / SMA-200 overlays (theme-aware via CSS vars).
+function VisualizeVisual() {
+  return (
+    <div className="h-full rounded-lg border border-line bg-panel p-2.5">
+      <div className="flex justify-between items-center text-[8px] mb-1">
+        <span className="font-medium">NVDA · 1Y</span>
+        <span className="flex gap-2">
+          <span className="text-accent">— Price</span>
+          <span className="text-warn">-- SMA 50</span>
+          <span className="text-pos">·· SMA 200</span>
+        </span>
+      </div>
+      <svg viewBox="0 0 300 76" preserveAspectRatio="none" className="w-full" style={{ height: "76px" }}>
+        <path d="M0,64 C25,60 40,58 60,52 C85,45 95,47 115,40 C140,31 150,34 170,26 C200,16 215,18 235,11 C260,6 280,4 300,2"
+          fill="none" stroke="var(--color-accent)" strokeWidth="1.5" />
+        <path d="M0,66 C60,63 120,54 200,40 C245,31 285,18 300,13"
+          fill="none" stroke="var(--color-warn)" strokeWidth="1" strokeDasharray="5 3" />
+        <path d="M0,69 C80,68 160,63 235,55 C270,50 290,46 300,44"
+          fill="none" stroke="var(--color-pos)" strokeWidth="1" strokeDasharray="2 4" />
+      </svg>
+    </div>
+  );
+}
+
+// 03 — a mini leaderboard: two labelled sections, unified accent bars.
+function ActVisual() {
+  const rows = [
+    { label: "Riding strong trends", items: [{ t: "NVDA", s: 79 }, { t: "MSFT", s: 73 }] },
+    { label: "Best value", items: [{ t: "BRK-B", s: 77 }] },
+  ];
+  return (
+    <div className="h-full rounded-lg border border-line bg-panel p-2.5">
+      {rows.map((sec) => (
+        <div key={sec.label}>
+          <div className="text-[8px] uppercase tracking-wider text-dim mt-1 mb-1">{sec.label}</div>
+          {sec.items.map((it) => (
+            <div key={it.t} className="flex items-center gap-2 py-0.5">
+              <span className="font-mono text-[10px] font-medium w-10">{it.t}</span>
+              <div className="flex-1 h-1 bg-line rounded-full overflow-hidden">
+                <div className="h-full bg-accent rounded-full" style={{ width: `${it.s}%` }} />
+              </div>
+              <span className="text-[9px] text-dim font-mono w-5 text-right">{it.s}</span>
+            </div>
+          ))}
+        </div>
+      ))}
     </div>
   );
 }
