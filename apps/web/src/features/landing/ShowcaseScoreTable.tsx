@@ -6,7 +6,7 @@
 // chart row); reusing that here would mean a risky refactor for a one-panel need.
 
 import type { TickerRow } from "../../api/types";
-import { fmtNum, scoreColor, signalColor } from "../../lib/format";
+import { fmtNum, fmtPrice, scoreColor, signalColor } from "../../lib/format";
 
 export function ShowcaseScoreTable({
   rows,
@@ -22,6 +22,7 @@ export function ShowcaseScoreTable({
       <thead>
         <tr className="text-dim text-xs border-b border-line">
           <th className="py-1.5 pl-3 pr-3 text-left font-normal">Ticker</th>
+          <th className="py-1.5 pr-4 text-right font-normal">Price</th>
           <th className="py-1.5 pr-3 text-right font-normal">Fundamental</th>
           <th className="py-1.5 pr-3 text-right font-normal">Technical</th>
           <th className="py-1.5 pr-3 text-right font-normal">Overall</th>
@@ -44,6 +45,7 @@ export function ShowcaseScoreTable({
               <td className="py-2 pl-3 pr-3 font-medium font-mono whitespace-nowrap">
                 <span className={isSelected ? "text-accent" : ""}>{r.ticker}</span>
               </td>
+              <td className="pr-4 text-right font-mono whitespace-nowrap">{fmtPrice(r.price)}</td>
               <td className={`pr-3 text-right font-mono whitespace-nowrap ${scoreColor(r.scores.fund)}`}>
                 {fmtNum(r.scores.fund, 0)}
               </td>

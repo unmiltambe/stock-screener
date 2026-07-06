@@ -17,7 +17,7 @@ captured.
 | Item | Effort | Notes |
 |------|--------|-------|
 | 17 — new-user landing page | ◑ in progress | marketing home for signed-out visitors (audience → pain → how → differentiation); [spec](specs/home-landing.md) + `feat/home-landing` |
-| 18 — curated starter watchlist | ✅ done | seed renamed "Starter picks" — 9 names across tech/financials/healthcare/staples so built-in views + #17 hero look alive |
+| 18 — curated starter watchlist | ✅ done | seed renamed "Starter picks" — 6 varied names (tech/financials/healthcare/staples) so the #17 hero (shows 6) spans the score range |
 | 2 — multi-ticker add | ✅ done | shipped: paste `AAPL MSFT NVDA` or `AAPL, MSFT` — splits, validates, partial errors |
 | 6 — SMA 50/200 toggles | 🟢 small | decision made (independent toggles); likely frontend-only if SMA series already in chart payload |
 | 15 — in-app feedback link | ✅ done | shipped as an embedded Tally popup ([ADR-0010](decisions/0010-feedback-channel.md)) |
@@ -652,9 +652,10 @@ looked thin/monotone on first visit.
 
 **Shipped** — `STARTER_WATCHLISTS` in
 [`service.py`](../services/app/api/service.py) is now **"Starter picks"** =
-`["AAPL","NVDA","MSFT","META","BRK-B","JPM","JNJ","COST","WMT"]`, spread across tech,
-financials, healthcare, and consumer staples so the built-in views + #17 hero
-demonstrate the scoring model's range on a first visit. Seeding tests updated
+`["NVDA","AAPL","BRK-B","JNJ","JPM","WMT"]` — **6** varied names (the #17 hero shows
+6) spanning tech-momentum, quality, deep value, defensive healthcare, financials, and
+a staple, so the built-in views + hero demonstrate the scoring model's range on a
+first visit. Seeding tests updated
 ([test_seeding.py](../services/app/api/tests/test_seeding.py)); full suite green. The
 user can add/remove freely — it's a starting point, not a lock-in.
 

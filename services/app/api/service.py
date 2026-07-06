@@ -21,7 +21,7 @@ SCORE_TTL_SECONDS = 900  # 15 minutes (FR-3.3/3.4)
 # and show the scoring model's range on a first visit — not a wall of similar
 # tech names (backlog #18 / spec home-landing.md D8).
 STARTER_WATCHLISTS = {
-    "Starter picks": ["AAPL", "NVDA", "MSFT", "META", "BRK-B", "JPM", "JNJ", "COST", "WMT"],
+    "Starter picks": ["NVDA", "AAPL", "BRK-B", "JNJ", "JPM", "WMT"],
 }
 
 

@@ -78,10 +78,10 @@ export default function LandingPage({ onStart }: { onStart: () => void }) {
 
       {/* ── Pain ── */}
       <section className="py-10 border-t border-line">
-        <h2 className="text-xl font-semibold text-center mb-1">
+        <h2 className="text-2xl sm:text-3xl font-semibold text-center mb-2">
           Picking stocks shouldn't need 10 browser tabs.
         </h2>
-        <p className="text-dim text-sm text-center mb-8">
+        <p className="text-dim text-base text-center mb-8">
           If any of this sounds familiar, you're the reason we built Bellwether.
         </p>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -98,11 +98,11 @@ export default function LandingPage({ onStart }: { onStart: () => void }) {
 
       {/* ── How it works ── */}
       <section className="py-10 border-t border-line">
-        <p className="text-[10px] uppercase tracking-wider text-dim text-center mb-1">How it works</p>
-        <h2 className="text-xl font-semibold text-center mb-1">
+        <p className="text-xs uppercase tracking-wider text-dim text-center mb-2">How it works</p>
+        <h2 className="text-2xl sm:text-3xl font-semibold text-center mb-2">
           From watchlist to decision, on one screen.
         </h2>
-        <p className="text-dim text-sm text-center mb-8">
+        <p className="text-dim text-base text-center mb-8">
           Add a ticker — or start with the ten we've loaded for you — then:
         </p>
         <div className="grid gap-5 md:grid-cols-3">
@@ -120,8 +120,8 @@ export default function LandingPage({ onStart }: { onStart: () => void }) {
 
       {/* ── Differentiation ── */}
       <section className="py-10 border-t border-line">
-        <p className="text-[10px] uppercase tracking-wider text-dim text-center mb-1">Why Bellwether</p>
-        <h2 className="text-xl font-semibold text-center mb-8">Not another data dump.</h2>
+        <p className="text-xs uppercase tracking-wider text-dim text-center mb-2">Why Bellwether</p>
+        <h2 className="text-2xl sm:text-3xl font-semibold text-center mb-8">Not another data dump.</h2>
         <div className="grid gap-4 sm:grid-cols-2">
           <DiffCard icon={<Eye size={18} strokeWidth={1.5} />} title="Transparent scoring"
             body="See exactly how each score is built — every metric visible, every column explained."
@@ -140,8 +140,8 @@ export default function LandingPage({ onStart }: { onStart: () => void }) {
 
       {/* ── Live proof ── */}
       <section className="py-10 border-t border-line">
-        <h2 className="text-lg font-semibold text-center mb-1">See it working — right now.</h2>
-        <p className="text-dim text-xs text-center italic mb-6">
+        <h2 className="text-2xl sm:text-3xl font-semibold text-center mb-2">See it working — right now.</h2>
+        <p className="text-dim text-sm text-center italic mb-6">
           Your starter list comes pre-loaded, so these views are alive on your first visit.
         </p>
         <div className="grid gap-4 sm:grid-cols-2">
@@ -164,8 +164,8 @@ export default function LandingPage({ onStart }: { onStart: () => void }) {
 
       {/* ── Final CTA ── */}
       <section className="py-12 border-t border-line text-center">
-        <h2 className="text-2xl font-semibold mb-2">Start reading the signal.</h2>
-        <p className="text-dim text-sm mb-6">
+        <h2 className="text-2xl sm:text-3xl font-semibold mb-3">Start reading the signal.</h2>
+        <p className="text-dim text-base mb-6">
           No account. No setup. Your first scored watchlist is already waiting.
         </p>
         <button
@@ -183,8 +183,8 @@ function PainCard({ icon, title, body }: { icon: React.ReactNode; title: string;
   return (
     <div className="rounded-lg border border-line bg-panel p-4 text-center">
       <div className="text-neg/70 flex justify-center mb-2">{icon}</div>
-      <div className="font-medium text-sm mb-1">{title}</div>
-      <div className="text-dim text-xs leading-relaxed">{body}</div>
+      <div className="font-medium text-base mb-1">{title}</div>
+      <div className="text-dim text-sm leading-relaxed">{body}</div>
     </div>
   );
 }
@@ -195,8 +195,8 @@ function HowStep({ n, label, title, body, visual }: { n: string; label: string; 
       <div className="text-[10px] font-medium text-accent mb-2">{n} · {label.toUpperCase()}</div>
       {/* Static stand-in for the captured webm loop (build task #6). */}
       <div className="h-32 mb-3">{visual}</div>
-      <div className="font-medium text-sm mb-1">{title}</div>
-      <div className="text-dim text-xs leading-relaxed">{body}</div>
+      <div className="font-medium text-base mb-1">{title}</div>
+      <div className="text-dim text-sm leading-relaxed">{body}</div>
     </div>
   );
 }
@@ -288,9 +288,9 @@ function DiffCard({ icon, title, body, vs }: { icon: React.ReactNode; title: str
     <div className="rounded-lg border border-line bg-panel p-4 flex gap-3 items-start">
       <div className="w-9 h-9 rounded-lg bg-accent/10 text-accent flex items-center justify-center shrink-0">{icon}</div>
       <div>
-        <div className="font-medium text-sm mb-1">{title}</div>
-        <div className="text-dim text-xs leading-relaxed">{body}</div>
-        <div className="text-dim text-[11px] mt-1.5 flex items-center gap-1">
+        <div className="font-medium text-base mb-1">{title}</div>
+        <div className="text-dim text-sm leading-relaxed">{body}</div>
+        <div className="text-dim text-xs mt-1.5 flex items-center gap-1">
           <span className="text-line">→</span> {vs}
         </div>
       </div>
