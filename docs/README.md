@@ -44,9 +44,7 @@ Specification for stock-screener. Conventions: **EARS** for requirements, **ADR*
 
 ## Status
 
-Active build. Backend (Phases 0–2) and the React web app (Phase 3 — marketing
-landing, watchlists dashboard, All Symbols, charts, ticker detail, leaderboard,
-profile/account) are deployed on AWS via CloudFront + S3 + API Gateway + Lambda +
-DynamoDB, with **both guest sessions and Cognito sign-in (guest→account migration)
-live**. Next up is Phase 4 (discovery / screener). The [deployments.md](deployments.md) map tracks
-every environment; phased build order is in the [roadmap](roadmap.md).
+Status lives in exactly two places — don't restate it elsewhere:
+**[roadmap.md](roadmap.md)** (phase-level) and **[backlog.md](backlog.md)**
+(item-level). The [deployments.md](deployments.md) map tracks every running
+environment.

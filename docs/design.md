@@ -68,7 +68,7 @@ Two compute paths:
 | Discovery batch | Lambda + EventBridge | Periodic universe scoring → rankings | P5, P7 |
 | Persistence | DynamoDB | Per-user data; TTL score cache; universe rankings | P2, P5, P7 |
 | Secrets | Secrets Manager | Data-provider keys | P8 |
-| Infra | AWS CDK (TS) | Define & deploy everything | P6 |
+| Infra | AWS CDK (Python, [ADR-0006](decisions/0006-cdk-python-container-lambda.md)) | Define & deploy everything | P6 |
 
 **Dependency rule:** application → core, application → adapters; the core depends on
 nothing. The batch path reuses the **same** core + adapters as the request path.
@@ -226,34 +226,10 @@ adapter reuses the same helper.
 
 ## 7. Monorepo layout (P4)
 
-```
-/apps
-  /web            React + Vite + TypeScript (the only frontend built now)
-  /mobile         React Native / Expo — SCAFFOLD ONLY, later phase
-
-/packages         ← shared, framework-agnostic, consumed by web AND mobile
-  /shared-types   API contract types
-  /api-client     typed fetch client (auth, endpoints, error mapping)
-  /view-logic     pure formatting + red→yellow→green thresholds + sort/rank
-
-/services
-  /app            ← hosting-agnostic backend (imported as top-level packages)
-    /core         pure Python scoring (SCORING.md)
-    /adapters     market-data, dynamo-cache, dynamo-repo
-    /api          FastAPI app + Lambda handler (Mangum)
-    /discovery    batch job: universe definition + scheduled scoring
-  /deploy
-    /render       Dockerfile + requirements (uvicorn container)
-    /aws          Dockerfile + requirements (Lambda image) + seed_dynamo.py
-      /cdk        AWS CDK (Python): Cognito, API GW, Lambda(s), Dynamo,
-                  EventBridge schedule, S3, CloudFront
-  pyproject.toml  requirements-dev.txt   ← shared dev/test tooling
-
-/render.yaml      Render blueprint — must live at the repo root (Render finds it there)
-```
-
-Shared web↔mobile = `/packages/*` only (types, client, view logic) — **not**
-components. See [ADR-0002](decisions/0002-web-mobile-sharing.md).
+The canonical annotated tree lives in **[structure.md](structure.md)** (one source
+of truth — other docs link there rather than redrawing it). The layer rule: shared
+web↔mobile = `/packages/*` only (types, client, view logic) — **not** components.
+See [ADR-0002](decisions/0002-web-mobile-sharing.md).
 
 ## 8. Environments
 

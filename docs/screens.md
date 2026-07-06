@@ -288,18 +288,6 @@ the name powers the S5 greeting.
 
 ---
 
-## Build order
-
-| # | Screen/feature | Status |
-|---|----------------|--------|
-| S0 | Landing (marketing home) | ✅ done |
-| S1 | Watchlists index (CRUD) | ✅ done |
-| S1b | All Symbols built-in view | ✅ done |
-| S2 | Watchlist detail (full table, chart panel, sort) | ✅ done |
-| S3 | Ticker detail page (chart + metrics) | ✅ done |
-| S5 guest | X-Guest-Id backend path + frontend UUID | ✅ done |
-| S5 auth | Cognito sign-in + migrate-guest | ✅ done |
-| S5 nudge | First-run name prompt | ✅ done |
-| S7 | Profile + account deletion | ✅ done |
-| S4 | Leaderboard | ✅ done |
-| S6 | Discovery (Phase 4) | ⬜ |
+> Every screen above carries its own **Status** line — that's the single status
+> source here. Phase-level status lives in [roadmap.md](roadmap.md); item-level in
+> [backlog.md](backlog.md).
