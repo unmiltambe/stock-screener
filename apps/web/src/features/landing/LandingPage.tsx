@@ -11,6 +11,7 @@
 
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { useAuth } from "react-oidc-context";
 import { ArrowUpDown, Eye, HelpCircle, Layers, LayoutGrid, MousePointer2, RefreshCw, Trophy, Zap } from "lucide-react";
 import { useWatchlists } from "../../api/watchlists";
 import { useScores } from "../../api/tickers";
@@ -27,6 +28,7 @@ export default function LandingPage() {
   const { data: showcase = [], isLoading } = useScores(SHOWCASE_TICKERS);
   const [selected, setSelected] = useState<string | null>(null);
   const active = selected ?? showcase[0]?.ticker ?? null;
+  const { isAuthenticated } = useAuth();
 
   // "Open my starter list" goes straight into the seeded list; if the guest has
   // removed it, fall back to the always-valid All Symbols view. "Starter picks"
@@ -58,13 +60,19 @@ export default function LandingPage() {
         </div>
         <div className="flex items-center gap-3">
           <Link
-            to="/watchlists"
+            to={isAuthenticated ? openHref : "/watchlists"}
             className="text-sm font-medium px-5 py-2.5 rounded-lg bg-accent text-bg hover:opacity-90 transition-opacity"
           >
-            Start free →
+            {isAuthenticated ? "Go to my dashboard →" : "Start free →"}
           </Link>
-          <span className="text-xs text-dim">no account, 30 seconds</span>
+          {!isAuthenticated && <span className="text-xs text-dim">no account, 30 seconds</span>}
         </div>
+        <p className="text-xs text-dim/70 mt-3 max-w-sm leading-relaxed">
+          For informational purposes only — not financial advice.{" "}
+          <Link to="/legal/terms" className="underline decoration-dotted underline-offset-2 hover:text-accent">Terms</Link>
+          {" · "}
+          <Link to="/legal/privacy" className="underline decoration-dotted underline-offset-2 hover:text-accent">Privacy</Link>
+        </p>
 
         {/* Live product panel — real ChartPanel + compact scored table */}
         <div className="mt-8 rounded-xl border border-line bg-panel overflow-hidden">
@@ -154,15 +162,19 @@ export default function LandingPage() {
 
       {/* ── Final CTA ── */}
       <section className="py-12 border-t border-line text-center">
-        <h2 className="text-2xl sm:text-3xl font-semibold mb-3">Start reading the signal.</h2>
+        <h2 className="text-2xl sm:text-3xl font-semibold mb-3">
+          {isAuthenticated ? "Your dashboard is waiting." : "Start reading the signal."}
+        </h2>
         <p className="text-dim text-base mb-6">
-          No account. No setup. Your first scored watchlist is already waiting.
+          {isAuthenticated
+            ? "Head to your watchlists and leaderboard."
+            : "No account. No setup. Your first scored watchlist is already waiting."}
         </p>
         <Link
           to={openHref}
           className="inline-block text-sm font-medium px-5 py-2.5 rounded-lg bg-accent text-bg hover:opacity-90 transition-opacity"
         >
-          Open my starter list →
+          {isAuthenticated ? "Open my dashboard →" : "Open my starter list →"}
         </Link>
       </section>
     </div>

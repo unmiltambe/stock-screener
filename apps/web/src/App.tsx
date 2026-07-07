@@ -11,6 +11,7 @@ import WelcomeNamePrompt from './auth/WelcomeNamePrompt'
 import ProfilePage from './features/account/ProfilePage'
 import LeaderboardPage from './features/watchlists/LeaderboardPage'
 import LandingPage from './features/landing/LandingPage'
+import { TermsPage, PrivacyPage } from './features/legal/LegalPages'
 
 // Every route maps to exactly one view, independent of auth (spec home-landing.md
 // D1): `/` is always the landing, `/watchlists` is always the dashboard. Auth only
@@ -51,6 +52,8 @@ export default function App() {
           <Route path="/tickers/:symbol" element={<TickerDetailPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/callback" element={<CallbackPage />} />
+          <Route path="/legal/terms" element={<TermsPage />} />
+          <Route path="/legal/privacy" element={<PrivacyPage />} />
         </Routes>
       </main>
 
@@ -74,6 +77,8 @@ export default function App() {
           >
             Docs <ExternalLink size={12} strokeWidth={1.75} />
           </a>
+          <Link to="/legal/privacy" className="hover:text-accent transition-colors">Privacy</Link>
+          <Link to="/legal/terms" className="hover:text-accent transition-colors">Terms</Link>
         </div>
       </footer>
     </div>

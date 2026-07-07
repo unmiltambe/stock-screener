@@ -1,8 +1,9 @@
 import { Link } from "react-router-dom";
-import { ArrowLeft, ArrowRight, Rocket, Scale, TrendingUp, RotateCcw, type LucideIcon } from "lucide-react";
+import { ArrowLeft, ArrowRight, Rocket, Scale, TrendingUp, RotateCcw, TrendingDown, type LucideIcon } from "lucide-react";
 import { useLeaderboard } from "../../api/leaderboard";
+import { useAllSymbols } from "../../api/watchlists";
 import type { Leaderboard, TickerRow } from "../../api/types";
-import { fmtNum, scoreColor, signalColor } from "../../lib/format";
+import { fmtNum, fmtPctAdaptive, scoreColor, signalColor, dayChangeColor } from "../../lib/format";
 
 // The opinionated companion to All Symbols: a curated "best picks first" read,
 // not a full table. Four ranked angles across everything you track.
@@ -43,10 +44,32 @@ function Row({ rank, row, metric }: {
   );
 }
 
+function MoverRow({ rank, row, sign }: { rank: number; row: TickerRow; sign: 1 | -1 }) {
+  const pct = row.dayChangePct;
+  return (
+    <Link
+      to={`/tickers/${row.ticker}`}
+      className="flex items-center gap-3 px-3 py-2 rounded hover:bg-line/30 transition-colors"
+    >
+      <span className="text-dim text-xs w-4 tabular-nums">{rank}</span>
+      <span className="font-medium w-16">{row.ticker}</span>
+      <span className="text-dim text-sm flex-1 truncate">{row.name}</span>
+      <span className={`font-mono text-sm w-14 text-right ${dayChangeColor(pct)}`}>
+        {sign > 0 && pct != null && pct > 0 ? "+" : ""}{fmtPctAdaptive(pct)}
+      </span>
+    </Link>
+  );
+}
+
 export default function LeaderboardPage() {
   const { data, isLoading } = useLeaderboard();
+  const { data: allRows } = useAllSymbols();
 
   if (isLoading) return <p className="text-dim">Tallying the standings…</p>;
+
+  const withChange = allRows.filter((r) => r.dayChangePct != null);
+  const topMovers = [...withChange].sort((a, b) => b.dayChangePct! - a.dayChangePct!).slice(0, 5);
+  const bottomMovers = [...withChange].sort((a, b) => a.dayChangePct! - b.dayChangePct!).slice(0, 5);
 
   const empty = data && SECTIONS.every((s) => (data[s.key] ?? []).length === 0);
   if (!data || empty) {
@@ -66,6 +89,11 @@ export default function LeaderboardPage() {
 
   return (
     <div className="max-w-5xl mx-auto">
+      <p className="text-sm text-dim mb-4">
+        <Link to="/watchlists" className="hover:text-accent transition-colors">← Watchlists</Link>
+        <span className="mx-1.5 text-line">/</span>
+        <span>Leaderboard</span>
+      </p>
       <div className="flex items-baseline justify-between mb-1">
         <h1 className="text-lg font-semibold">Leaderboard</h1>
         <Link to="/watchlists/_all" className="text-accent text-sm hover:underline inline-flex items-center gap-1">
@@ -104,6 +132,39 @@ export default function LeaderboardPage() {
           );
         })}
       </div>
+
+      {(topMovers.length > 0 || bottomMovers.length > 0) && (
+        <div className="grid gap-4 md:grid-cols-2 mt-4">
+          <div className="rounded-lg border border-line bg-panel p-4">
+            <div className="mb-2 flex items-center gap-3">
+              <div className="border border-accent rounded p-1.5 text-accent shrink-0">
+                <TrendingUp size={18} strokeWidth={1.5} />
+              </div>
+              <div>
+                <h2 className="font-medium">Top Movers Today</h2>
+                <p className="text-dim text-xs">Biggest gains across your watchlists.</p>
+              </div>
+            </div>
+            <div className="-mx-1">
+              {topMovers.map((r, i) => <MoverRow key={r.ticker} rank={i + 1} row={r} sign={1} />)}
+            </div>
+          </div>
+          <div className="rounded-lg border border-line bg-panel p-4">
+            <div className="mb-2 flex items-center gap-3">
+              <div className="border border-neg/50 rounded p-1.5 text-neg shrink-0">
+                <TrendingDown size={18} strokeWidth={1.5} />
+              </div>
+              <div>
+                <h2 className="font-medium">Biggest Drops Today</h2>
+                <p className="text-dim text-xs">Sharpest declines across your watchlists.</p>
+              </div>
+            </div>
+            <div className="-mx-1">
+              {bottomMovers.map((r, i) => <MoverRow key={r.ticker} rank={i + 1} row={r} sign={-1} />)}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
