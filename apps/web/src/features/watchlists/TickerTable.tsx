@@ -5,7 +5,7 @@
 
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowUp, ArrowDown, ArrowUpRight } from "lucide-react";
+import { ArrowLeft, ArrowUp, ArrowDown, ArrowUpRight } from "lucide-react";
 import {
   Area, CartesianGrid, ComposedChart, Line,
   ResponsiveContainer, Tooltip, XAxis, YAxis,
@@ -18,6 +18,27 @@ import {
   fmtPctAdaptive, fmtPrice, pegColor, rangeColor, roeColor, rsiColor,
   scoreColor, signalColor, sma200Color, sma50Color,
 } from "../../lib/format";
+
+// ── Breadcrumb ────────────────────────────────────────────────────────────────
+
+// Breadcrumb renders inline (no margin) — callers wrap in a mb-4 div as needed.
+export function Breadcrumb({ crumbs }: {
+  crumbs: { label: string; to: string }[];
+}) {
+  return (
+    <div className="flex items-center gap-3 text-sm">
+      {crumbs.slice(0, -1).map((c) => (
+        <span key={c.to} className="contents">
+          <Link to={c.to} className="text-accent inline-flex items-center gap-1">
+            <ArrowLeft size={14} strokeWidth={1.75} /> {c.label}
+          </Link>
+          <span className="text-dim">/</span>
+        </span>
+      ))}
+      <span className="font-semibold">{crumbs[crumbs.length - 1].label}</span>
+    </div>
+  );
+}
 
 // ── Sort ──────────────────────────────────────────────────────────────────────
 

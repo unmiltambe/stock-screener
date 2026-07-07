@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Rocket, Scale, TrendingUp, RotateCcw, TrendingDown, type LucideIcon } from "lucide-react";
+import { Breadcrumb } from "./TickerTable";
 import { useLeaderboard } from "../../api/leaderboard";
 import { useAllSymbols } from "../../api/watchlists";
 import type { Leaderboard, TickerRow } from "../../api/types";
@@ -89,11 +90,9 @@ export default function LeaderboardPage() {
 
   return (
     <div className="max-w-5xl mx-auto">
-      <p className="text-sm text-dim mb-4">
-        <Link to="/watchlists" className="hover:text-accent transition-colors">← Watchlists</Link>
-        <span className="mx-1.5 text-line">/</span>
-        <span>Leaderboard</span>
-      </p>
+      <div className="mb-4">
+        <Breadcrumb crumbs={[{ label: "watchlists", to: "/watchlists" }, { label: "Leaderboard", to: "/leaderboard" }]} />
+      </div>
       <div className="flex items-baseline justify-between mb-1">
         <h1 className="text-lg font-semibold">Leaderboard</h1>
         <Link to="/watchlists/_all" className="text-accent text-sm hover:underline inline-flex items-center gap-1">

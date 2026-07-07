@@ -1,9 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
 import { useAllSymbols } from "../../api/watchlists";
 import {
-  BASE_ACCESSORS, ChartPanel, type SortDir, Th, TIPS, TickerTableHead, TickerTableRow, sortRows,
+  BASE_ACCESSORS, Breadcrumb, ChartPanel, type SortDir, Th, TIPS, TickerTableHead, TickerTableRow, sortRows,
 } from "./TickerTable";
 
 // AllSymbols extends the base accessors with a `lists` sort key (watchlist count).
@@ -47,11 +45,7 @@ export default function AllSymbolsPage() {
   return (
     <div className="max-w-[1400px] mx-auto">
       <div className="flex items-center gap-3 mb-4">
-        <Link to="/watchlists" className="text-accent text-sm inline-flex items-center gap-1">
-          <ArrowLeft size={14} strokeWidth={1.75} /> watchlists
-        </Link>
-        <span className="text-dim text-sm">/</span>
-        <span className="text-sm font-semibold">All Symbols</span>
+        <Breadcrumb crumbs={[{ label: "watchlists", to: "/watchlists" }, { label: "All Symbols", to: "/watchlists/_all" }]} />
         <span className="text-[10px] text-dim bg-line px-2 py-0.5 rounded">Built-in</span>
         {!isLoading && (
           <span className="text-dim text-xs ml-auto">

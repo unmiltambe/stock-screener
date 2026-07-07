@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useParams } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { useParams } from "react-router-dom";
 import {
   useAddTickers,
   useRemoveTicker,
@@ -8,7 +7,7 @@ import {
   useWatchlists,
 } from "../../api/watchlists";
 import {
-  BASE_ACCESSORS, ChartPanel, type SortDir, TickerTableHead, TickerTableRow, sortRows,
+  BASE_ACCESSORS, Breadcrumb, ChartPanel, type SortDir, TickerTableHead, TickerTableRow, sortRows,
 } from "./TickerTable";
 import { TickerAutocomplete } from "./TickerAutocomplete";
 import { parseSymbols, validateSymbols } from "../../api/symbols";
@@ -92,13 +91,7 @@ export default function WatchlistDetailPage() {
   return (
     <div className="max-w-[1400px] mx-auto">
       <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2 text-sm">
-          <Link to="/watchlists" className="text-accent inline-flex items-center gap-1">
-            <ArrowLeft size={14} strokeWidth={1.75} /> watchlists
-          </Link>
-          <span className="text-dim">/</span>
-          <span className="font-semibold">{watchlistName}</span>
-        </div>
+        <Breadcrumb crumbs={[{ label: "watchlists", to: "/watchlists" }, { label: watchlistName ?? "…", to: "#" }]} />
         <div className="flex flex-col items-end gap-1">
           <form onSubmit={submitAdd} className="flex gap-2">
             <TickerAutocomplete
