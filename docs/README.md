@@ -27,7 +27,8 @@ Specification for stock-screener. Conventions: **EARS** for requirements, **ADR*
 | 14 | [decisions/0009-guest-session-before-login.md](decisions/0009-guest-session-before-login.md) | ADR: guest session before login (try the app before signing in). |
 | 15 | [decisions/0010-feedback-channel.md](decisions/0010-feedback-channel.md) | ADR: in-app feedback via an embedded Tally form. |
 | 16 | [decisions/0011-symbol-universe.md](decisions/0011-symbol-universe.md) | ADR: symbol universe — backend-owned, market-abstracted. |
-| 17 | [structure.md](structure.md) | Canonical project tree + how the two deploys are selected. |
+| 17 | [decisions/0012-chart-indicators.md](decisions/0012-chart-indicators.md) | ADR: SMA toggles + MACD + OBV as opt-in sub-panels; alternatives rejected. |
+| 18 | [structure.md](structure.md) | Canonical project tree + how the two deploys are selected. |
 | 18 | [roadmap.md](roadmap.md) | Phased build sequence (0–5). |
 | 19 | [backlog.md](backlog.md) | Captured-but-unbuilt enhancements, with open questions + rough approaches. |
 
@@ -37,7 +38,7 @@ Specification for stock-screener. Conventions: **EARS** for requirements, **ADR*
 |-----|---------|
 | [voice.md](voice.md) | The UI design motto — warm, personal, a little witty — and where it shows up. |
 | [ui-columns.md](ui-columns.md) | Reference: every table column — definition, colour thresholds, tooltips, sort/persistence behaviour. |
-| [specs/](specs/) | Feature specs — the plan/decision record for a larger feature before/while it's built (e.g. [day-change.md](specs/day-change.md), [home-landing.md](specs/home-landing.md)). |
+| [specs/](specs/) | Feature specs — the plan/decision record for a larger feature before/while it's built (e.g. [day-change.md](specs/day-change.md), [home-landing.md](specs/home-landing.md), [chart-indicators.md](specs/chart-indicators.md)). |
 | [deployments.md](deployments.md) | **The environment map** — all four surfaces (local, Render, API Gateway, CloudFront), URLs, and how to retire the interim ones safely. |
 | [deploy-aws.md](deploy-aws.md) | AWS architecture, control flows, deploy steps. Live URLs at top. |
 | [local-dev.md](local-dev.md) | Run & test the backend + SPA locally. |

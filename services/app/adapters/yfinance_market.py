@@ -8,7 +8,7 @@ the source-agnostic `with_retry` helper (adapters/retry.py)."""
 from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import Dict, Optional, Sequence
+from typing import Dict, List, Optional, Sequence
 
 import yfinance as yf
 
@@ -67,24 +67,32 @@ def _closes_by_symbol(
         return {}
 
     def _extract(data) -> Dict[str, tuple]:
+        # Returns {sym: (dates, closes, volumes)}
         out: Dict[str, tuple] = {}
         if data is None or data.empty:
             return out
         close = data["Close"]
+        volume = data.get("Volume")
         if hasattr(close, "columns"):
             for sym in symbols:
                 if sym in close.columns:
                     col = close[sym].dropna()
-                    out[sym] = (
-                        [str(d.date()) for d in col.index],
-                        [float(x) for x in col.tolist()],
-                    )
+                    dates = [str(d.date()) for d in col.index]
+                    closes = [float(x) for x in col.tolist()]
+                    vols: List[float] = []
+                    if volume is not None and sym in volume.columns:
+                        vcol = volume[sym].reindex(col.index).fillna(0)
+                        vols = [float(x) for x in vcol.tolist()]
+                    out[sym] = (dates, closes, vols)
         else:
             col = close.dropna()
-            out[symbols[0]] = (
-                [str(d.date()) for d in col.index],
-                [float(x) for x in col.tolist()],
-            )
+            dates = [str(d.date()) for d in col.index]
+            closes = [float(x) for x in col.tolist()]
+            vols = []
+            if volume is not None:
+                vcol = volume.reindex(col.index).fillna(0)
+                vols = [float(x) for x in vcol.tolist()]
+            out[symbols[0]] = (dates, closes, vols)
         return out
 
     def fetch() -> Dict[str, tuple]:
@@ -116,9 +124,14 @@ class YFinanceMarketData:
         out: Dict[str, Optional[MarketSnapshot]] = {}
         for sym in symbols:
             f = funds.get(sym)
-            dates, series = closes_data.get(sym, ([], []))
+            dates, series, volumes = closes_data.get(sym, ([], [], []))
             if f is None and not series:
                 out[sym] = None
                 continue
-            out[sym] = MarketSnapshot(fundamentals=f or Fundamentals(), closes=series, dates=dates)
+            out[sym] = MarketSnapshot(
+                fundamentals=f or Fundamentals(),
+                closes=series,
+                dates=dates,
+                volumes=volumes,
+            )
         return out

@@ -20,12 +20,12 @@ captured.
 | 17 — new-user landing page | ✅ done | marketing home (audience → pain → how → differentiation); live hero (real ChartPanel + ShowcaseScoreTable), idempotent routing — see [spec](specs/home-landing.md) |
 | 18 — curated starter watchlist | ✅ done | seed renamed "Starter picks" — 6 varied names (tech/financials/healthcare/staples) so the #17 hero (shows 6) spans the score range |
 | 2 — multi-ticker add | ✅ done | shipped: paste `AAPL MSFT NVDA` or `AAPL, MSFT` — splits, validates, partial errors |
-| 6 — SMA 50/200 toggles | 🟢 small | decision made (independent toggles); likely frontend-only if SMA series already in chart payload |
+| 6 — SMA 50/200 toggles | ✅ done | independent toggle pills in chart header; on by default — see [spec](specs/chart-indicators.md) |
 | 15 — in-app feedback link | ✅ done | shipped as an embedded Tally popup ([ADR-0010](decisions/0010-feedback-channel.md)) |
 | 12 — today's movers (sort) | ✅ done | sortable Chg % column + top 5 / bottom 5 movers panel on Leaderboard page |
 | 1 — autocomplete + validation | ✅ done | shipped: [ADR-0011](decisions/0011-symbol-universe.md) + [spec](specs/ticker-autocomplete.md); 11.7k US symbols, debounced type-ahead, eager validation |
 | 4 — watchlist column filters | 🟡 medium | client-side view-logic, no backend; UX-shape decision open |
-| 7 — MACD on graph | 🟡 medium | decision made (separate panel); needs backend MACD computation |
+| 7 — MACD on graph | ✅ done | MACD(12,26,9) sub-panel with histogram + lines; OBV sub-panel included — see [spec](specs/chart-indicators.md), [ADR-0012](decisions/0012-chart-indicators.md) |
 | 10 — fund/tech weight slider | 🟡 medium | decision made (persist per-user); Signal-table question still open |
 | 11 — day change ($/%) | ◑ partial | % column + chart sidebar shipped ([spec](specs/day-change.md)); $/% toggle deferred (frontend-only) |
 | 5 — interactive chart | 🟡→🔴 | likely a charting-library decision |

@@ -49,6 +49,74 @@ def rsi(closes: List[float], period: int = 14) -> Optional[float]:
     return round(100 - 100 / (1 + rs), 1)
 
 
+def ema_series(values: List[float], period: int) -> List[Optional[float]]:
+    """Exponential moving average series, seeded from the first SMA of the window.
+
+    Returns None for the first `period - 1` positions (insufficient data).
+    Uses multiplier k = 2 / (period + 1), the standard for MACD charting."""
+    out: List[Optional[float]] = [None] * (period - 1)
+    if len(values) < period:
+        return [None] * len(values)
+    seed = sum(values[:period]) / period
+    out.append(seed)
+    k = 2 / (period + 1)
+    prev = seed
+    for v in values[period:]:
+        prev = v * k + prev * (1 - k)
+        out.append(prev)
+    return out
+
+
+def macd_series(
+    closes: List[float],
+    fast: int = 12,
+    slow: int = 26,
+    signal_period: int = 9,
+) -> tuple[List[Optional[float]], List[Optional[float]], List[Optional[float]]]:
+    """MACD line, signal line, and histogram — all aligned to `closes`.
+
+    Returns (macd_line, signal_line, histogram). Values are None during the EMA
+    warm-up period (~slow + signal_period - 1 bars from the start)."""
+    ema_fast = ema_series(closes, fast)
+    ema_slow = ema_series(closes, slow)
+    macd_line: List[Optional[float]] = [
+        round(f - s, 4) if f is not None and s is not None else None
+        for f, s in zip(ema_fast, ema_slow)
+    ]
+    # Signal line = EMA of MACD; only over the non-None portion
+    non_null_start = next((i for i, v in enumerate(macd_line) if v is not None), None)
+    signal_line: List[Optional[float]] = [None] * len(macd_line)
+    if non_null_start is not None:
+        macd_values = [v for v in macd_line[non_null_start:] if v is not None]
+        signal_values = ema_series(macd_values, signal_period)
+        for i, sv in enumerate(signal_values):
+            signal_line[non_null_start + i] = sv
+    histogram: List[Optional[float]] = [
+        round(m - s, 4) if m is not None and s is not None else None
+        for m, s in zip(macd_line, signal_line)
+    ]
+    return macd_line, signal_line, histogram
+
+
+def obv_series(closes: List[float], volumes: List[float]) -> List[Optional[float]]:
+    """On-Balance Volume cumulative series, aligned to `closes`.
+
+    OBV rises when price closes up (volume adds), falls when price closes down
+    (volume subtracts), unchanged on flat close. Returns None for the first
+    point (no prior close to compare against)."""
+    if not closes or not volumes or len(closes) != len(volumes):
+        return [None] * len(closes)
+    out: List[Optional[float]] = [None]
+    cumulative = 0.0
+    for i in range(1, len(closes)):
+        if closes[i] > closes[i - 1]:
+            cumulative += volumes[i]
+        elif closes[i] < closes[i - 1]:
+            cumulative -= volumes[i]
+        out.append(round(cumulative, 0))
+    return out
+
+
 def _pct_vs(price: Optional[float], reference: Optional[float]) -> Optional[float]:
     if price is None or reference in (None, 0):
         return None

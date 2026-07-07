@@ -133,6 +133,11 @@ def _synthetic_closes(base: float, n: int = 260, drift: float = 0.0003,
     return out
 
 
+def _synthetic_volumes(n: int, base: float = 5_000_000.0) -> List[float]:
+    """Deterministic volume series — sine wave around a base, no randomness."""
+    return [round(base * (1 + 0.4 * math.sin(i / 7.0))) for i in range(n)]
+
+
 def _synthetic_dates(n: int) -> List[str]:
     """Weekday dates ending today, going back n calendar steps (skips weekends)."""
     dates: List[str] = []
@@ -181,8 +186,11 @@ class FixtureMarketData:
                 continue
             closes = _synthetic_closes(_BASE_PRICE.get(sym, 100.0))
             dates = _synthetic_dates(len(closes))
+            volumes = _synthetic_volumes(len(closes))
             funds = Fundamentals(**{**base.__dict__, "price": closes[-1]})
-            out[sym] = MarketSnapshot(fundamentals=funds, closes=closes, dates=dates)
+            out[sym] = MarketSnapshot(
+                fundamentals=funds, closes=closes, dates=dates, volumes=volumes
+            )
         return out
 
     @staticmethod

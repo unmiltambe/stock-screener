@@ -69,7 +69,8 @@ class MarketSnapshot:
     """
     fundamentals: Fundamentals
     closes: List[float] = field(default_factory=list)
-    dates: List[str] = field(default_factory=list)  # YYYY-MM-DD, same length as closes
+    dates: List[str] = field(default_factory=list)    # YYYY-MM-DD, same length as closes
+    volumes: List[float] = field(default_factory=list) # daily volume, same length as closes
 
 
 @dataclass(frozen=True)

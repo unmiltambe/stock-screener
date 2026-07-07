@@ -69,6 +69,11 @@ class ChartPoint(BaseModel):
     price: float
     sma50: Optional[float] = None
     sma200: Optional[float] = None
+    volume: Optional[float] = None
+    macd: Optional[float] = None
+    macd_signal: Optional[float] = None
+    macd_hist: Optional[float] = None
+    obv: Optional[float] = None
 
 
 class ChartOut(BaseModel):

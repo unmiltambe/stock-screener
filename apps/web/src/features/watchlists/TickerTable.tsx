@@ -7,7 +7,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, ArrowUp, ArrowDown, ArrowUpRight } from "lucide-react";
 import {
-  Area, CartesianGrid, ComposedChart, Line,
+  Area, Bar, CartesianGrid, ComposedChart, Line, ReferenceLine,
   ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from "recharts";
 import { useChartColors } from "../../lib/chartColors";
@@ -222,6 +222,26 @@ function VerdictCard({ score, signal }: { score: number | null; signal: string |
   );
 }
 
+// Small toggle pill used in the chart header to show/hide individual series.
+function IndicatorToggle({ label, active, color, onClick }: {
+  label: string; active: boolean; color: string; onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={[
+        "px-2 py-0.5 rounded text-[10px] border transition-colors",
+        active
+          ? "border-current"
+          : "border-transparent text-dim hover:text-ink",
+      ].join(" ")}
+      style={active ? { color, borderColor: color, backgroundColor: color + "20" } : undefined}
+    >
+      {label}
+    </button>
+  );
+}
+
 // watchlistId is optional — when provided the detail link carries routing state
 // so the detail page can offer a "back" link to the originating watchlist.
 export function ChartPanel({ ticker, watchlistId, onClose, hideClose }: {
@@ -229,20 +249,46 @@ export function ChartPanel({ ticker, watchlistId, onClose, hideClose }: {
   watchlistId?: string;
   onClose: () => void;
   // Landing hero embeds this always-on (spec home-landing.md D2) — no row to
-  // collapse back into, so the close affordance is suppressed there.
+  // collapse back into, so the close affordance and sub-panel toggles are suppressed.
   hideClose?: boolean;
 }) {
   const CHART_C = useChartColors();
   const [period, setPeriod] = useState<Period>("1Y");
+  const [showSma50, setShowSma50] = useState(true);
+  const [showSma200, setShowSma200] = useState(true);
+  const [showMacd, setShowMacd] = useState(false);
+  const [showObv, setShowObv] = useState(false);
+
   const { data: chartData, isLoading: chartLoading } = useTickerChart(ticker, YEARS_TO_FETCH[period]);
   const { data: row, isLoading: rowLoading } = useTickerScores(ticker);
   const isLoading = chartLoading || rowLoading;
   const points = chartData ? chartData.points.slice(-TRADING_DAYS[period]) : [];
   const tickInterval = Math.max(1, Math.floor(points.length / 8));
 
+  const hasObv = points.some((p) => p.obv != null);
+  const hasMacd = points.some((p) => p.macd != null);
+
+  // Price panel shrinks when sub-panels are open to keep overall height bounded.
+  const subPanels = (showMacd ? 1 : 0) + (showObv ? 1 : 0);
+  const priceH = subPanels === 0 ? "100%" : subPanels === 1 ? "55%" : "40%";
+  const subH = subPanels === 2 ? "28%" : "38%";
+
+  const sharedXAxis = (hide?: boolean) => (
+    <XAxis
+      dataKey="t"
+      tickFormatter={hide ? () => "" : makeTickFmt(period)}
+      interval={tickInterval}
+      tick={hide ? false : { fill: CHART_C.dim, fontSize: 10 }}
+      axisLine={{ stroke: CHART_C.line }}
+      tickLine={false}
+      height={hide ? 4 : undefined}
+    />
+  );
+
   return (
     <div className="bg-panel border border-line rounded-xl mb-4 overflow-hidden">
-      <div className="flex h-[280px]">
+      <div className="flex" style={{ minHeight: 280 }}>
+        {/* ── Sidebar ── */}
         <div className="w-52 shrink-0 border-r border-line flex flex-col justify-between p-4">
           <div>
             <div className="flex items-start justify-between gap-1 mb-1">
@@ -307,12 +353,26 @@ export function ChartPanel({ ticker, watchlistId, onClose, hideClose }: {
           )}
         </div>
 
+        {/* ── Chart area ── */}
         <div className="flex-1 flex flex-col min-w-0 px-3 pt-3 pb-2">
-          <div className="flex items-center justify-between mb-2 shrink-0">
-            <div className="flex items-center gap-3 text-[10px] text-dim">
-              <span style={{ color: CHART_C.accent }}>— Price</span>
-              <span style={{ color: CHART_C.warn }}>-- SMA 50</span>
-              <span style={{ color: CHART_C.pos }}>· · SMA 200</span>
+          {/* Header: legend + period + indicator toggles */}
+          <div className="flex items-center justify-between mb-2 shrink-0 gap-2 flex-wrap">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-[10px] mr-1" style={{ color: CHART_C.accent }}>— Price</span>
+              {!hideClose && (
+                <>
+                  <IndicatorToggle label="SMA 50"  active={showSma50}  color={CHART_C.warn} onClick={() => setShowSma50(v => !v)} />
+                  <IndicatorToggle label="SMA 200" active={showSma200} color={CHART_C.pos}  onClick={() => setShowSma200(v => !v)} />
+                  <IndicatorToggle label="MACD"    active={showMacd}   color={CHART_C.accent} onClick={() => setShowMacd(v => !v)} />
+                  <IndicatorToggle label="OBV"     active={showObv}    color={CHART_C.dim}  onClick={() => setShowObv(v => !v)} />
+                </>
+              )}
+              {hideClose && (
+                <>
+                  <span className="text-[10px] text-dim">-- SMA 50</span>
+                  <span className="text-[10px] text-dim">·· SMA 200</span>
+                </>
+              )}
             </div>
             <div className="flex gap-1">
               {PERIODS.map((p) => (
@@ -329,47 +389,155 @@ export function ChartPanel({ ticker, watchlistId, onClose, hideClose }: {
               ))}
             </div>
           </div>
-          <div className="flex-1 min-h-0">
-            {chartLoading && (
-              <div className="h-full flex items-center justify-center text-dim text-sm">Loading…</div>
-            )}
-            {!chartLoading && points.length > 0 && (
-              <ResponsiveContainer width="100%" height="100%">
-                <ComposedChart data={points} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={CHART_C.line} vertical={false} />
-                  <XAxis
-                    dataKey="t"
-                    tickFormatter={makeTickFmt(period)}
-                    interval={tickInterval}
-                    tick={{ fill: CHART_C.dim, fontSize: 10 }}
-                    axisLine={{ stroke: CHART_C.line }}
-                    tickLine={false}
-                  />
-                  <YAxis
-                    domain={[(min: number) => min * 0.98, (max: number) => max * 1.02]}
-                    tickFormatter={(v) => `$${v.toFixed(0)}`}
-                    tick={{ fill: CHART_C.dim, fontSize: 10 }}
-                    axisLine={false}
-                    tickLine={false}
-                    width={52}
-                  />
-                  <Tooltip
-                    content={<PanelTooltip />}
-                    cursor={{ stroke: CHART_C.dim, strokeWidth: 1, strokeDasharray: "4 4" }}
-                  />
-                  <Area type="monotone" dataKey="price" name="Price" stroke={CHART_C.accent}
-                    strokeWidth={1.5} fill={CHART_C.accentA} dot={false}
-                    activeDot={{ r: 3, fill: CHART_C.accent }} />
-                  <Line type="monotone" dataKey="sma50" name="SMA 50" stroke={CHART_C.warn}
-                    strokeWidth={1} strokeDasharray="5 3" dot={false} activeDot={false} />
-                  <Line type="monotone" dataKey="sma200" name="SMA 200" stroke={CHART_C.pos}
-                    strokeWidth={1} strokeDasharray="2 4" dot={false} activeDot={false} />
-                </ComposedChart>
-              </ResponsiveContainer>
-            )}
-          </div>
+
+          {chartLoading && (
+            <div className="flex-1 flex items-center justify-center text-dim text-sm">Loading…</div>
+          )}
+
+          {!chartLoading && points.length > 0 && (
+            <div className="flex-1 flex flex-col min-h-0 gap-0">
+              {/* Price + SMA chart */}
+              <div style={{ height: priceH }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <ComposedChart data={points} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke={CHART_C.line} vertical={false} />
+                    {sharedXAxis(showMacd || showObv)}
+                    <YAxis
+                      domain={[(min: number) => min * 0.98, (max: number) => max * 1.02]}
+                      tickFormatter={(v) => `$${v.toFixed(0)}`}
+                      tick={{ fill: CHART_C.dim, fontSize: 10 }}
+                      axisLine={false} tickLine={false} width={52}
+                    />
+                    <Tooltip
+                      content={<PanelTooltip />}
+                      cursor={{ stroke: CHART_C.dim, strokeWidth: 1, strokeDasharray: "4 4" }}
+                    />
+                    <Area type="monotone" dataKey="price" name="Price" stroke={CHART_C.accent}
+                      strokeWidth={1.5} fill={CHART_C.accentA} dot={false}
+                      activeDot={{ r: 3, fill: CHART_C.accent }} />
+                    {(hideClose || showSma50) && (
+                      <Line type="monotone" dataKey="sma50" name="SMA 50" stroke={CHART_C.warn}
+                        strokeWidth={1} strokeDasharray="5 3" dot={false} activeDot={false} connectNulls />
+                    )}
+                    {(hideClose || showSma200) && (
+                      <Line type="monotone" dataKey="sma200" name="SMA 200" stroke={CHART_C.pos}
+                        strokeWidth={1} strokeDasharray="2 4" dot={false} activeDot={false} connectNulls />
+                    )}
+                  </ComposedChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* MACD sub-panel */}
+              {showMacd && (
+                <div style={{ height: subH }} className="border-t border-line/40">
+                  <div className="text-[9px] text-dim px-1 pt-0.5 leading-none">MACD (12,26,9)</div>
+                  {!hasMacd ? (
+                    <div className="flex items-center justify-center h-[80%] text-dim text-xs">Not enough data</div>
+                  ) : (
+                    <ResponsiveContainer width="100%" height="85%">
+                      <ComposedChart data={points} margin={{ top: 2, right: 8, left: 0, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke={CHART_C.line} vertical={false} />
+                        {sharedXAxis(!showObv)}
+                        <YAxis
+                          tickFormatter={(v) => v.toFixed(1)}
+                          tick={{ fill: CHART_C.dim, fontSize: 9 }}
+                          axisLine={false} tickLine={false} width={40}
+                        />
+                        <Tooltip
+                          content={<MacdTooltip />}
+                          cursor={{ stroke: CHART_C.dim, strokeWidth: 1, strokeDasharray: "4 4" }}
+                        />
+                        <ReferenceLine y={0} stroke={CHART_C.line} strokeWidth={1} />
+                        <Bar dataKey="macd_hist" name="Histogram" fill={CHART_C.accent}
+                          opacity={0.5} isAnimationActive={false}
+                          // color each bar by sign: positive = pos, negative = neg
+                          label={false}
+                        />
+                        <Line type="monotone" dataKey="macd" name="MACD" stroke={CHART_C.accent}
+                          strokeWidth={1.5} dot={false} activeDot={false} connectNulls />
+                        <Line type="monotone" dataKey="macd_signal" name="Signal" stroke={CHART_C.warn}
+                          strokeWidth={1} strokeDasharray="4 2" dot={false} activeDot={false} connectNulls />
+                      </ComposedChart>
+                    </ResponsiveContainer>
+                  )}
+                </div>
+              )}
+
+              {/* OBV sub-panel */}
+              {showObv && (
+                <div style={{ height: subH }} className="border-t border-line/40">
+                  <div className="text-[9px] text-dim px-1 pt-0.5 leading-none">OBV</div>
+                  {!hasObv ? (
+                    <div className="flex items-center justify-center h-[80%] text-dim text-xs">No volume data</div>
+                  ) : (
+                    <ResponsiveContainer width="100%" height="85%">
+                      <ComposedChart data={points} margin={{ top: 2, right: 8, left: 0, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke={CHART_C.line} vertical={false} />
+                        {sharedXAxis()}
+                        <YAxis
+                          tickFormatter={(v) => {
+                            const abs = Math.abs(v);
+                            if (abs >= 1e9) return `${(v / 1e9).toFixed(1)}B`;
+                            if (abs >= 1e6) return `${(v / 1e6).toFixed(1)}M`;
+                            return v.toFixed(0);
+                          }}
+                          tick={{ fill: CHART_C.dim, fontSize: 9 }}
+                          axisLine={false} tickLine={false} width={40}
+                        />
+                        <Tooltip
+                          content={<ObvTooltip />}
+                          cursor={{ stroke: CHART_C.dim, strokeWidth: 1, strokeDasharray: "4 4" }}
+                        />
+                        <ReferenceLine y={0} stroke={CHART_C.line} strokeWidth={1} />
+                        <Area type="monotone" dataKey="obv" name="OBV" stroke={CHART_C.dim}
+                          strokeWidth={1.5} fill={CHART_C.dim + "15"} dot={false}
+                          activeDot={{ r: 2, fill: CHART_C.dim }} connectNulls />
+                      </ComposedChart>
+                    </ResponsiveContainer>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
+    </div>
+  );
+}
+
+function MacdTooltip({ active, payload, label }: {
+  active?: boolean; payload?: { name: string; value: number | null; color: string }[]; label?: string;
+}) {
+  if (!active || !payload?.length) return null;
+  const fmtLabel = /^\d{4}/.test(label ?? "")
+    ? new Date((label ?? "") + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+    : label;
+  return (
+    <div className="bg-panel border border-line rounded-lg px-3 py-2 text-xs shadow-xl">
+      <p className="text-dim mb-1">{fmtLabel}</p>
+      {payload.map((p) => p.value != null ? (
+        <p key={p.name} style={{ color: p.color }} className="font-mono">{p.name}: {p.value.toFixed(3)}</p>
+      ) : null)}
+    </div>
+  );
+}
+
+function ObvTooltip({ active, payload, label }: {
+  active?: boolean; payload?: { name: string; value: number | null; color: string }[]; label?: string;
+}) {
+  if (!active || !payload?.length) return null;
+  const fmtLabel = /^\d{4}/.test(label ?? "")
+    ? new Date((label ?? "") + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+    : label;
+  const val = payload[0]?.value;
+  const fmtObv = val == null ? "—"
+    : Math.abs(val) >= 1e9 ? `${(val / 1e9).toFixed(2)}B`
+    : Math.abs(val) >= 1e6 ? `${(val / 1e6).toFixed(2)}M`
+    : val.toLocaleString();
+  return (
+    <div className="bg-panel border border-line rounded-lg px-3 py-2 text-xs shadow-xl">
+      <p className="text-dim mb-1">{fmtLabel}</p>
+      <p className="font-mono" style={{ color: payload[0]?.color }}>OBV: {fmtObv}</p>
     </div>
   );
 }

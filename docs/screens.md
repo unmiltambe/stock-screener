@@ -134,7 +134,7 @@ AAPL    Apple     $213   $3.4T   ...                         ...                
  Left (208px): ticker, price, Fundamental + Technical score bars, Overall
    verdict card (signal + score + bar), 4 key metrics (PEG, FCF Yield, RSI,
    vs 200d — each with a tooltip)
- Right (flex): period toggle (1W/1M/3M/6M/1Y/5Y/10Y) + Recharts chart
+ Right (flex): indicator toggles (SMA 50 · SMA 200 · MACD · OBV) + period toggle + Recharts charts
 
                     ┌── Fundamental Metrics ──┐ ┌── Technical Metrics ──┐ ┌─── Scores ───┐
 Ticker  Company  Price  MktCap  P/E  FwdP/E  PEG  FCFYld  ROE  RSI  vs200d  vs50d  52WRange  Fundamental  Technical  Overall  Signal
@@ -166,6 +166,7 @@ differ only in what they pass via props (S2 → remove button; S1b → Watchlist
 - Hover row → `×` appears → DELETE /v1/watchlists/:id/tickers/:symbol
 - Click any column header → sort (toggle asc/desc; nulls sink to bottom)
 - Period toggle in chart → 1W/1M/3M/6M/1Y fetches 1Y of data and slices; 5Y/10Y fetches full history
+- Indicator toggles → SMA 50 / SMA 200 show/hide on price chart (on by default); MACD and OBV expand as sub-panels below (off by default)
 
 **Sorting:** all 18 data columns are sortable. Recommended: Combined Score ↓ (best picks first).
 See [ui-columns.md](ui-columns.md) for full column definitions, color thresholds, and tooltips.

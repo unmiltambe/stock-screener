@@ -37,6 +37,11 @@ export interface ChartPoint {
   price: number;
   sma50: number | null;
   sma200: number | null;
+  volume: number | null;
+  macd: number | null;
+  macd_signal: number | null;
+  macd_hist: number | null;
+  obv: number | null;
 }
 
 export interface ChartOut {

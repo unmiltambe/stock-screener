@@ -8,7 +8,7 @@ from __future__ import annotations
 from typing import Dict, List, Optional, Sequence
 
 from adapters.ports import GUEST_PREFIX, CachePort, MarketDataPort, WatchlistRepo
-from core import score_snapshot, sma_series
+from core import macd_series, obv_series, score_snapshot, sma_series
 
 from . import schemas
 
@@ -232,14 +232,22 @@ class ScreenerService:
             return None
         closes = snap.closes
         dates = snap.dates
+        volumes = snap.volumes
         sma50 = sma_series(closes, 50)
         sma200 = sma_series(closes, 200)
+        macd_line, signal_line, histogram = macd_series(closes)
+        obv = obv_series(closes, volumes) if volumes else [None] * len(closes)
         points = [
             {
                 "t": dates[i] if i < len(dates) else str(i),
                 "price": closes[i],
                 "sma50": sma50[i],
                 "sma200": sma200[i],
+                "volume": volumes[i] if i < len(volumes) else None,
+                "macd": macd_line[i],
+                "macd_signal": signal_line[i],
+                "macd_hist": histogram[i],
+                "obv": obv[i],
             }
             for i in range(len(closes))
         ]
