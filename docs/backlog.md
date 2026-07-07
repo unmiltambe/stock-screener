@@ -16,13 +16,13 @@ captured.
 
 | Item | Effort | Notes |
 |------|--------|-------|
-| 19 — legal notices & disclaimers | ◑ partial | README disclaimer shipped; still open: site footer line, landing-hero note, `/legal` privacy + terms pages |
+| 19 — legal notices & disclaimers | ✅ done | README disclaimer + landing-hero note + footer Privacy/Terms links + `/legal/terms` and `/legal/privacy` pages |
 | 17 — new-user landing page | ✅ done | marketing home (audience → pain → how → differentiation); live hero (real ChartPanel + ShowcaseScoreTable), idempotent routing — see [spec](specs/home-landing.md) |
 | 18 — curated starter watchlist | ✅ done | seed renamed "Starter picks" — 6 varied names (tech/financials/healthcare/staples) so the #17 hero (shows 6) spans the score range |
 | 2 — multi-ticker add | ✅ done | shipped: paste `AAPL MSFT NVDA` or `AAPL, MSFT` — splits, validates, partial errors |
 | 6 — SMA 50/200 toggles | 🟢 small | decision made (independent toggles); likely frontend-only if SMA series already in chart payload |
 | 15 — in-app feedback link | ✅ done | shipped as an embedded Tally popup ([ADR-0010](decisions/0010-feedback-channel.md)) |
-| 12 — today's movers (sort) | ◑ partial | sortable Chg % column shipped; dedicated movers strip still open |
+| 12 — today's movers (sort) | ✅ done | sortable Chg % column + top 5 / bottom 5 movers panel on Leaderboard page |
 | 1 — autocomplete + validation | ✅ done | shipped: [ADR-0011](decisions/0011-symbol-universe.md) + [spec](specs/ticker-autocomplete.md); 11.7k US symbols, debounced type-ahead, eager validation |
 | 4 — watchlist column filters | 🟡 medium | client-side view-logic, no backend; UX-shape decision open |
 | 7 — MACD on graph | 🟡 medium | decision made (separate panel); needs backend MACD computation |
