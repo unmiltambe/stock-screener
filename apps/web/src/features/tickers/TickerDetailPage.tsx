@@ -2,7 +2,6 @@ import { useLocation, useParams } from "react-router-dom";
 import { Breadcrumb, ChartPanel, VerdictCard } from "../watchlists/TickerTable";
 import { useTickerScores } from "../../api/tickers";
 import {
-  dayChangeColor,
   fcfYieldColor,
   fmtMarketCap,
   fmtNum,
@@ -51,17 +50,23 @@ export default function TickerDetailPage() {
 
       {row && (
         <div className="flex items-start justify-between mb-4 gap-4 flex-wrap">
-          {/* Left: ticker + price + name + sector */}
+          {/* Left: ticker → name + sector → price + change */}
           <div>
-            <div className="flex items-baseline gap-3 mb-0.5">
-              <h1 className="text-2xl font-semibold font-mono">{symbol}</h1>
-              <span className="text-2xl font-mono font-semibold">{fmtPrice(row.price)}</span>
-              <span className={`text-sm font-medium ${dayChangeColor(row.dayChangePct)}`}>
-                {fmtPctAdaptive(row.dayChangePct)}
+            <h1 className="text-[26px] font-bold font-mono leading-none tracking-tight mb-1">{symbol}</h1>
+            <p className="text-dim text-sm mb-2.5">
+              {row.name}
+              {row.metrics.sector && <><span className="mx-1.5 opacity-40">·</span>{row.metrics.sector}</>}
+            </p>
+            <div className="flex items-center gap-2.5">
+              <span className="text-xl font-semibold font-mono">{fmtPrice(row.price)}</span>
+              <span className={`text-xs font-medium px-2 py-0.5 rounded ${
+                (row.dayChangePct ?? 0) >= 0
+                  ? "bg-pos/10 text-pos"
+                  : "bg-neg/10 text-neg"
+              }`}>
+                {fmtPctAdaptive(row.dayChangePct)} today
               </span>
             </div>
-            <p className="text-dim text-sm">{row.name}</p>
-            {row.metrics.sector && <p className="text-dim text-xs mt-0.5">{row.metrics.sector}</p>}
           </div>
           {/* Right: Overall verdict on top, then Fundamental / Technical bars */}
           <div className="flex flex-col items-end gap-2">

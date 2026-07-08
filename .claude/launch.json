@@ -8,7 +8,8 @@
         "-c",
         "cd services && source .venv/bin/activate && DATA_BACKEND=yfinance exec uvicorn api.app:app --app-dir app --port 8000"
       ],
-      "port": 8000
+      "port": 8000,
+      "autoPort": false
     },
     {
       "name": "web",

@@ -223,12 +223,13 @@ export function VerdictCard({ score, signal }: { score: number | null; signal: s
 }
 
 // Small toggle pill used in the chart header to show/hide individual series.
-function IndicatorToggle({ label, active, color, onClick }: {
-  label: string; active: boolean; color: string; onClick: () => void;
+function IndicatorToggle({ label, active, color, onClick, title }: {
+  label: string; active: boolean; color: string; onClick: () => void; title?: string;
 }) {
   return (
     <button
       onClick={onClick}
+      title={title}
       className={[
         "px-2 py-0.5 rounded text-[10px] border transition-colors",
         active
@@ -241,6 +242,14 @@ function IndicatorToggle({ label, active, color, onClick }: {
     </button>
   );
 }
+
+const INDICATOR_TIPS = {
+  price:  "Closing price of the stock.",
+  sma50:  "50-day Simple Moving Average. Tracks the medium-term trend; price above it is generally bullish.",
+  sma200: "200-day Simple Moving Average. The long-term trend line. A 'golden cross' (SMA 50 crossing above SMA 200) is a classic buy signal.",
+  macd:   "Moving Average Convergence/Divergence (12/26/9). Momentum indicator. Histogram bars turning from negative to positive can signal a trend reversal.",
+  obv:    "On-Balance Volume. Adds volume on up days, subtracts on down days, creating a cumulative flow line. Rising OBV while price is flat often signals quiet accumulation — a potential breakout ahead.",
+};
 
 // watchlistId is optional — when provided the detail link carries routing state
 // so the detail page can offer a "back" link to the originating watchlist.
@@ -360,14 +369,14 @@ export function ChartPanel({ ticker, watchlistId, onClose, hideClose, hideSideba
           {/* Header: legend + period + indicator toggles */}
           <div className="flex items-center justify-between mb-2 shrink-0 gap-2 flex-wrap">
             <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="text-[10px] mr-1" style={{ color: CHART_C.accent }}>— Price</span>
+              <span className="text-[10px] mr-1" style={{ color: CHART_C.accent }} title={INDICATOR_TIPS.price}>— Price</span>
               {/* hideClose = landing hero: show static legend only. Otherwise: full toggles */}
               {!hideClose ? (
                 <>
-                  <IndicatorToggle label="SMA 50"  active={showSma50}  color={CHART_C.warn} onClick={() => setShowSma50(v => !v)} />
-                  <IndicatorToggle label="SMA 200" active={showSma200} color={CHART_C.pos}  onClick={() => setShowSma200(v => !v)} />
-                  <IndicatorToggle label="MACD"    active={showMacd}   color={CHART_C.accent} onClick={() => setShowMacd(v => !v)} />
-                  <IndicatorToggle label="OBV"     active={showObv}    color={CHART_C.dim}  onClick={() => setShowObv(v => !v)} />
+                  <IndicatorToggle label="SMA 50"  active={showSma50}  color={CHART_C.warn}   onClick={() => setShowSma50(v => !v)}  title={INDICATOR_TIPS.sma50} />
+                  <IndicatorToggle label="SMA 200" active={showSma200} color={CHART_C.pos}    onClick={() => setShowSma200(v => !v)} title={INDICATOR_TIPS.sma200} />
+                  <IndicatorToggle label="MACD"    active={showMacd}   color={CHART_C.accent} onClick={() => setShowMacd(v => !v)}   title={INDICATOR_TIPS.macd} />
+                  <IndicatorToggle label="OBV"     active={showObv}    color={CHART_C.dim}    onClick={() => setShowObv(v => !v)}    title={INDICATOR_TIPS.obv} />
                 </>
               ) : (
                 <>
