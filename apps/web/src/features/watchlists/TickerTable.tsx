@@ -244,13 +244,15 @@ function IndicatorToggle({ label, active, color, onClick }: {
 
 // watchlistId is optional — when provided the detail link carries routing state
 // so the detail page can offer a "back" link to the originating watchlist.
-export function ChartPanel({ ticker, watchlistId, onClose, hideClose }: {
+export function ChartPanel({ ticker, watchlistId, onClose, hideClose, hideSidebar }: {
   ticker: string;
   watchlistId?: string;
   onClose: () => void;
   // Landing hero embeds this always-on (spec home-landing.md D2) — no row to
   // collapse back into, so the close affordance and sub-panel toggles are suppressed.
   hideClose?: boolean;
+  // Detail page shows ticker info in its own page header — sidebar is redundant there.
+  hideSidebar?: boolean;
 }) {
   const CHART_C = useChartColors();
   const [period, setPeriod] = useState<Period>("1Y");
@@ -260,8 +262,7 @@ export function ChartPanel({ ticker, watchlistId, onClose, hideClose }: {
   const [showObv, setShowObv] = useState(false);
 
   const { data: chartData, isLoading: chartLoading } = useTickerChart(ticker, YEARS_TO_FETCH[period]);
-  const { data: row, isLoading: rowLoading } = useTickerScores(ticker);
-  const isLoading = chartLoading || rowLoading;
+  const { data: row } = useTickerScores(ticker);
   const points = chartData ? chartData.points.slice(-TRADING_DAYS[period]) : [];
   const tickInterval = Math.max(1, Math.floor(points.length / 8));
 
@@ -287,8 +288,9 @@ export function ChartPanel({ ticker, watchlistId, onClose, hideClose }: {
 
   return (
     <div className="bg-panel border border-line rounded-xl mb-4 overflow-hidden">
-      <div className="flex" style={{ minHeight: 280 }}>
+      <div className="flex" style={{ minHeight: 364 }}>
         {/* ── Sidebar ── */}
+        {!hideSidebar && (
         <div className="w-52 shrink-0 border-r border-line flex flex-col justify-between p-4">
           <div>
             <div className="flex items-start justify-between gap-1 mb-1">
@@ -334,7 +336,6 @@ export function ChartPanel({ ticker, watchlistId, onClose, hideClose }: {
                 <VerdictCard score={row.scores.combined} signal={row.signal} />
               </>
             )}
-            {isLoading && <p className="text-dim text-xs mt-2">Loading…</p>}
           </div>
           {row && (
             <div className="grid grid-cols-2 gap-x-3 gap-y-2 text-xs pt-2 border-t border-line/40">
@@ -352,6 +353,7 @@ export function ChartPanel({ ticker, watchlistId, onClose, hideClose }: {
             </div>
           )}
         </div>
+        )}
 
         {/* ── Chart area ── */}
         <div className="flex-1 flex flex-col min-w-0 px-3 pt-3 pb-2">
@@ -359,15 +361,15 @@ export function ChartPanel({ ticker, watchlistId, onClose, hideClose }: {
           <div className="flex items-center justify-between mb-2 shrink-0 gap-2 flex-wrap">
             <div className="flex items-center gap-1.5 flex-wrap">
               <span className="text-[10px] mr-1" style={{ color: CHART_C.accent }}>— Price</span>
-              {!hideClose && (
+              {/* hideClose = landing hero: show static legend only. Otherwise: full toggles */}
+              {!hideClose ? (
                 <>
                   <IndicatorToggle label="SMA 50"  active={showSma50}  color={CHART_C.warn} onClick={() => setShowSma50(v => !v)} />
                   <IndicatorToggle label="SMA 200" active={showSma200} color={CHART_C.pos}  onClick={() => setShowSma200(v => !v)} />
                   <IndicatorToggle label="MACD"    active={showMacd}   color={CHART_C.accent} onClick={() => setShowMacd(v => !v)} />
                   <IndicatorToggle label="OBV"     active={showObv}    color={CHART_C.dim}  onClick={() => setShowObv(v => !v)} />
                 </>
-              )}
-              {hideClose && (
+              ) : (
                 <>
                   <span className="text-[10px] text-dim">-- SMA 50</span>
                   <span className="text-[10px] text-dim">·· SMA 200</span>
@@ -591,15 +593,16 @@ export function TickerTableRow({ r, isSelected, onClick, extraCell }: {
 
 // extraGroupHeader — <th> injected into the group-label row (after Scores)
 // extraHeader      — <th> injected into the column-label row (after Signal)
-export function TickerTableHead({ sort, onSort, extraGroupHeader, extraHeader }: {
+export function TickerTableHead({ sort, onSort, extraGroupHeader, extraHeader, className }: {
   sort: { key: string | null; dir: SortDir };
   onSort: (key: string) => void;
   extraGroupHeader?: React.ReactNode;
   extraHeader?: React.ReactNode;
+  className?: string;
 }) {
   const thProps = { sort, onSort };
   return (
-    <thead>
+    <thead className={className}>
       <tr className="text-[10px] uppercase tracking-wider border-b border-line/40">
         <th colSpan={5} className="pb-1" />
         <th colSpan={5} className="pb-1 text-center border-l border-line/40 pl-3 pr-4 text-warn">

@@ -89,8 +89,8 @@ export default function WatchlistDetailPage() {
   const rows = sortRows(data!, BASE_ACCESSORS, sortKey, sortDir);
 
   return (
-    <div className="max-w-[1400px] mx-auto">
-      <div className="flex items-center justify-between mb-4">
+    <div className="max-w-[1400px] mx-auto h-full flex flex-col">
+      <div className="flex items-center justify-between mb-4 shrink-0">
         <Breadcrumb crumbs={[{ label: "watchlists", to: "/watchlists" }, { label: watchlistName ?? "…", to: "#" }]} />
         <div className="flex flex-col items-end gap-1">
           <form onSubmit={submitAdd} className="flex gap-2">
@@ -115,20 +115,23 @@ export default function WatchlistDetailPage() {
       {data!.length === 0 ? (
         <p className="text-dim text-sm mt-8 text-center">No tickers yet — add one above.</p>
       ) : (
-        <>
+        <div className="flex-1 min-h-0 flex flex-col">
           {selectedTicker && (
-            <ChartPanel
-              ticker={selectedTicker}
-              watchlistId={id}
-              onClose={() => setSelectedTicker(null)}
-            />
+            <div className="shrink-0">
+              <ChartPanel
+                ticker={selectedTicker}
+                watchlistId={id}
+                onClose={() => setSelectedTicker(null)}
+              />
+            </div>
           )}
 
-          <div className="overflow-x-auto">
+          <div className="flex-1 min-h-0 overflow-auto">
             <table className="text-sm w-full">
               <TickerTableHead
                 sort={sort}
                 onSort={handleSort}
+                className="sticky top-0 z-10 bg-bg"
                 extraGroupHeader={<th className="pb-1 w-6" />}
                 extraHeader={<th className="w-6 pt-1" />}
               />
@@ -153,7 +156,7 @@ export default function WatchlistDetailPage() {
               </tbody>
             </table>
           </div>
-        </>
+        </div>
       )}
     </div>
   );

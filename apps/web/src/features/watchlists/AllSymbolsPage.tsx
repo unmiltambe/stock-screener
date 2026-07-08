@@ -43,8 +43,8 @@ export default function AllSymbolsPage() {
   const thProps = { sort, onSort: handleSort };
 
   return (
-    <div className="max-w-[1400px] mx-auto">
-      <div className="flex items-center gap-3 mb-4">
+    <div className="max-w-[1400px] mx-auto h-full flex flex-col">
+      <div className="flex items-center gap-3 mb-4 shrink-0">
         <Breadcrumb crumbs={[{ label: "watchlists", to: "/watchlists" }, { label: "All Symbols", to: "/watchlists/_all" }]} />
         <span className="text-[10px] text-dim bg-line px-2 py-0.5 rounded">Built-in</span>
         {!isLoading && (
@@ -57,16 +57,19 @@ export default function AllSymbolsPage() {
       {isLoading && <p className="text-dim">Loading symbols…</p>}
 
       {!isLoading && data.length > 0 && (
-        <>
+        <div className="flex-1 min-h-0 flex flex-col">
           {selectedTicker && (
-            <ChartPanel ticker={selectedTicker} onClose={() => setSelectedTicker(null)} />
+            <div className="shrink-0">
+              <ChartPanel ticker={selectedTicker} onClose={() => setSelectedTicker(null)} />
+            </div>
           )}
 
-          <div className="overflow-x-auto">
+          <div className="flex-1 min-h-0 overflow-auto">
             <table className="text-sm w-full">
               <TickerTableHead
                 sort={sort}
                 onSort={handleSort}
+                className="sticky top-0 z-10 bg-bg"
                 extraGroupHeader={
                   <th className="pb-1 border-l border-line/40 pl-3 text-dim">Lists</th>
                 }
@@ -97,7 +100,7 @@ export default function AllSymbolsPage() {
               </tbody>
             </table>
           </div>
-        </>
+        </div>
       )}
 
       {!isLoading && data.length === 0 && (

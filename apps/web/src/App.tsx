@@ -23,7 +23,7 @@ const TALLY_FORM_ID = "XxgZee";
 
 export default function App() {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="h-screen flex flex-col">
       <header className="border-b border-line px-6 py-3 flex items-center justify-between">
         <div className="flex items-center gap-6">
           <Link to="/" className="flex items-center gap-2.5">
@@ -42,7 +42,7 @@ export default function App() {
 
       <WelcomeNamePrompt />
 
-      <main className="flex-1 px-6 py-6">
+      <main className="flex-1 min-h-0 overflow-auto px-6 py-6">
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/watchlists" element={<WatchlistsPage />} />
