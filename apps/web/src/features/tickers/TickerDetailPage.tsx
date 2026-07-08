@@ -2,11 +2,13 @@ import { useLocation, useParams } from "react-router-dom";
 import { Breadcrumb, ChartPanel, VerdictCard } from "../watchlists/TickerTable";
 import { useTickerScores } from "../../api/tickers";
 import {
+  dayChangeColor,
   fcfYieldColor,
   fmtMarketCap,
   fmtNum,
   fmtPct,
   fmtPctAbs,
+  fmtPctAdaptive,
   fmtPrice,
   pegColor,
   rangeColor,
@@ -49,13 +51,23 @@ export default function TickerDetailPage() {
 
       {row && (
         <div className="flex items-start justify-between mb-4 gap-4 flex-wrap">
+          {/* Left: ticker + price + name + sector */}
           <div>
-            <h1 className="text-2xl font-semibold font-mono">{symbol}</h1>
-            <p className="text-dim mt-0.5">{row.name}</p>
+            <div className="flex items-baseline gap-3 mb-0.5">
+              <h1 className="text-2xl font-semibold font-mono">{symbol}</h1>
+              <span className="text-2xl font-mono font-semibold">{fmtPrice(row.price)}</span>
+              <span className={`text-sm font-medium ${dayChangeColor(row.dayChangePct)}`}>
+                {fmtPctAdaptive(row.dayChangePct)}
+              </span>
+            </div>
+            <p className="text-dim text-sm">{row.name}</p>
             {row.metrics.sector && <p className="text-dim text-xs mt-0.5">{row.metrics.sector}</p>}
           </div>
+          {/* Right: Overall verdict on top, then Fundamental / Technical bars */}
           <div className="flex flex-col items-end gap-2">
-            <div className="text-2xl font-mono font-semibold">{fmtPrice(row.price)}</div>
+            <div className="w-44">
+              <VerdictCard score={row.scores.combined} signal={row.signal} />
+            </div>
             <div className="w-44 space-y-1">
               {([
                 { label: "Fundamental", v: row.scores.fund },
@@ -74,9 +86,6 @@ export default function TickerDetailPage() {
                   </span>
                 </div>
               ))}
-            </div>
-            <div className="w-44">
-              <VerdictCard score={row.scores.combined} signal={row.signal} />
             </div>
           </div>
         </div>
