@@ -200,7 +200,7 @@ export function PanelTooltip({ active, payload, label }: {
   );
 }
 
-function VerdictCard({ score, signal }: { score: number | null; signal: string | null }) {
+export function VerdictCard({ score, signal }: { score: number | null; signal: string | null }) {
   const cfg = signal === "Buy"
     ? { dot: "bg-pos", text: "text-pos", border: "border-pos/30", bg: "bg-pos/10", bar: "bg-pos" }
     : signal === "Trim"

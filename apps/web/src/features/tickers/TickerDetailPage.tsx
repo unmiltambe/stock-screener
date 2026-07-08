@@ -1,5 +1,5 @@
 import { useLocation, useParams } from "react-router-dom";
-import { Breadcrumb, ChartPanel } from "../watchlists/TickerTable";
+import { Breadcrumb, ChartPanel, VerdictCard } from "../watchlists/TickerTable";
 import { useTickerScores } from "../../api/tickers";
 import {
   fcfYieldColor,
@@ -13,7 +13,6 @@ import {
   roeColor,
   rsiColor,
   scoreColor,
-  signalColor,
   sma200Color,
   sma50Color,
 } from "../../lib/format";
@@ -55,21 +54,29 @@ export default function TickerDetailPage() {
             <p className="text-dim mt-0.5">{row.name}</p>
             {row.metrics.sector && <p className="text-dim text-xs mt-0.5">{row.metrics.sector}</p>}
           </div>
-          <div className="text-right">
+          <div className="flex flex-col items-end gap-2">
             <div className="text-2xl font-mono font-semibold">{fmtPrice(row.price)}</div>
-            <div className="flex items-center gap-3 mt-1 justify-end">
-              <span className={`text-sm font-medium ${scoreColor(row.scores.fund)}`}>
-                Fund {fmtNum(row.scores.fund, 0)}
-              </span>
-              <span className={`text-sm font-medium ${scoreColor(row.scores.tech)}`}>
-                Tech {fmtNum(row.scores.tech, 0)}
-              </span>
-              <span className={`text-sm font-medium ${scoreColor(row.scores.combined)}`}>
-                Combined {fmtNum(row.scores.combined, 0)}
-              </span>
-              <span className={`text-sm font-semibold ${signalColor(row.signal)}`}>
-                {row.signal ?? "—"}
-              </span>
+            <div className="w-44 space-y-1">
+              {([
+                { label: "Fundamental", v: row.scores.fund },
+                { label: "Technical",   v: row.scores.tech },
+              ] as const).map(({ label, v }) => (
+                <div key={label} className="flex items-center gap-2">
+                  <span className="text-[10px] text-dim w-[72px] shrink-0 text-right">{label}</span>
+                  <div className="flex-1 h-1 bg-line rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full ${scoreColor(v).replace("text-", "bg-")}`}
+                      style={{ width: `${v ?? 0}%` }}
+                    />
+                  </div>
+                  <span className={`text-xs font-mono font-medium w-6 shrink-0 ${scoreColor(v)}`}>
+                    {fmtNum(v, 0)}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <div className="w-44">
+              <VerdictCard score={row.scores.combined} signal={row.signal} />
             </div>
           </div>
         </div>
