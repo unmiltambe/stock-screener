@@ -79,6 +79,12 @@ class TechMetrics:
     sma50_pct: Optional[float] = None
     sma200_pct: Optional[float] = None
     range_pos: Optional[float] = None   # position within 52w range, percent
+    # Setup-score inputs (computed alongside tech metrics)
+    rsi_slope: Optional[float] = None       # 3-bar RSI change (positive = rising)
+    macd_hist_pct: Optional[float] = None   # histogram as % of price (+ bullish, - bearish)
+    macd_hist_rising: Optional[bool] = None # True if histogram rose for 3 consecutive bars
+    macd_bars_on_side: Optional[int] = None # bars histogram has been on its current side of zero
+    obv_trend_pct: Optional[float] = None   # 20-bar OBV % change (+ accumulation, - distribution)
 
 
 @dataclass(frozen=True)
@@ -86,6 +92,7 @@ class Scores:
     fund: Optional[float] = None
     tech: Optional[float] = None
     combined: Optional[float] = None
+    setup: Optional[float] = None
 
 
 @dataclass(frozen=True)

@@ -59,9 +59,12 @@ export const BASE_ACCESSORS: Record<string, (r: TickerRow) => number | string | 
   vsSma200:  r => r.metrics.vsSma200,
   vsSma50:   r => r.metrics.vsSma50,
   rangePos:  r => r.metrics.rangePos,
+  macdHistPct: r => r.metrics.macdHistPct,
+  obvTrendPct: r => r.metrics.obvTrendPct,
   fund:      r => r.scores.fund,
   tech:      r => r.scores.tech,
   combined:  r => r.scores.combined,
+  setup:     r => r.scores.setup,
   signal:    r => r.signal,
 };
 
@@ -107,7 +110,10 @@ export const TIPS = {
   fund:     "Composite quality + valuation score (0–100). Higher = better.\n\n> 60  Undervalued\n35–60  Fair\n< 35  Overvalued\n\nInputs: ROE (35%), FCF Yield (35%), PEG (30%)\nNormalised via sigmoid — no hard caps.",
   tech:     "Composite momentum score (0–100). Higher = more bullish setup.\n\n> 60  Bullish\n40–60  Neutral\n< 40  Bearish\n\nInputs: RSI (30%), SMA-200 (30%), 52W range (30%), SMA-50 (10%)",
   combined: "Overall score combining valuation and momentum (0–100).\n\n= Fundamental × 70% + Technical × 30%\n\n≥ 65  strong buy candidate\n35–65  neutral\n< 35  avoid",
+  setup:    "Entry timing score (0–100). Higher = more favorable swing entry conditions.\n\nInputs: RSI recovery zone + direction (25%), SMA-200 proximity sweet spot (25%), MACD histogram direction (35%), OBV 20-day trend (15%).\n\nNot a buy signal — use alongside Fundamental score to find good businesses at good entry points.",
   signal:   "Action signal derived from Fundamental + Technical scores.\n\nBuy = undervalued with a constructive technical setup.\nTrim = overvalued — consider rotating out.\nNeutral = no strong conviction either way.",
+  macdHist: "MACD histogram as % of stock price — normalized so values are comparable across tickers.\n\nPositive = bullish momentum, negative = bearish.\nA cross from negative to positive signals a potential trend reversal.\n\n(Raw histogram shown on chart; this column divides by price for cross-ticker comparison.)",
+  obvTrend: "On-Balance Volume 20-day % change.\n\nAdds volume on up-days, subtracts on down-days, then measures the change over 20 trading days (~1 month).\n\nPositive = accumulation (buyers absorbing supply).\nNegative = distribution.\n\nRising OBV with flat price often signals quiet accumulation before a breakout.",
   lists:    "Watchlists this ticker appears in.",
 };
 
@@ -589,8 +595,15 @@ export function TickerTableRow({ r, isSelected, onClick, extraCell }: {
       <td className={`pr-3 text-right font-mono whitespace-nowrap ${sma200Color(m.vsSma200)}`}>{fmtPctAdaptive(m.vsSma200)}</td>
       <td className={`pr-4 text-right font-mono whitespace-nowrap ${sma50Color(m.vsSma50)}`}>{fmtPctAdaptive(m.vsSma50)}</td>
       <td className="pr-4 whitespace-nowrap"><RangeBar pos={m.rangePos} /></td>
+      <td className={`pr-3 text-right font-mono whitespace-nowrap border-l border-line/40 pl-3 ${(m.macdHistPct ?? 0) >= 0 ? "text-pos" : "text-neg"}`}>
+        {m.macdHistPct == null ? "—" : `${m.macdHistPct >= 0 ? "+" : ""}${m.macdHistPct.toFixed(2)}%`}
+      </td>
+      <td className={`pr-4 text-right font-mono whitespace-nowrap ${(m.obvTrendPct ?? 0) >= 0 ? "text-pos" : "text-neg"}`}>
+        {m.obvTrendPct == null ? "—" : `${m.obvTrendPct >= 0 ? "▲" : "▼"} ${Math.abs(m.obvTrendPct).toFixed(1)}%`}
+      </td>
       <td className={`pr-3 text-right font-mono whitespace-nowrap border-l border-line/40 pl-3 ${scoreColor(r.scores.fund)}`}>{fmtNum(r.scores.fund, 0)}</td>
       <td className={`pr-3 text-right font-mono whitespace-nowrap ${scoreColor(r.scores.tech)}`}>{fmtNum(r.scores.tech, 0)}</td>
+      <td className={`pr-3 text-right font-mono whitespace-nowrap ${scoreColor(r.scores.setup)}`}>{fmtNum(r.scores.setup, 0)}</td>
       <td className={`pr-4 text-right font-mono whitespace-nowrap ${scoreColor(r.scores.combined)}`}>{fmtNum(r.scores.combined, 0)}</td>
       <td className={`pr-3 font-medium whitespace-nowrap ${signalColor(r.signal)}`}>{r.signal ?? "—"}</td>
       {extraCell}
@@ -620,7 +633,10 @@ export function TickerTableHead({ sort, onSort, extraGroupHeader, extraHeader, c
         <th colSpan={4} className="pb-1 text-center border-l border-line/40 pl-3 pr-4 text-warn">
           Technical Metrics
         </th>
-        <th colSpan={4} className="pb-1 text-center border-l border-line/40 pl-3 text-warn">
+        <th colSpan={2} className="pb-1 text-center border-l border-line/40 pl-3 pr-4 text-warn">
+          Setup Metrics
+        </th>
+        <th colSpan={5} className="pb-1 text-center border-l border-line/40 pl-3 text-warn">
           Scores
         </th>
         {extraGroupHeader}
@@ -640,8 +656,11 @@ export function TickerTableHead({ sort, onSort, extraGroupHeader, extraHeader, c
         <Th tip={TIPS.sma200}   sortK="vsSma200"  {...thProps} className="pr-3 pt-1 text-right">vs<br/>200d</Th>
         <Th tip={TIPS.sma50}    sortK="vsSma50"   {...thProps} className="pr-4 pt-1 text-right">vs<br/>50d</Th>
         <Th tip={TIPS.range}    sortK="rangePos"  {...thProps} className="pr-4 pt-1">52W Range</Th>
+        <Th tip={TIPS.macdHist} sortK="macdHistPct" {...thProps} className="pr-3 pt-1 text-right border-l border-line/40 pl-3">MACD<br/>Hist%</Th>
+        <Th tip={TIPS.obvTrend} sortK="obvTrendPct"  {...thProps} className="pr-4 pt-1 text-right">OBV<br/>20d%</Th>
         <Th tip={TIPS.fund}     sortK="fund"      {...thProps} className="pr-3 pt-1 text-right border-l border-line/40 pl-3">Fundamental</Th>
         <Th tip={TIPS.tech}     sortK="tech"      {...thProps} className="pr-3 pt-1 text-right">Technical</Th>
+        <Th tip={TIPS.setup}    sortK="setup"     {...thProps} className="pr-3 pt-1 text-right">Setup</Th>
         <Th tip={TIPS.combined} sortK="combined"  {...thProps} className="pr-4 pt-1 text-right">Overall</Th>
         <Th tip={TIPS.signal}   sortK="signal"    {...thProps} className="pr-3 pt-1">Signal</Th>
         {extraHeader}

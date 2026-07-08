@@ -16,6 +16,7 @@ export interface Scores {
   fund: number | null;
   tech: number | null;
   combined: number | null;
+  setup: number | null;
 }
 
 export interface Metrics {
@@ -30,6 +31,8 @@ export interface Metrics {
   rangePos: number | null;
   sector: string | null;
   marketCap: number | null;
+  macdHistPct: number | null;
+  obvTrendPct: number | null;
 }
 
 export interface ChartPoint {

@@ -75,11 +75,12 @@ export default function TickerDetailPage() {
             </div>
             <div className="w-44 space-y-1">
               {([
-                { label: "Fundamental", v: row.scores.fund },
-                { label: "Technical",   v: row.scores.tech },
-              ] as const).map(({ label, v }) => (
+                { label: "Fundamental", v: row.scores.fund,  tip: "Business quality + valuation. ROE, FCF yield, PEG. > 60 = undervalued." },
+                { label: "Technical",   v: row.scores.tech,  tip: "Trend health. RSI level, SMA-200 distance, 52W range position. > 60 = bullish." },
+                { label: "Setup",       v: row.scores.setup, tip: "Entry timing. MACD inflection, OBV accumulation, RSI recovery zone, SMA-200 proximity. High = good time to enter." },
+              ] as const).map(({ label, v, tip }) => (
                 <div key={label} className="flex items-center gap-2">
-                  <span className="text-[10px] text-dim w-[72px] shrink-0 text-right">{label}</span>
+                  <span className="text-[10px] text-dim w-[72px] shrink-0 text-right cursor-help" title={tip}>{label}</span>
                   <div className="flex-1 h-1 bg-line rounded-full overflow-hidden">
                     <div
                       className={`h-full rounded-full ${scoreColor(v).replace("text-", "bg-")}`}

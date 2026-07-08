@@ -16,6 +16,7 @@ class ScoresOut(BaseModel):
     fund: Optional[float] = None
     tech: Optional[float] = None
     combined: Optional[float] = None
+    setup: Optional[float] = None
 
 
 class MetricsOut(BaseModel):
@@ -30,6 +31,9 @@ class MetricsOut(BaseModel):
     rangePos: Optional[float] = None
     sector: Optional[str] = None
     marketCap: Optional[float] = None
+    # Setup-score raw inputs (for the Setup Metrics columns in the table)
+    macdHistPct: Optional[float] = None   # MACD histogram as % of price
+    obvTrendPct: Optional[float] = None   # 20-bar OBV % change
 
 
 class TickerRow(BaseModel):
@@ -125,13 +129,14 @@ def row_from_scored(
         "price": f.price,
         "dayChange": f.day_change,
         "dayChangePct": f.day_change_pct,
-        "scores": {"fund": s.fund, "tech": s.tech, "combined": s.combined},
+        "scores": {"fund": s.fund, "tech": s.tech, "combined": s.combined, "setup": s.setup},
         "signal": scored.signal.value if scored.signal else None,
         "metrics": {
             "pe": f.trailing_pe, "fwdPe": f.forward_pe, "peg": f.peg,
             "fcfYield": f.fcf_yield, "roe": f.roe,
             "rsi": m.rsi, "vsSma200": m.sma200_pct, "vsSma50": m.sma50_pct,
             "rangePos": m.range_pos, "sector": f.sector, "marketCap": f.market_cap,
+            "macdHistPct": m.macd_hist_pct, "obvTrendPct": m.obv_trend_pct,
         },
         "lists": lists or [],
         "stale": stale,
