@@ -28,7 +28,9 @@ def _sigmoid(x: float, k: float, midpoint: float) -> float:
 
 
 def roe_subscore(roe_pct: float) -> float:
-    return _sigmoid(roe_pct, k=0.08, midpoint=20.0)
+    # Cap at 60 % to prevent accounting artifacts (near-zero book equity after losses)
+    # from saturating the score. At 60 % the sigmoid already returns ~96/100.
+    return _sigmoid(min(roe_pct, 60.0), k=0.08, midpoint=20.0)
 
 
 def fcf_subscore(fcf_yield_pct: float) -> float:
@@ -78,20 +80,6 @@ def sma_subscore(pct: float) -> float:
     return 15.0
 
 
-def range_subscore(range_pos: float) -> float:
-    if range_pos < 10:
-        return 50.0
-    if range_pos < 25:
-        return 80.0
-    if range_pos < 45:
-        return 90.0
-    if range_pos < 65:
-        return 60.0
-    if range_pos < 80:
-        return 35.0
-    return 15.0
-
-
 # ── Weighted combine with graceful degradation ────────────────────────────────
 
 
@@ -121,20 +109,26 @@ def tech_score(
     rsi: Optional[float],
     sma200_pct: Optional[float],
     sma50_pct: Optional[float],
-    range_pos: Optional[float],
 ) -> Optional[float]:
     return _weighted([
-        (rsi_subscore(rsi) if rsi is not None else None, 0.30),
-        (sma_subscore(sma200_pct) if sma200_pct is not None else None, 0.30),
-        (range_subscore(range_pos) if range_pos is not None else None, 0.30),
-        (sma_subscore(sma50_pct) if sma50_pct is not None else None, 0.10),
+        (rsi_subscore(rsi) if rsi is not None else None, 0.35),
+        (sma_subscore(sma200_pct) if sma200_pct is not None else None, 0.40),
+        (sma_subscore(sma50_pct) if sma50_pct is not None else None, 0.25),
     ])
 
 
-def combined_score(fund: Optional[float], tech: Optional[float]) -> Optional[float]:
+def combined_score(
+    fund: Optional[float],
+    tech: Optional[float],
+    setup: Optional[float] = None,
+) -> Optional[float]:
     if fund is None or tech is None:
         return None
-    return round(fund * 0.70 + tech * 0.30, 1)
+    # Setup is a technical sub-signal (entry timing), so it blends into the 30%
+    # technical bucket rather than becoming a new dimension. Falls back to pure
+    # tech when setup is unavailable.
+    tech_effective = round(tech * 0.70 + setup * 0.30, 1) if setup is not None else tech
+    return round(fund * 0.70 + tech_effective * 0.30, 1)
 
 
 def signal(fund: Optional[float], tech: Optional[float]) -> Optional[Signal]:
@@ -255,7 +249,7 @@ def score_metrics(f: Fundamentals, metrics: TechMetrics) -> ScoredTicker:
     """Combine raw fundamentals + already-computed technical metrics into scores.
     Pure; the `ticker` is filled in by the caller via `_replace`-style copy."""
     fs = fund_score(f.roe, f.fcf_yield, f.peg)
-    ts = tech_score(metrics.rsi, metrics.sma200_pct, metrics.sma50_pct, metrics.range_pos)
+    ts = tech_score(metrics.rsi, metrics.sma200_pct, metrics.sma50_pct)
     ss = setup_score(
         metrics.rsi, metrics.rsi_slope,
         metrics.sma200_pct,
@@ -266,7 +260,7 @@ def score_metrics(f: Fundamentals, metrics: TechMetrics) -> ScoredTicker:
         ticker="",
         fundamentals=f,
         metrics=metrics,
-        scores=Scores(fund=fs, tech=ts, combined=combined_score(fs, ts), setup=ss),
+        scores=Scores(fund=fs, tech=ts, combined=combined_score(fs, ts, ss), setup=ss),
         signal=signal(fs, ts),
     )
 

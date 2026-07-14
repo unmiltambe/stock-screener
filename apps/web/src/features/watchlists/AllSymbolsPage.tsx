@@ -43,7 +43,7 @@ export default function AllSymbolsPage() {
   const thProps = { sort, onSort: handleSort };
 
   return (
-    <div className="max-w-[1400px] mx-auto h-full flex flex-col">
+    <div className="max-w-[1700px] mx-auto h-full flex flex-col">
       <div className="flex items-center gap-3 mb-4 shrink-0">
         <Breadcrumb crumbs={[{ label: "watchlists", to: "/watchlists" }, { label: "All Symbols", to: "/watchlists/_all" }]} />
         <span className="text-[10px] text-dim bg-line px-2 py-0.5 rounded">Built-in</span>

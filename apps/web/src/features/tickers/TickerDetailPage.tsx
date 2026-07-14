@@ -41,7 +41,7 @@ export default function TickerDetailPage() {
   const backLabel = fromName ?? "watchlists";
 
   return (
-    <div className="max-w-[1400px] mx-auto">
+    <div className="max-w-[1700px] mx-auto">
       <div className="mb-6">
         <Breadcrumb crumbs={[{ label: backLabel, to: backTo }, { label: symbol, to: `/tickers/${symbol}` }]} />
       </div>

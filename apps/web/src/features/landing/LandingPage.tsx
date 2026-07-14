@@ -60,7 +60,7 @@ export default function LandingPage() {
         </div>
         <div className="flex items-center gap-3">
           <Link
-            to={isAuthenticated ? openHref : "/watchlists"}
+            to="/watchlists"
             className="text-sm font-medium px-5 py-2.5 rounded-lg bg-accent text-bg hover:opacity-90 transition-opacity"
           >
             {isAuthenticated ? "Go to my dashboard →" : "Start free →"}
@@ -171,7 +171,7 @@ export default function LandingPage() {
             : "No account. No setup. Your first scored watchlist is already waiting."}
         </p>
         <Link
-          to={openHref}
+          to={isAuthenticated ? "/watchlists" : openHref}
           className="inline-block text-sm font-medium px-5 py-2.5 rounded-lg bg-accent text-bg hover:opacity-90 transition-opacity"
         >
           {isAuthenticated ? "Open my dashboard →" : "Open my starter list →"}

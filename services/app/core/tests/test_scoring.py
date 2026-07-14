@@ -22,9 +22,15 @@ def _sig(x, k, mid):
     return 100.0 / (1.0 + math.exp(-k * (x - mid)))
 
 
-@pytest.mark.parametrize("roe", [0, 10, 20, 35, 60, 114])
+@pytest.mark.parametrize("roe", [0, 10, 20, 35, 60])
 def test_roe_subscore_matches_formula(roe):
     assert scoring.roe_subscore(roe) == pytest.approx(_sig(roe, 0.08, 20.0), abs=1e-6)
+
+
+def test_roe_subscore_caps_at_60():
+    # Values above 60 % are capped to avoid accounting artifacts inflating the score.
+    assert scoring.roe_subscore(114) == pytest.approx(scoring.roe_subscore(60), abs=1e-6)
+    assert scoring.roe_subscore(600) == pytest.approx(scoring.roe_subscore(60), abs=1e-6)
 
 
 @pytest.mark.parametrize("fcf", [-2, 0, 3.5, 5, 7.6, 10])
@@ -50,9 +56,9 @@ def test_peg_is_inverted_lower_is_better():
 # ── fundamental score worked examples ─────────────────────────────────────────
 
 @pytest.mark.parametrize("roe, fcf, peg, expected", [
-    (48.5, 7.6, 1.58, 76.8),   # NFLX
-    (114.3, 0.9, 0.63, 66.1),  # NVDA
-    (38.9, 0.6, 1.42, 51.3),   # GOOGL
+    (48.5, 7.6, 1.58, 76.9),   # NFLX
+    (114.3, 0.9, 0.63, 64.7),  # NVDA (ROE capped at 60 — was 66.1 before cap)
+    (38.9, 0.6, 1.42, 51.2),   # GOOGL
 ])
 def test_fund_score_examples(roe, fcf, peg, expected):
     assert scoring.fund_score(roe, fcf, peg) == pytest.approx(expected, abs=0.6)
@@ -83,20 +89,17 @@ def test_sma_subscore(pct, expected):
     assert scoring.sma_subscore(pct) == expected
 
 
-@pytest.mark.parametrize("pos, expected", [
-    (5, 50), (15, 80), (35, 90), (55, 60), (70, 35), (90, 15)])
-def test_range_subscore(pos, expected):
-    assert scoring.range_subscore(pos) == expected
-
-
 def test_tech_score_none_when_fewer_than_two_inputs():
-    assert scoring.tech_score(50, None, None, None) is None
+    assert scoring.tech_score(50, None, None) is None
 
 
 # ── combined & signal ─────────────────────────────────────────────────────────
 
 def test_combined_weights_fundamentals_more():
+    # No setup: falls back to fund × 0.70 + tech × 0.30
     assert scoring.combined_score(80, 40) == pytest.approx(80 * 0.7 + 40 * 0.3, abs=0.05)
+    # With setup: tech effective = tech × 0.70 + setup × 0.30
+    assert scoring.combined_score(80, 40, 60) == pytest.approx(80 * 0.7 + (40 * 0.7 + 60 * 0.3) * 0.3, abs=0.05)
 
 
 def test_combined_none_if_either_missing():

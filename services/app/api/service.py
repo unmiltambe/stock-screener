@@ -205,7 +205,7 @@ class ScreenerService:
             "top_opportunities": by("combined", reverse=True)[:5],
             "reconsider": by("combined", reverse=False)[:5],
             "best_value": by("fund", reverse=True)[:5],
-            "best_momentum": by("tech", reverse=True)[:5],
+            "best_momentum": by("setup", reverse=True)[:5],
         }
 
     def all_symbols(self, user_id: str) -> List[Dict]:

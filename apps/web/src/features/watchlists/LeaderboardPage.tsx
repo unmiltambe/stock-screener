@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ArrowLeft, ArrowRight, Rocket, Scale, TrendingUp, RotateCcw, TrendingDown, type LucideIcon } from "lucide-react";
+import { Activity, ArrowLeft, ArrowRight, Rocket, Scale, TrendingUp, RotateCcw, TrendingDown, type LucideIcon } from "lucide-react";
 import { Breadcrumb } from "./TickerTable";
 import { useLeaderboard } from "../../api/leaderboard";
 import { useAllSymbols } from "../../api/watchlists";
@@ -20,7 +20,7 @@ const SECTIONS: {
   { key: "best_value", title: "Best Value", blurb: "Strong fundamentals at sensible prices.",
     icon: Scale, metric: (r) => r.scores.fund },
   { key: "best_momentum", title: "Best Momentum", blurb: "Riding the strongest trends.",
-    icon: TrendingUp, metric: (r) => r.scores.tech },
+    icon: Activity, metric: (r) => r.scores.tech },
   { key: "reconsider", title: "Worth a Second Look", blurb: "Lagging the pack — patience or a trim?",
     icon: RotateCcw, metric: (r) => r.scores.combined },
 ];
@@ -37,15 +37,15 @@ function Row({ rank, row, metric }: {
       <span className="text-dim text-xs w-4 tabular-nums">{rank}</span>
       <span className="font-medium w-16">{row.ticker}</span>
       <span className="text-dim text-sm flex-1 truncate">{row.name}</span>
-      {row.signal && (
-        <span className={`text-xs ${signalColor(row.signal)}`}>{row.signal}</span>
-      )}
+      <span className={`text-xs w-12 text-right ${row.signal ? signalColor(row.signal) : "text-dim"}`}>
+        {row.signal ?? "—"}
+      </span>
       <span className={`font-mono text-sm w-10 text-right ${scoreColor(v)}`}>{fmtNum(v, 0)}</span>
     </Link>
   );
 }
 
-function MoverRow({ rank, row, sign }: { rank: number; row: TickerRow; sign: 1 | -1 }) {
+function MoverRow({ rank, row }: { rank: number; row: TickerRow }) {
   const pct = row.dayChangePct;
   return (
     <Link
@@ -56,7 +56,7 @@ function MoverRow({ rank, row, sign }: { rank: number; row: TickerRow; sign: 1 |
       <span className="font-medium w-16">{row.ticker}</span>
       <span className="text-dim text-sm flex-1 truncate">{row.name}</span>
       <span className={`font-mono text-sm w-14 text-right ${dayChangeColor(pct)}`}>
-        {sign > 0 && pct != null && pct > 0 ? "+" : ""}{fmtPctAdaptive(pct)}
+        {fmtPctAdaptive(pct)}
       </span>
     </Link>
   );
@@ -104,6 +104,39 @@ export default function LeaderboardPage() {
         table? That's <Link to="/watchlists/_all" className="text-accent hover:underline">All Symbols</Link>.
       </p>
 
+      {(topMovers.length > 0 || bottomMovers.length > 0) && (
+        <div className="grid gap-4 md:grid-cols-2 mb-4">
+          <div className="rounded-lg border border-line bg-panel p-4">
+            <div className="mb-2 flex items-center gap-3">
+              <div className="border border-accent rounded p-1.5 text-accent shrink-0">
+                <TrendingUp size={18} strokeWidth={1.5} />
+              </div>
+              <div>
+                <h2 className="font-medium">Top Movers Today</h2>
+                <p className="text-dim text-xs">Biggest gains across your watchlists.</p>
+              </div>
+            </div>
+            <div className="-mx-1">
+              {topMovers.map((r, i) => <MoverRow key={r.ticker} rank={i + 1} row={r} />)}
+            </div>
+          </div>
+          <div className="rounded-lg border border-line bg-panel p-4">
+            <div className="mb-2 flex items-center gap-3">
+              <div className="border border-neg/50 rounded p-1.5 text-neg shrink-0">
+                <TrendingDown size={18} strokeWidth={1.5} />
+              </div>
+              <div>
+                <h2 className="font-medium">Biggest Drops Today</h2>
+                <p className="text-dim text-xs">Sharpest declines across your watchlists.</p>
+              </div>
+            </div>
+            <div className="-mx-1">
+              {bottomMovers.map((r, i) => <MoverRow key={r.ticker} rank={i + 1} row={r} />)}
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="grid gap-4 md:grid-cols-2">
         {SECTIONS.map((s) => {
           const rows = data[s.key] ?? [];
@@ -131,39 +164,6 @@ export default function LeaderboardPage() {
           );
         })}
       </div>
-
-      {(topMovers.length > 0 || bottomMovers.length > 0) && (
-        <div className="grid gap-4 md:grid-cols-2 mt-4">
-          <div className="rounded-lg border border-line bg-panel p-4">
-            <div className="mb-2 flex items-center gap-3">
-              <div className="border border-accent rounded p-1.5 text-accent shrink-0">
-                <TrendingUp size={18} strokeWidth={1.5} />
-              </div>
-              <div>
-                <h2 className="font-medium">Top Movers Today</h2>
-                <p className="text-dim text-xs">Biggest gains across your watchlists.</p>
-              </div>
-            </div>
-            <div className="-mx-1">
-              {topMovers.map((r, i) => <MoverRow key={r.ticker} rank={i + 1} row={r} sign={1} />)}
-            </div>
-          </div>
-          <div className="rounded-lg border border-line bg-panel p-4">
-            <div className="mb-2 flex items-center gap-3">
-              <div className="border border-neg/50 rounded p-1.5 text-neg shrink-0">
-                <TrendingDown size={18} strokeWidth={1.5} />
-              </div>
-              <div>
-                <h2 className="font-medium">Biggest Drops Today</h2>
-                <p className="text-dim text-xs">Sharpest declines across your watchlists.</p>
-              </div>
-            </div>
-            <div className="-mx-1">
-              {bottomMovers.map((r, i) => <MoverRow key={r.ticker} rank={i + 1} row={r} sign={-1} />)}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

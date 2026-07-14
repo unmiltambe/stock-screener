@@ -579,33 +579,33 @@ export function TickerTableRow({ r, isSelected, onClick, extraCell }: {
         isSelected ? "bg-accent/10" : "hover:bg-panel",
       ].join(" ")}
     >
-      <td className="py-2 pr-3 font-medium font-mono whitespace-nowrap">
+      <td className="py-2 pr-2 font-medium font-mono whitespace-nowrap">
         <span className={isSelected ? "text-accent" : ""}>{r.ticker}</span>
       </td>
-      <td className="pr-4 text-dim whitespace-nowrap">{(r.name ?? "").slice(0, 26)}</td>
-      <td className="pr-4 text-right font-mono whitespace-nowrap">{fmtPrice(r.price)}</td>
-      <td className={`pr-4 text-right font-mono whitespace-nowrap ${dayChangeColor(r.dayChangePct)}`}>{fmtPctAdaptive(r.dayChangePct)}</td>
-      <td className="pr-4 text-right font-mono text-dim whitespace-nowrap">{fmtMarketCap(m.marketCap)}</td>
-      <td className="pr-3 text-right font-mono text-dim whitespace-nowrap border-l border-line/40 pl-3">{fmtNumAdaptive(m.pe, 1)}</td>
-      <td className="pr-3 text-right font-mono text-dim whitespace-nowrap">{fmtNumAdaptive(m.fwdPe, 1)}</td>
-      <td className={`pr-3 text-right font-mono whitespace-nowrap ${pegColor(m.peg)}`}>{fmtNumAdaptive(m.peg, 2)}</td>
-      <td className={`pr-3 text-right font-mono whitespace-nowrap ${fcfYieldColor(m.fcfYield)}`}>{fmtPctAbsAdaptive(m.fcfYield)}</td>
-      <td className={`pr-4 text-right font-mono whitespace-nowrap ${roeColor(m.roe)}`}>{fmtPctAbsAdaptive(m.roe)}</td>
-      <td className={`pr-3 text-right font-mono whitespace-nowrap border-l border-line/40 pl-3 ${rsiColor(m.rsi)}`}>{fmtNum(m.rsi, 0)}</td>
-      <td className={`pr-3 text-right font-mono whitespace-nowrap ${sma200Color(m.vsSma200)}`}>{fmtPctAdaptive(m.vsSma200)}</td>
-      <td className={`pr-4 text-right font-mono whitespace-nowrap ${sma50Color(m.vsSma50)}`}>{fmtPctAdaptive(m.vsSma50)}</td>
-      <td className="pr-4 whitespace-nowrap"><RangeBar pos={m.rangePos} /></td>
-      <td className={`pr-3 text-right font-mono whitespace-nowrap border-l border-line/40 pl-3 ${(m.macdHistPct ?? 0) >= 0 ? "text-pos" : "text-neg"}`}>
+      <td className="pr-2 text-dim whitespace-nowrap">{(r.name ?? "").slice(0, 26)}</td>
+      <td className="pr-2 text-right font-mono whitespace-nowrap">{fmtPrice(r.price)}</td>
+      <td className={`pr-2 text-right font-mono whitespace-nowrap ${dayChangeColor(r.dayChangePct)}`}>{fmtPctAdaptive(r.dayChangePct)}</td>
+      <td className="pr-2 text-right font-mono text-dim whitespace-nowrap">{fmtMarketCap(m.marketCap)}</td>
+      <td className="pr-2 text-right font-mono text-dim whitespace-nowrap border-l border-line/40 pl-2">{fmtNumAdaptive(m.pe, 1)}</td>
+      <td className="pr-2 text-right font-mono text-dim whitespace-nowrap">{fmtNumAdaptive(m.fwdPe, 1)}</td>
+      <td className={`pr-2 text-right font-mono whitespace-nowrap ${pegColor(m.peg)}`}>{fmtNumAdaptive(m.peg, 2)}</td>
+      <td className={`pr-2 text-right font-mono whitespace-nowrap ${fcfYieldColor(m.fcfYield)}`}>{fmtPctAbsAdaptive(m.fcfYield)}</td>
+      <td className={`pr-2 text-right font-mono whitespace-nowrap ${roeColor(m.roe)}`}>{fmtPctAbsAdaptive(m.roe)}</td>
+      <td className={`pr-2 text-right font-mono whitespace-nowrap border-l border-line/40 pl-2 ${rsiColor(m.rsi)}`}>{fmtNum(m.rsi, 0)}</td>
+      <td className={`pr-2 text-right font-mono whitespace-nowrap ${sma200Color(m.vsSma200)}`}>{fmtPctAdaptive(m.vsSma200)}</td>
+      <td className={`pr-2 text-right font-mono whitespace-nowrap ${sma50Color(m.vsSma50)}`}>{fmtPctAdaptive(m.vsSma50)}</td>
+      <td className="pr-2 whitespace-nowrap"><RangeBar pos={m.rangePos} /></td>
+      <td className={`pr-2 text-right font-mono whitespace-nowrap border-l border-line/40 pl-2 ${(m.macdHistPct ?? 0) >= 0 ? "text-pos" : "text-neg"}`}>
         {m.macdHistPct == null ? "—" : `${m.macdHistPct >= 0 ? "+" : ""}${m.macdHistPct.toFixed(2)}%`}
       </td>
-      <td className={`pr-4 text-right font-mono whitespace-nowrap ${(m.obvTrendPct ?? 0) >= 0 ? "text-pos" : "text-neg"}`}>
+      <td className={`pr-2 text-right font-mono whitespace-nowrap ${(m.obvTrendPct ?? 0) >= 0 ? "text-pos" : "text-neg"}`}>
         {m.obvTrendPct == null ? "—" : `${m.obvTrendPct >= 0 ? "▲" : "▼"} ${Math.abs(m.obvTrendPct).toFixed(1)}%`}
       </td>
-      <td className={`pr-3 text-right font-mono whitespace-nowrap border-l border-line/40 pl-3 ${scoreColor(r.scores.fund)}`}>{fmtNum(r.scores.fund, 0)}</td>
-      <td className={`pr-3 text-right font-mono whitespace-nowrap ${scoreColor(r.scores.tech)}`}>{fmtNum(r.scores.tech, 0)}</td>
-      <td className={`pr-3 text-right font-mono whitespace-nowrap ${scoreColor(r.scores.setup)}`}>{fmtNum(r.scores.setup, 0)}</td>
-      <td className={`pr-4 text-right font-mono whitespace-nowrap ${scoreColor(r.scores.combined)}`}>{fmtNum(r.scores.combined, 0)}</td>
-      <td className={`pr-3 font-medium whitespace-nowrap ${signalColor(r.signal)}`}>{r.signal ?? "—"}</td>
+      <td className={`pr-2 text-right font-mono whitespace-nowrap border-l border-line/40 pl-2 ${scoreColor(r.scores.fund)}`}>{fmtNum(r.scores.fund, 0)}</td>
+      <td className={`pr-2 text-right font-mono whitespace-nowrap ${scoreColor(r.scores.tech)}`}>{fmtNum(r.scores.tech, 0)}</td>
+      <td className={`pr-2 text-right font-mono whitespace-nowrap ${scoreColor(r.scores.setup)}`}>{fmtNum(r.scores.setup, 0)}</td>
+      <td className={`pr-2 text-right font-mono whitespace-nowrap ${scoreColor(r.scores.combined)}`}>{fmtNum(r.scores.combined, 0)}</td>
+      <td className={`pr-2 font-medium whitespace-nowrap ${signalColor(r.signal)}`}>{r.signal ?? "—"}</td>
       {extraCell}
     </tr>
   );
@@ -627,42 +627,42 @@ export function TickerTableHead({ sort, onSort, extraGroupHeader, extraHeader, c
     <thead className={className}>
       <tr className="text-[10px] uppercase tracking-wider border-b border-line/40">
         <th colSpan={5} className="pb-1" />
-        <th colSpan={5} className="pb-1 text-center border-l border-line/40 pl-3 pr-4 text-warn">
+        <th colSpan={5} className="pb-1 text-center border-l border-line/40 pl-2 pr-2 text-warn">
           Fundamental Metrics
         </th>
-        <th colSpan={4} className="pb-1 text-center border-l border-line/40 pl-3 pr-4 text-warn">
+        <th colSpan={4} className="pb-1 text-center border-l border-line/40 pl-2 pr-2 text-warn">
           Technical Metrics
         </th>
-        <th colSpan={2} className="pb-1 text-center border-l border-line/40 pl-3 pr-4 text-warn">
+        <th colSpan={2} className="pb-1 text-center border-l border-line/40 pl-2 pr-2 text-warn">
           Setup Metrics
         </th>
-        <th colSpan={5} className="pb-1 text-center border-l border-line/40 pl-3 text-warn">
+        <th colSpan={5} className="pb-1 text-center border-l border-line/40 pl-2 text-warn">
           Scores
         </th>
         {extraGroupHeader}
       </tr>
       <tr className="text-dim text-left border-b border-line text-xs">
-        <Th tip={TIPS.ticker}   sortK="ticker"    {...thProps} className="pr-3 pt-1">Ticker</Th>
-        <Th tip={TIPS.company}  sortK="company"   {...thProps} className="pr-4 pt-1">Company</Th>
-        <Th tip={TIPS.price}    sortK="price"     {...thProps} className="pr-4 pt-1 text-right">Price</Th>
-        <Th tip={TIPS.dayChange} sortK="dayChangePct" {...thProps} className="pr-4 pt-1 text-right">Chg %</Th>
-        <Th tip={TIPS.mktCap}   sortK="marketCap" {...thProps} className="pr-4 pt-1 text-right">Mkt Cap</Th>
-        <Th tip={TIPS.pe}       sortK="pe"        {...thProps} className="pr-3 pt-1 text-right border-l border-line/40 pl-3">P/E</Th>
-        <Th tip={TIPS.fwdPe}    sortK="fwdPe"     {...thProps} className="pr-3 pt-1 text-right">Fwd P/E</Th>
-        <Th tip={TIPS.peg}      sortK="peg"       {...thProps} className="pr-3 pt-1 text-right">PEG</Th>
-        <Th tip={TIPS.fcfYield} sortK="fcfYield"  {...thProps} className="pr-3 pt-1 text-right">FCF<br/>Yield</Th>
-        <Th tip={TIPS.roe}      sortK="roe"       {...thProps} className="pr-4 pt-1 text-right">ROE</Th>
-        <Th tip={TIPS.rsi}      sortK="rsi"       {...thProps} className="pr-3 pt-1 text-right border-l border-line/40 pl-3">RSI</Th>
-        <Th tip={TIPS.sma200}   sortK="vsSma200"  {...thProps} className="pr-3 pt-1 text-right">vs<br/>200d</Th>
-        <Th tip={TIPS.sma50}    sortK="vsSma50"   {...thProps} className="pr-4 pt-1 text-right">vs<br/>50d</Th>
-        <Th tip={TIPS.range}    sortK="rangePos"  {...thProps} className="pr-4 pt-1">52W Range</Th>
-        <Th tip={TIPS.macdHist} sortK="macdHistPct" {...thProps} className="pr-3 pt-1 text-right border-l border-line/40 pl-3">MACD<br/>Hist%</Th>
-        <Th tip={TIPS.obvTrend} sortK="obvTrendPct"  {...thProps} className="pr-4 pt-1 text-right">OBV<br/>20d%</Th>
-        <Th tip={TIPS.fund}     sortK="fund"      {...thProps} className="pr-3 pt-1 text-right border-l border-line/40 pl-3">Fundamental</Th>
-        <Th tip={TIPS.tech}     sortK="tech"      {...thProps} className="pr-3 pt-1 text-right">Technical</Th>
-        <Th tip={TIPS.setup}    sortK="setup"     {...thProps} className="pr-3 pt-1 text-right">Setup</Th>
-        <Th tip={TIPS.combined} sortK="combined"  {...thProps} className="pr-4 pt-1 text-right">Overall</Th>
-        <Th tip={TIPS.signal}   sortK="signal"    {...thProps} className="pr-3 pt-1">Signal</Th>
+        <Th tip={TIPS.ticker}   sortK="ticker"    {...thProps} className="pr-2 pt-1">Ticker</Th>
+        <Th tip={TIPS.company}  sortK="company"   {...thProps} className="pr-2 pt-1">Company</Th>
+        <Th tip={TIPS.price}    sortK="price"     {...thProps} className="pr-2 pt-1 text-right">Price</Th>
+        <Th tip={TIPS.dayChange} sortK="dayChangePct" {...thProps} className="pr-2 pt-1 text-right">Chg %</Th>
+        <Th tip={TIPS.mktCap}   sortK="marketCap" {...thProps} className="pr-2 pt-1 text-right">Mkt Cap</Th>
+        <Th tip={TIPS.pe}       sortK="pe"        {...thProps} className="pr-2 pt-1 text-right border-l border-line/40 pl-2">P/E</Th>
+        <Th tip={TIPS.fwdPe}    sortK="fwdPe"     {...thProps} className="pr-2 pt-1 text-right">Fwd P/E</Th>
+        <Th tip={TIPS.peg}      sortK="peg"       {...thProps} className="pr-2 pt-1 text-right">PEG</Th>
+        <Th tip={TIPS.fcfYield} sortK="fcfYield"  {...thProps} className="pr-2 pt-1 text-right">FCF<br/>Yield</Th>
+        <Th tip={TIPS.roe}      sortK="roe"       {...thProps} className="pr-2 pt-1 text-right">ROE</Th>
+        <Th tip={TIPS.rsi}      sortK="rsi"       {...thProps} className="pr-2 pt-1 text-right border-l border-line/40 pl-2">RSI</Th>
+        <Th tip={TIPS.sma200}   sortK="vsSma200"  {...thProps} className="pr-2 pt-1 text-right">vs<br/>200d</Th>
+        <Th tip={TIPS.sma50}    sortK="vsSma50"   {...thProps} className="pr-2 pt-1 text-right">vs<br/>50d</Th>
+        <Th tip={TIPS.range}    sortK="rangePos"  {...thProps} className="pr-2 pt-1">52W Range</Th>
+        <Th tip={TIPS.macdHist} sortK="macdHistPct" {...thProps} className="pr-2 pt-1 text-right border-l border-line/40 pl-2">MACD<br/>Hist%</Th>
+        <Th tip={TIPS.obvTrend} sortK="obvTrendPct"  {...thProps} className="pr-2 pt-1 text-right">OBV<br/>20d%</Th>
+        <Th tip={TIPS.fund}     sortK="fund"      {...thProps} className="pr-2 pt-1 text-right border-l border-line/40 pl-2">Fund</Th>
+        <Th tip={TIPS.tech}     sortK="tech"      {...thProps} className="pr-2 pt-1 text-right">Tech</Th>
+        <Th tip={TIPS.setup}    sortK="setup"     {...thProps} className="pr-2 pt-1 text-right">Setup</Th>
+        <Th tip={TIPS.combined} sortK="combined"  {...thProps} className="pr-2 pt-1 text-right">Overall</Th>
+        <Th tip={TIPS.signal}   sortK="signal"    {...thProps} className="pr-2 pt-1">Signal</Th>
         {extraHeader}
       </tr>
     </thead>

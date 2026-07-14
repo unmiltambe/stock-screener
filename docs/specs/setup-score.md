@@ -1,6 +1,6 @@
 # Spec — Setup Score
 
-**Status:** draft  
+**Status:** implemented  
 **Backlog items:** #2 (high-confidence setup scoring), #B1 (backtesting — see §Open questions)
 
 ---
@@ -14,7 +14,7 @@ This is distinct from the existing scores:
 | Score | Question | Inputs | Changes how often |
 |---|---|---|---|
 | Fundamental | Is this a high-quality business at a fair price? | ROE, FCF yield, PEG | Quarterly |
-| Technical | Is the stock in a healthy trend? | RSI level, SMA distances, 52W range | Weekly |
+| Technical | Is the stock in a healthy trend? | RSI level, SMA-200, SMA-50 | Weekly |
 | **Setup** | **Is this a good time to enter?** | **RSI zone + direction, SMA-200 proximity, MACD % direction, OBV trend** | **Daily** |
 
 The typical use: filter for high Fund score (good business) + high Setup score (good timing) to surface swing-trade entry candidates for the current week.
@@ -28,15 +28,17 @@ Setup is a *refinement* of Technical, not a new independent dimension.
 | | Technical score | Setup score |
 |---|---|---|
 | RSI | Rewards low RSI (oversold level) | Rewards RSI recovering upward from oversold |
-| SMA-200 | Rewards being above SMA-200 broadly | Rewards being in the sweet spot (0–15% above) |
-| SMA-50 | Minor weight (10%) | Not used — already captured by MACD |
-| 52W range | Rewards mid-range position | Not used |
+| SMA-200 | Rewards being above SMA-200 broadly (40% weight) | Rewards being in the sweet spot (0–15% above) |
+| SMA-50 | 25% weight — medium-term trend | Not used — MACD already captures short-term momentum |
+| 52W range | ~~Rewards mid-range position~~ **Removed** — penalised turnarounds unfairly | Not used |
 | MACD | Not used | Primary signal (35% weight) — momentum inflection |
 | OBV | Not used | Confirmation signal (15% weight) — volume flow |
 
-**Setup should NOT be incorporated into the Combined score.** Combined answers "is this a good stock?" (a stable, business-quality question). Setup answers "should I enter this week?" (a volatile, daily-conditions question). Mixing them would cause Combined to fluctuate daily with market noise, masking the fundamental signal that makes it useful for ranking.
-
-Post-calibration option: if Setup proves predictive, consider replacing Technical in Combined with a blended `tech × 0.60 + setup × 0.40`. That enriches the Technical dimension without adding a new top-level dimension or double-counting.
+**Setup is incorporated into the Combined score as a blend within the technical bucket.**
+`tech_effective = tech × 0.70 + setup × 0.30`, then `Combined = Fund × 0.70 + tech_effective × 0.30`.
+Effective weights: **Fund 70% · Tech 21% · Setup 9%**. Setup at 9% of combined is enough to nudge
+a boundary score (e.g., push a 59 over 60 for a BUY signal when timing is clearly favourable) without
+making Combined volatile enough to flip signals on routine MACD noise.
 
 ---
 

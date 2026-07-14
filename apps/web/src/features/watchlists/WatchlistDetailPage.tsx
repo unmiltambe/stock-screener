@@ -89,7 +89,7 @@ export default function WatchlistDetailPage() {
   const rows = sortRows(data!, BASE_ACCESSORS, sortKey, sortDir);
 
   return (
-    <div className="max-w-[1400px] mx-auto h-full flex flex-col">
+    <div className="max-w-[1700px] mx-auto h-full flex flex-col">
       <div className="flex items-center justify-between mb-4 shrink-0">
         <Breadcrumb crumbs={[{ label: "watchlists", to: "/watchlists" }, { label: watchlistName ?? "…", to: "#" }]} />
         <div className="flex flex-col items-end gap-1">
