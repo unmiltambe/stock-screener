@@ -141,10 +141,10 @@ def macd_scalars(
     """Derive setup-score inputs from the MACD histogram series.
 
     Returns (hist_pct, hist_rising_3bar, bars_on_side):
-      hist_pct        — last histogram value as % of price (sign = direction)
+      hist_pct         — last histogram value as % of price (sign = direction)
       hist_rising_3bar — True if histogram rose for 3 consecutive bars
-      bars_on_side    — how many bars histogram has been on its current side of
-                        zero; None if > 10 (signal too stale to be actionable)
+      bars_on_side     — how many bars histogram has been on its current side of
+                         zero; None only if data is insufficient
     """
     _, _, histogram = macd_series(closes)
     hist_vals = [v for v in histogram if v is not None]
@@ -160,16 +160,12 @@ def macd_scalars(
 
     # Count bars the histogram has been on the same side of zero as today.
     current_sign = 1 if last > 0 else -1 if last < 0 else 0
-    bars_on_side: Optional[int] = 1
+    bars_on_side: int = 1
     for v in reversed(hist_vals[:-1]):
         sign = 1 if v > 0 else -1 if v < 0 else 0
         if sign == current_sign or sign == 0:
-            assert bars_on_side is not None
             bars_on_side += 1
         else:
-            break
-        if bars_on_side > 10:
-            bars_on_side = None
             break
 
     return hist_pct, hist_rising, bars_on_side
