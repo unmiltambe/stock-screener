@@ -190,26 +190,27 @@ def macd_hist_subscore(
     hist_rising: Optional[bool],
     bars_on_side: Optional[int],
 ) -> Optional[float]:
-    """Scores the MACD histogram for momentum inflection. A zero-cross to positive
-    within the last 3 bars scores highest (95); a falling negative histogram scores
-    lowest (15). Returns None if histogram data is unavailable."""
+    """Scores the MACD histogram for momentum inflection.
+
+    Two dimensions: direction (positive/negative, rising/falling) and age
+    (bars_on_side). A fresh positive cross still climbing scores highest (95);
+    a positive cross that peaked weeks ago scores near 30 — the move is over.
+    """
     if hist_pct is None:
         return None
     positive = hist_pct > 0
     just_crossed = bars_on_side is not None and bars_on_side <= 3
-    if positive and just_crossed:
-        return 95.0
-    if positive and hist_rising:
-        return 80.0
-    if positive:
-        return 65.0
-    if just_crossed:          # just crossed negative
-        return 10.0
-    if hist_rising:           # negative but rising — potential reversal forming
-        return 60.0
-    if hist_rising is False:  # explicitly falling
-        return 15.0
-    return 35.0               # negative, flat or unknown direction
+    stale = bars_on_side is None or bars_on_side > 10
+
+    if positive and just_crossed:                   return 95.0
+    if positive and hist_rising and not stale:       return 80.0  # fresh, still climbing
+    if positive and hist_rising and stale:           return 65.0  # old but still climbing
+    if positive and not hist_rising and not stale:   return 50.0  # peaked, unwinding
+    if positive and not hist_rising and stale:       return 30.0  # stale, move over
+    if just_crossed:                                 return 10.0  # just went negative
+    if hist_rising:                                  return 60.0  # negative but recovering
+    if hist_rising is False:                         return 15.0  # negative and falling
+    return 35.0                                                    # negative, flat
 
 
 def obv_trend_subscore(obv_pct: float) -> float:
