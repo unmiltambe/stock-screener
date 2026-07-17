@@ -9,6 +9,7 @@ from typing import Dict, List, Optional
 
 from pydantic import BaseModel
 
+from core.chips import build_chips
 from core.models import ScoredTicker
 
 
@@ -33,7 +34,11 @@ class MetricsOut(BaseModel):
     marketCap: Optional[float] = None
     # Setup-score raw inputs (for the Setup Metrics columns in the table)
     macdHistPct: Optional[float] = None   # MACD histogram as % of price
+    macdBarsOnSide: Optional[int] = None  # bars histogram on current side of zero
     obvTrendPct: Optional[float] = None   # 20-bar OBV % change
+    # SMA crossover signals: +N = above-cross N bars ago, -N = below-cross, None = no recent cross
+    sma50CrossBars: Optional[int] = None
+    sma200CrossBars: Optional[int] = None
 
 
 class TickerRow(BaseModel):
@@ -45,6 +50,7 @@ class TickerRow(BaseModel):
     scores: ScoresOut = ScoresOut()
     signal: Optional[str] = None
     metrics: MetricsOut = MetricsOut()
+    chips: List[Dict] = []
     lists: List[str] = []
     stale: bool = False
 
@@ -123,6 +129,15 @@ def row_from_scored(
     f = scored.fundamentals
     m = scored.metrics
     s = scored.scores
+    metrics = {
+        "pe": f.trailing_pe, "fwdPe": f.forward_pe, "peg": f.peg,
+        "fcfYield": f.fcf_yield, "roe": f.roe,
+        "rsi": m.rsi, "vsSma200": m.sma200_pct, "vsSma50": m.sma50_pct,
+        "rangePos": m.range_pos, "sector": f.sector, "marketCap": f.market_cap,
+        "macdHistPct": m.macd_hist_pct, "macdBarsOnSide": m.macd_bars_on_side,
+        "obvTrendPct": m.obv_trend_pct,
+        "sma50CrossBars": m.sma50_cross_bars, "sma200CrossBars": m.sma200_cross_bars,
+    }
     return {
         "ticker": scored.ticker,
         "name": f.name,
@@ -131,13 +146,8 @@ def row_from_scored(
         "dayChangePct": f.day_change_pct,
         "scores": {"fund": s.fund, "tech": s.tech, "combined": s.combined, "setup": s.setup},
         "signal": scored.signal.value if scored.signal else None,
-        "metrics": {
-            "pe": f.trailing_pe, "fwdPe": f.forward_pe, "peg": f.peg,
-            "fcfYield": f.fcf_yield, "roe": f.roe,
-            "rsi": m.rsi, "vsSma200": m.sma200_pct, "vsSma50": m.sma50_pct,
-            "rangePos": m.range_pos, "sector": f.sector, "marketCap": f.market_cap,
-            "macdHistPct": m.macd_hist_pct, "obvTrendPct": m.obv_trend_pct,
-        },
+        "metrics": metrics,
+        "chips": build_chips({"metrics": metrics}),
         "lists": lists or [],
         "stale": stale,
     }

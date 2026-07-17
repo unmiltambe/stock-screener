@@ -24,7 +24,9 @@ captured.
 | 15 — in-app feedback link | ✅ done | shipped as an embedded Tally popup ([ADR-0010](decisions/0010-feedback-channel.md)) |
 | 12 — today's movers (sort) | ✅ done | sortable Chg % column + top 5 / bottom 5 movers panel on Leaderboard page |
 | 1 — autocomplete + validation | ✅ done | shipped: [ADR-0011](decisions/0011-symbol-universe.md) + [spec](specs/ticker-autocomplete.md); 11.7k US symbols, debounced type-ahead, eager validation |
-| 4 — watchlist column filters | 🟡 medium | client-side view-logic, no backend; UX-shape decision open |
+| 20 — leaderboard redesign | 🔴 in progress | 2-group 4-card layout: Entry Signals, Exit Warnings, Best Positioned, Today's Movers. All crossover events consolidated, no artificial per-card caps. See [spec](specs/leaderboard-redesign.md). Branch: `feat/leaderboard-redesign` |
+| 21 — signal chips in watchlist row view | 🟢 small | Show MACD↑/↓ and SMA crossover chips inline on individual watchlist rows (same chips as leaderboard), covering speculative stocks that are filtered out of the quality-gated leaderboard. Wire fields already on the API (`macdBarsOnSide`, `sma50CrossBars`, `sma200CrossBars`) — frontend-only change in `TickerTable.tsx`. |
+| 4 — watchlist column filters | 🟡 descoped | General filter builder deferred; preset sort buttons on All Symbols table cover primary use cases (covered by #20 leaderboard + existing sort columns) |
 | 7 — MACD on graph | ✅ done | MACD(12,26,9) sub-panel with histogram + lines; OBV sub-panel included — see [spec](specs/chart-indicators.md), [ADR-0012](decisions/0012-chart-indicators.md) |
 | 10 — fund/tech weight slider | 🟡 medium | decision made (persist per-user); Signal-table question still open |
 | 11 — day change ($/%) | ◑ partial | % column + chart sidebar shipped ([spec](specs/day-change.md)); $/% toggle deferred (frontend-only) |
@@ -643,6 +645,22 @@ user can add/remove freely — it's a starting point, not a lock-in.
 
 **Why it mattered:** directly powers #17's live hero + built-in views — a leaderboard
 that already looks *insightful* is the temptation loop that converts a visit.
+
+### 20. Leaderboard redesign  🔴 in progress
+
+See [spec](specs/leaderboard-redesign.md) and branch `feat/leaderboard-redesign`.
+
+### 21. Signal chips in watchlist row view  ✅ done
+
+**Shipped:** chips render in the table's "Crossovers" column (replaced the Signal / Buy/Neutral/Trim column). Built client-side from `macdBarsOnSide`, `sma50CrossBars`, `sma200CrossBars` already on every `TickerRow.metrics`. Window = 5 bars, no quality gate.
+
+**Tech debt:** chip window (`maxBars`) is duplicated — `lib/chips.ts` default and `leaderboard.py` `entry_signals`/`exit_warnings` defaults are kept in sync manually. Fix: compute chips on the backend for every scored row and include a `chips` field on `TickerRow`, then remove `lib/chips.ts` entirely. Frontend just renders what the API sends, single source of truth.
+
+### 22. Centralise chip computation to backend  🟢
+
+**Intent:** eliminate the duplicate `maxBars = 5` between `lib/chips.ts` (frontend table) and `leaderboard.py` (leaderboard cards). A single backend change would currently require two edits to take effect.
+
+**Approach:** compute chips in `row_from_scored()` in `schemas.py` (or a shared helper) for every row, add `chips: list[SignalChip]` to `TickerRow` API shape, and remove `lib/chips.ts`. The leaderboard backend already sets chips; extending it to all rows is a small loop addition. Frontend `TickerTable` and `LeaderboardPage` both render from the same `row.chips` field.
 
 ### 19. Legal notices and disclaimers  ◑ partial
 

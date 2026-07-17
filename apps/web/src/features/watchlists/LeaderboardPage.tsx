@@ -1,34 +1,13 @@
 import { Link } from "react-router-dom";
-import { Activity, ArrowLeft, ArrowRight, Rocket, Scale, TrendingUp, RotateCcw, TrendingDown, type LucideIcon } from "lucide-react";
-import { Breadcrumb } from "./TickerTable";
+import { ArrowLeft, ArrowRight, TrendingUp, Star, ShieldAlert, Zap } from "lucide-react";
 import { useLeaderboard } from "../../api/leaderboard";
-import { useAllSymbols } from "../../api/watchlists";
-import type { Leaderboard, TickerRow } from "../../api/types";
-import { fmtNum, fmtPctAdaptive, scoreColor, signalColor, dayChangeColor } from "../../lib/format";
+import type { TickerRow } from "../../api/types";
+import { fmtNum, fmtPctAdaptive, scoreColor, dayChangeColor } from "../../lib/format";
 
-// The opinionated companion to All Symbols: a curated "best picks first" read,
-// not a full table. Four ranked angles across everything you track.
-const SECTIONS: {
-  key: keyof Leaderboard;
-  title: string;
-  blurb: string;
-  icon: LucideIcon;
-  metric: (r: TickerRow) => number | null;
-}[] = [
-  { key: "top_opportunities", title: "Top Opportunities", blurb: "Best combined scores right now.",
-    icon: Rocket, metric: (r) => r.scores.combined },
-  { key: "best_value", title: "Best Value", blurb: "Strong fundamentals at sensible prices.",
-    icon: Scale, metric: (r) => r.scores.fund },
-  { key: "best_momentum", title: "Best Momentum", blurb: "Riding the strongest trends.",
-    icon: Activity, metric: (r) => r.scores.tech },
-  { key: "reconsider", title: "Worth a Second Look", blurb: "Lagging the pack — patience or a trim?",
-    icon: RotateCcw, metric: (r) => r.scores.combined },
-];
+// ── shared row components ─────────────────────────────────────────────────────
 
-function Row({ rank, row, metric }: {
-  rank: number; row: TickerRow; metric: (r: TickerRow) => number | null;
-}) {
-  const v = metric(row);
+function RankedRow({ rank, row }: { rank: number; row: TickerRow }) {
+  const combined = row.scores.combined;
   return (
     <Link
       to={`/tickers/${row.ticker}`}
@@ -37,49 +16,148 @@ function Row({ rank, row, metric }: {
       <span className="text-dim text-xs w-4 tabular-nums">{rank}</span>
       <span className="font-medium w-16">{row.ticker}</span>
       <span className="text-dim text-sm flex-1 truncate">{row.name}</span>
-      <span className={`text-xs w-12 text-right ${row.signal ? signalColor(row.signal) : "text-dim"}`}>
-        {row.signal ?? "—"}
-      </span>
-      <span className={`font-mono text-sm w-10 text-right ${scoreColor(v)}`}>{fmtNum(v, 0)}</span>
+      <span className={`font-mono text-sm w-10 text-right ${scoreColor(combined)}`}>{fmtNum(combined, 0)}</span>
     </Link>
   );
 }
 
-function MoverRow({ rank, row }: { rank: number; row: TickerRow }) {
+function SignalRowItem({ row }: { row: TickerRow }) {
+  const fund = row.scores.fund;
+  return (
+    <Link
+      to={`/tickers/${row.ticker}`}
+      className="flex items-center gap-2 px-3 py-2 rounded hover:bg-line/30 transition-colors"
+    >
+      <span className="font-medium w-14 shrink-0">{row.ticker}</span>
+      <span className="text-dim text-sm truncate min-w-0 flex-1">{row.name}</span>
+      <div className="flex gap-1 shrink-0">
+        {row.chips.map((chip) => (
+          <span
+            key={chip.label}
+            className="text-xs font-mono px-1.5 py-0.5 rounded border border-accent/40 text-accent bg-accent/5 whitespace-nowrap"
+          >
+            {chip.label} {chip.bars}d
+          </span>
+        ))}
+      </div>
+      <span className={`font-mono text-sm w-8 text-right shrink-0 ${scoreColor(fund)}`}>
+        {fmtNum(fund, 0)}
+      </span>
+    </Link>
+  );
+}
+
+function ExitRowItem({ row }: { row: TickerRow }) {
+  const fund = row.scores.fund;
+  return (
+    <Link
+      to={`/tickers/${row.ticker}`}
+      className="flex items-center gap-2 px-3 py-2 rounded hover:bg-line/30 transition-colors"
+    >
+      <span className="font-medium w-14 shrink-0">{row.ticker}</span>
+      <span className="text-dim text-sm truncate min-w-0 flex-1">{row.name}</span>
+      <div className="flex gap-1 shrink-0">
+        {row.chips.map((chip) => (
+          <span
+            key={chip.label}
+            className="text-xs font-mono px-1.5 py-0.5 rounded border border-neg/40 text-neg bg-neg/5 whitespace-nowrap"
+          >
+            {chip.label} {chip.bars}d
+          </span>
+        ))}
+      </div>
+      <span className={`font-mono text-sm w-8 text-right shrink-0 ${scoreColor(fund)}`}>
+        {fmtNum(fund, 0)}
+      </span>
+    </Link>
+  );
+}
+
+function MoverRow({ row }: { row: TickerRow }) {
   const pct = row.dayChangePct;
   return (
     <Link
       to={`/tickers/${row.ticker}`}
-      className="flex items-center gap-3 px-3 py-2 rounded hover:bg-line/30 transition-colors"
+      className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-line/30 transition-colors"
     >
-      <span className="text-dim text-xs w-4 tabular-nums">{rank}</span>
-      <span className="font-medium w-16">{row.ticker}</span>
-      <span className="text-dim text-sm flex-1 truncate">{row.name}</span>
-      <span className={`font-mono text-sm w-14 text-right ${dayChangeColor(pct)}`}>
+      <span className="font-medium text-sm w-14 shrink-0">{row.ticker}</span>
+      <span className="text-dim text-xs flex-1 truncate">{row.name}</span>
+      <span className={`font-mono text-xs w-12 text-right shrink-0 ${dayChangeColor(pct)}`}>
         {fmtPctAdaptive(pct)}
       </span>
     </Link>
   );
 }
 
+// ── card shells ───────────────────────────────────────────────────────────────
+
+function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  return (
+    <div className={`rounded-lg border border-line bg-panel p-4 ${className}`}>
+      {children}
+    </div>
+  );
+}
+
+function CardHeader({
+  icon,
+  accent = "accent",
+  title,
+  blurb,
+}: {
+  icon: React.ReactNode;
+  accent?: "accent" | "neg";
+  title: string;
+  blurb: string;
+}) {
+  const border = accent === "neg" ? "border-neg/50 text-neg" : "border-accent text-accent";
+  return (
+    <div className="mb-3 flex items-center gap-3">
+      <div className={`border rounded p-1.5 shrink-0 ${border}`}>{icon}</div>
+      <div>
+        <h2 className="font-medium">{title}</h2>
+        <p className="text-dim text-xs">{blurb}</p>
+      </div>
+    </div>
+  );
+}
+
+// ── group label ───────────────────────────────────────────────────────────────
+
+function GroupLabel({ label, description }: { label: string; description: string }) {
+  return (
+    <div className="mb-4">
+      <div className="flex items-center gap-3 mb-1">
+        <span className="text-sm font-bold tracking-widest uppercase">{label}</span>
+        <div className="flex-1 border-t border-line" />
+      </div>
+      <p className="text-dim text-sm">{description}</p>
+    </div>
+  );
+}
+
+// ── page ──────────────────────────────────────────────────────────────────────
+
 export default function LeaderboardPage() {
   const { data, isLoading } = useLeaderboard();
-  const { data: allRows } = useAllSymbols();
 
   if (isLoading) return <p className="text-dim">Tallying the standings…</p>;
 
-  const withChange = allRows.filter((r) => r.dayChangePct != null);
-  const topMovers = [...withChange].sort((a, b) => b.dayChangePct! - a.dayChangePct!).slice(0, 5);
-  const bottomMovers = [...withChange].sort((a, b) => a.dayChangePct! - b.dayChangePct!).slice(0, 5);
+  const hasData =
+    data &&
+    ((data.entry_signals?.length ?? 0) > 0 ||
+      (data.exit_warnings?.length ?? 0) > 0 ||
+      (data.best_positioned?.length ?? 0) > 0 ||
+      (data.top_movers_up?.length ?? 0) > 0 ||
+      (data.top_movers_down?.length ?? 0) > 0);
 
-  const empty = data && SECTIONS.every((s) => (data[s.key] ?? []).length === 0);
-  if (!data || empty) {
+  if (!data || !hasData) {
     return (
       <div className="max-w-md mx-auto text-center mt-16">
         <h1 className="text-lg font-semibold mb-2">Your leaderboard is waiting</h1>
         <p className="text-dim text-sm">
           Add a few tickers to your watchlists and the rankings fill in here —
-          best value, best momentum, and the ones worth a second look.
+          entry signals, best positioned, and today's movers.
         </p>
         <Link to="/watchlists" className="inline-flex items-center gap-1 mt-5 text-accent text-sm hover:underline">
           <ArrowLeft size={14} strokeWidth={1.75} /> Back to watchlists
@@ -88,11 +166,14 @@ export default function LeaderboardPage() {
     );
   }
 
+  const entrySignals = data?.entry_signals ?? [];
+  const exitWarnings = data?.exit_warnings ?? [];
+  const bestPositioned = data?.best_positioned ?? [];
+  const moversUp = data?.top_movers_up ?? [];
+  const moversDown = data?.top_movers_down ?? [];
+
   return (
     <div className="max-w-5xl mx-auto">
-      <div className="mb-4">
-        <Breadcrumb crumbs={[{ label: "watchlists", to: "/watchlists" }, { label: "Leaderboard", to: "/leaderboard" }]} />
-      </div>
       <div className="flex items-baseline justify-between mb-1">
         <h1 className="text-lg font-semibold">Leaderboard</h1>
         <Link to="/watchlists/_all" className="text-accent text-sm hover:underline inline-flex items-center gap-1">
@@ -100,69 +181,97 @@ export default function LeaderboardPage() {
         </Link>
       </div>
       <p className="text-dim text-sm mb-6">
-        The highlights across everything you track. Want every name in one sortable
-        table? That's <Link to="/watchlists/_all" className="text-accent hover:underline">All Symbols</Link>.
+        Your daily briefing — one question: should I do anything today? Want every
+        name in one sortable table? That's{" "}
+        <Link to="/watchlists/_all" className="text-accent hover:underline">All Symbols</Link>.
       </p>
 
-      {(topMovers.length > 0 || bottomMovers.length > 0) && (
-        <div className="grid gap-4 md:grid-cols-2 mb-4">
-          <div className="rounded-lg border border-line bg-panel p-4">
-            <div className="mb-2 flex items-center gap-3">
-              <div className="border border-accent rounded p-1.5 text-accent shrink-0">
-                <TrendingUp size={18} strokeWidth={1.5} />
-              </div>
-              <div>
-                <h2 className="font-medium">Top Movers Today</h2>
-                <p className="text-dim text-xs">Biggest gains across your watchlists.</p>
-              </div>
-            </div>
-            <div className="-mx-1">
-              {topMovers.map((r, i) => <MoverRow key={r.ticker} rank={i + 1} row={r} />)}
-            </div>
+      {/* ── ACT ───────────────────────────────────────────────────────────── */}
+      <GroupLabel label="Act" description="Fresh crossovers that warrant a decision today." />
+      <div className="grid gap-4 md:grid-cols-2 mb-6">
+        {/* Entry Signals */}
+        <Card>
+          <CardHeader
+            icon={<Zap size={18} strokeWidth={1.5} />}
+            title="Entry Signals"
+            blurb="MACD↑ or SMA crossover within 5 bars · fundamental score ≥ 50"
+          />
+          <div className="-mx-1">
+            {entrySignals.length === 0 ? (
+              <p className="text-dim text-sm px-3 py-2">No fresh entry signals today.</p>
+            ) : (
+              entrySignals.map((r) => <SignalRowItem key={r.ticker} row={r} />)
+            )}
           </div>
-          <div className="rounded-lg border border-line bg-panel p-4">
-            <div className="mb-2 flex items-center gap-3">
-              <div className="border border-neg/50 rounded p-1.5 text-neg shrink-0">
-                <TrendingDown size={18} strokeWidth={1.5} />
-              </div>
-              <div>
-                <h2 className="font-medium">Biggest Drops Today</h2>
-                <p className="text-dim text-xs">Sharpest declines across your watchlists.</p>
-              </div>
-            </div>
-            <div className="-mx-1">
-              {bottomMovers.map((r, i) => <MoverRow key={r.ticker} rank={i + 1} row={r} />)}
-            </div>
-          </div>
-        </div>
-      )}
+        </Card>
 
+        {/* Exit Warnings */}
+        <Card>
+          <CardHeader
+            icon={<ShieldAlert size={18} strokeWidth={1.5} />}
+            accent="neg"
+            title="Exit Warnings"
+            blurb="MACD↓ or SMA crossover within 5 bars · fundamental score ≥ 50"
+          />
+          <div className="-mx-1">
+            {exitWarnings.length === 0 ? (
+              <p className="text-dim text-sm px-3 py-2">No exit warnings today.</p>
+            ) : (
+              exitWarnings.map((r) => <ExitRowItem key={r.ticker} row={r} />)
+            )}
+          </div>
+        </Card>
+      </div>
+
+      {/* ── MONITOR ───────────────────────────────────────────────────────── */}
+      <GroupLabel label="Monitor" description="Where things stand — no immediate action needed, but keep an eye on it." />
       <div className="grid gap-4 md:grid-cols-2">
-        {SECTIONS.map((s) => {
-          const rows = data[s.key] ?? [];
-          return (
-            <div key={s.key} className="rounded-lg border border-line bg-panel p-4">
-              <div className="mb-2 flex items-center gap-3">
-                <div className="border border-accent rounded p-1.5 text-accent shrink-0">
-                  <s.icon size={18} strokeWidth={1.5} />
-                </div>
-                <div>
-                  <h2 className="font-medium">{s.title}</h2>
-                  <p className="text-dim text-xs">{s.blurb}</p>
+        {/* Best Positioned */}
+        <Card>
+          <CardHeader
+            icon={<Star size={18} strokeWidth={1.5} />}
+            title="Best Positioned"
+            blurb="Top 10 by overall score"
+          />
+          <div className="-mx-1">
+            {bestPositioned.length === 0 ? (
+              <p className="text-dim text-sm px-3 py-2">Nothing here yet.</p>
+            ) : (
+              bestPositioned.map((r, i) => <RankedRow key={r.ticker} rank={i + 1} row={r} />)
+            )}
+          </div>
+        </Card>
+
+        {/* Today's Movers — two columns inside one card */}
+        <Card>
+          <CardHeader
+            icon={<TrendingUp size={18} strokeWidth={1.5} />}
+            title="Today's Movers"
+            blurb="Moves ≥ 0.5% today · up to 10 per direction"
+          />
+          {moversUp.length === 0 && moversDown.length === 0 ? (
+            <p className="text-dim text-sm px-3 py-2">No significant moves today.</p>
+          ) : (
+            <div className="grid grid-cols-2 gap-x-4">
+              <div>
+                <p className="text-xs text-dim font-medium mb-1 px-2">↑ Gainers</p>
+                <div className="-mx-1">
+                  {moversUp.length === 0
+                    ? <p className="text-dim text-xs px-3 py-1">—</p>
+                    : moversUp.map((r) => <MoverRow key={r.ticker} row={r} />)}
                 </div>
               </div>
-              {rows.length === 0 ? (
-                <p className="text-dim text-sm px-3 py-2">Nothing here yet.</p>
-              ) : (
+              <div>
+                <p className="text-xs text-dim font-medium mb-1 px-2">↓ Decliners</p>
                 <div className="-mx-1">
-                  {rows.map((r, i) => (
-                    <Row key={r.ticker} rank={i + 1} row={r} metric={s.metric} />
-                  ))}
+                  {moversDown.length === 0
+                    ? <p className="text-dim text-xs px-3 py-1">—</p>
+                    : moversDown.map((r) => <MoverRow key={r.ticker} row={r} />)}
                 </div>
-              )}
+              </div>
             </div>
-          );
-        })}
+          )}
+        </Card>
       </div>
     </div>
   );

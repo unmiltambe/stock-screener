@@ -86,6 +86,23 @@ deployed endpoint — not a later phase. Secrets (any data-provider API keys) li
 a managed secrets store, never in the repo or client code. A public URL with
 personal data and no auth is the one thing we will not ship.
 
+## P10 — No domain logic in the frontend
+
+The frontend renders; the backend decides. Scoring, filtering, signal detection, and
+any calculation that derives a fact about a ticker belong in `services/app/core`.
+The frontend's permitted logic is: formatting numbers for display, mapping scores to
+colours, sorting/filtering data the API already returned, and framework-specific
+view wiring.
+
+*Why:* domain logic in the frontend creates two problems: (1) it duplicates a
+parameter or threshold that the backend already owns, so a change requires two edits
+and the two can silently drift; (2) it is harder to test — unit tests for backend
+pure functions are trivial, but testing frontend calculations requires rendering.
+
+*Smell to catch in review:* any `lib/` file in the frontend that computes a business
+fact (crossover detection, score derivation, signal classification) rather than
+formatting or presentation logic.
+
 ## P9 — No UI component duplication across feature files
 
 Before adding any component, helper function, or constant that already exists (or

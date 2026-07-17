@@ -171,6 +171,48 @@ def macd_scalars(
     return hist_pct, hist_rising, bars_on_side
 
 
+def sma_cross_bars(closes: List[float], period: int, lookback: int = 30) -> Optional[int]:
+    """Bars since price last crossed the SMA, within lookback.
+
+    Returns positive when price is above the SMA (above-cross), negative when
+    below (below-cross). The magnitude is how many consecutive bars price has
+    been on the current side — i.e. how many bars since the cross.
+    Returns None if no cross occurred within `lookback` bars or data is
+    insufficient.
+    """
+    if len(closes) < period + 1:
+        return None
+
+    # Build sign sequence for the last (lookback + 1) bars where SMA is valid.
+    # +1 if price > sma, -1 if price < sma, 0 if exactly equal.
+    start = max(period - 1, len(closes) - lookback - 1)
+    signs: List[int] = []
+    for i in range(start, len(closes)):
+        sma_val = sum(closes[i - period + 1 : i + 1]) / period
+        price = closes[i]
+        signs.append(1 if price > sma_val else -1 if price < sma_val else 0)
+
+    if not signs:
+        return None
+
+    current_side = signs[-1]
+    if current_side == 0:
+        return None  # price sitting exactly on SMA — no clear cross
+
+    # Count consecutive bars on current side (from most recent backwards).
+    bars = 1
+    for i in range(len(signs) - 2, -1, -1):
+        s = signs[i]
+        if s == current_side or s == 0:
+            bars += 1
+        else:
+            # Transition found — this is the cross point.
+            return current_side * bars
+
+    # No transition found within the lookback window.
+    return None
+
+
 def obv_trend_pct(
     closes: List[float],
     volumes: List[float],
@@ -231,4 +273,6 @@ def compute_tech_metrics(
         macd_hist_rising=hist_rising,
         macd_bars_on_side=bars_on_side,
         obv_trend_pct=obv_pct,
+        sma50_cross_bars=sma_cross_bars(closes, 50),
+        sma200_cross_bars=sma_cross_bars(closes, 200),
     )

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { LayoutGrid, Trophy } from "lucide-react";
+import { LayoutGrid } from "lucide-react";
 import {
   useAllSymbols,
   useCreateWatchlist,
@@ -53,7 +53,7 @@ export default function WatchlistsPage() {
 
   return (
     <div className="max-w-5xl mx-auto">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-baseline justify-between mb-1">
         <h1 className="text-lg font-semibold">Watchlists</h1>
         <button
           onClick={() => setShowNew(true)}
@@ -62,44 +62,41 @@ export default function WatchlistsPage() {
           + New watchlist
         </button>
       </div>
+      <p className="text-dim text-sm mb-6">
+        Organise your tickers into lists and let the scoring do the work.
+      </p>
 
-      {/* Built-in boards: the full table (All Symbols) + the curated highlights */}
-      <div className="mb-5">
-        <p className="text-[10px] uppercase tracking-wider text-dim mb-2">Built-in views</p>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Link
-            to="/watchlists/_all"
-            className="flex items-center justify-between rounded-lg border border-dashed border-accent/40 bg-accent/5 px-4 py-3 hover:border-accent/70 hover:bg-accent/10 transition-colors group"
-          >
-            <div>
-              <div className="font-medium">All Symbols</div>
-              <div className="text-dim text-sm mt-0.5">
-                {allTotal > 0
-                  ? `${allTotal} symbols across ${listCount} lists — full sortable table`
-                  : "Every symbol you track, in one sortable table"}
-              </div>
-            </div>
-            <LayoutGrid className="text-accent opacity-40 group-hover:opacity-100 transition-opacity shrink-0" size={20} strokeWidth={1.5} />
-          </Link>
-          <Link
-            to="/leaderboard"
-            className="flex items-center justify-between rounded-lg border border-dashed border-accent/40 bg-accent/5 px-4 py-3 hover:border-accent/70 hover:bg-accent/10 transition-colors group"
-          >
-            <div>
-              <div className="font-medium">Leaderboard</div>
-              <div className="text-dim text-sm mt-0.5">
-                Best picks first — value, momentum & second looks
-              </div>
-            </div>
-            <Trophy className="text-accent opacity-40 group-hover:opacity-100 transition-opacity shrink-0" size={20} strokeWidth={1.5} />
-          </Link>
+      {/* Built-in boards: the full table (All Symbols) */}
+      <div className="mb-4">
+        <div className="flex items-center gap-3 mb-1">
+          <span className="text-sm font-bold tracking-widest uppercase">Built-in views</span>
+          <div className="flex-1 border-t border-line" />
         </div>
+        <p className="text-dim text-sm mb-4">Cross-list views that span everything you track.</p>
+        <Link
+          to="/watchlists/_all"
+          className="flex items-center justify-between rounded-lg border border-accent/30 bg-accent/5 px-4 py-3 hover:border-accent/60 transition-colors group"
+        >
+          <div>
+            <div className="font-medium">All Symbols</div>
+            <div className="text-dim text-sm mt-0.5">
+              {allTotal > 0
+                ? `${allTotal} symbols across ${listCount} lists, scored and ranked`
+                : "Every ticker you follow, scored and ranked"}
+            </div>
+          </div>
+          <LayoutGrid className="text-dim group-hover:text-accent transition-colors shrink-0" size={18} strokeWidth={1.5} />
+        </Link>
       </div>
 
-      <p className="text-[10px] uppercase tracking-wider text-dim mb-2">Your watchlists</p>
+      <div className="flex items-center gap-3 mb-1 mt-6">
+        <span className="text-sm font-bold tracking-widest uppercase">Your watchlists</span>
+        <div className="flex-1 border-t border-line" />
+      </div>
+      <p className="text-dim text-sm mb-4">Custom groups — organise by theme, sector, or conviction.</p>
       {data.length === 0 && (
         <p className="text-dim text-sm mb-3">
-          No lists yet — start one above and add a ticker or two. We'll handle the scoring.
+          No lists yet — create one to get started.
         </p>
       )}
       <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">

@@ -16,7 +16,7 @@ import type { TickerRow } from "../../api/types";
 import {
   dayChangeColor, fcfYieldColor, fmtMarketCap, fmtNum, fmtNumAdaptive, fmtPctAbsAdaptive,
   fmtPctAdaptive, fmtPrice, pegColor, rangeColor, roeColor, rsiColor,
-  scoreColor, signalColor, sma200Color, sma50Color,
+  scoreColor, sma200Color, sma50Color,
 } from "../../lib/format";
 
 // ── Breadcrumb ────────────────────────────────────────────────────────────────
@@ -65,7 +65,6 @@ export const BASE_ACCESSORS: Record<string, (r: TickerRow) => number | string | 
   tech:      r => r.scores.tech,
   combined:  r => r.scores.combined,
   setup:     r => r.scores.setup,
-  signal:    r => r.signal,
 };
 
 export function sortRows(
@@ -605,7 +604,22 @@ export function TickerTableRow({ r, isSelected, onClick, extraCell }: {
       <td className={`pr-2 text-right font-mono whitespace-nowrap ${scoreColor(r.scores.tech)}`}>{fmtNum(r.scores.tech, 0)}</td>
       <td className={`pr-2 text-right font-mono whitespace-nowrap ${scoreColor(r.scores.setup)}`}>{fmtNum(r.scores.setup, 0)}</td>
       <td className={`pr-2 text-right font-mono whitespace-nowrap ${scoreColor(r.scores.combined)}`}>{fmtNum(r.scores.combined, 0)}</td>
-      <td className={`pr-2 font-medium whitespace-nowrap ${signalColor(r.signal)}`}>{r.signal ?? "—"}</td>
+      <td className="pr-2 whitespace-nowrap">
+        <div className="flex gap-1">
+          {r.chips.map((chip) => (
+            <span
+              key={chip.label}
+              className={`text-xs font-mono px-1 py-0.5 rounded border whitespace-nowrap ${
+                chip.label.includes("↑")
+                  ? "border-accent/40 text-accent bg-accent/5"
+                  : "border-neg/40 text-neg bg-neg/5"
+              }`}
+            >
+              {chip.label} {chip.bars}d
+            </span>
+          ))}
+        </div>
+      </td>
       {extraCell}
     </tr>
   );
@@ -636,8 +650,11 @@ export function TickerTableHead({ sort, onSort, extraGroupHeader, extraHeader, c
         <th colSpan={2} className="pb-1 text-center border-l border-line/40 pl-2 pr-2 text-warn">
           Setup Metrics
         </th>
-        <th colSpan={5} className="pb-1 text-center border-l border-line/40 pl-2 text-warn">
+        <th colSpan={4} className="pb-1 text-center border-l border-line/40 pl-2 text-warn">
           Scores
+        </th>
+        <th colSpan={1} className="pb-1 text-center border-l border-line/40 pl-2 text-warn">
+          Signals
         </th>
         {extraGroupHeader}
       </tr>
@@ -662,7 +679,7 @@ export function TickerTableHead({ sort, onSort, extraGroupHeader, extraHeader, c
         <Th tip={TIPS.tech}     sortK="tech"      {...thProps} className="pr-2 pt-1 text-right">Tech</Th>
         <Th tip={TIPS.setup}    sortK="setup"     {...thProps} className="pr-2 pt-1 text-right">Setup</Th>
         <Th tip={TIPS.combined} sortK="combined"  {...thProps} className="pr-2 pt-1 text-right">Overall</Th>
-        <Th tip={TIPS.signal}   sortK="signal"    {...thProps} className="pr-2 pt-1">Signal</Th>
+        <th className="py-2 pr-2 pl-2 select-none whitespace-nowrap border-l border-line/40">Crossovers</th>
         {extraHeader}
       </tr>
     </thead>

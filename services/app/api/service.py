@@ -9,6 +9,7 @@ from typing import Dict, List, Optional, Sequence
 
 from adapters.ports import GUEST_PREFIX, CachePort, MarketDataPort, WatchlistRepo
 from core import macd_series, obv_series, score_snapshot, sma_series
+from core.leaderboard import best_positioned, entry_signals, exit_warnings, top_movers
 
 from . import schemas
 
@@ -187,7 +188,10 @@ class ScreenerService:
 
     def leaderboard(self, user_id: str) -> Dict[str, List[Dict]]:
         """Aggregate every ticker across the user's lists (de-duplicated, with
-        membership by list name) and build ranked views (FR-5.1/5.2)."""
+        membership by list name) and build the 4-card leaderboard (FR-5.1/5.2).
+
+        Cards: Entry Signals · Exit Warnings · Best Positioned · Today's Movers.
+        All ranking logic lives in core/leaderboard.py — pure and reusable."""
         membership: Dict[str, List[str]] = {}
         for wl in self._watchlists.list_all(user_id):
             for t in wl.tickers:
@@ -197,15 +201,13 @@ class ScreenerService:
         for row in rows:
             row["lists"] = membership.get(row["ticker"], [])
 
-        def by(metric: str, reverse: bool):
-            scored = [r for r in rows if r["scores"].get(metric) is not None]
-            return sorted(scored, key=lambda r: r["scores"][metric], reverse=reverse)
-
+        gainers, decliners = top_movers(rows)
         return {
-            "top_opportunities": by("combined", reverse=True)[:5],
-            "reconsider": by("combined", reverse=False)[:5],
-            "best_value": by("fund", reverse=True)[:5],
-            "best_momentum": by("setup", reverse=True)[:5],
+            "entry_signals": entry_signals(rows),
+            "exit_warnings": exit_warnings(rows),
+            "best_positioned": best_positioned(rows),
+            "top_movers_up": gainers,
+            "top_movers_down": decliners,
         }
 
     def all_symbols(self, user_id: str) -> List[Dict]:

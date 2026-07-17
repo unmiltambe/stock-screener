@@ -85,6 +85,9 @@ class TechMetrics:
     macd_hist_rising: Optional[bool] = None # True if histogram rose for 3 consecutive bars
     macd_bars_on_side: Optional[int] = None # bars histogram has been on its current side of zero
     obv_trend_pct: Optional[float] = None   # 20-bar OBV % change (+ accumulation, - distribution)
+    # SMA crossover signals: positive = bars since above-cross, negative = below-cross, None = no recent cross
+    sma50_cross_bars: Optional[int] = None
+    sma200_cross_bars: Optional[int] = None
 
 
 @dataclass(frozen=True)
