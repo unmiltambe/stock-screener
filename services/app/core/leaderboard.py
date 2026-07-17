@@ -114,7 +114,7 @@ def exit_warnings(
     return result
 
 
-def best_positioned(rows: List[Dict], top_n: int = 15) -> List[Dict]:
+def best_positioned(rows: List[Dict], top_n: int = 10) -> List[Dict]:
     """Top N by combined score — the stable 'what to hold or research' view."""
     scored = [r for r in rows if (r.get("scores") or {}).get("combined") is not None]
     return sorted(scored, key=lambda r: r["scores"]["combined"], reverse=True)[:top_n]
@@ -123,7 +123,7 @@ def best_positioned(rows: List[Dict], top_n: int = 15) -> List[Dict]:
 def top_movers(
     rows: List[Dict],
     top_n: int = 10,
-    min_move_pct: float = 1.0,
+    min_move_pct: float = 0.5,
 ) -> Tuple[List[Dict], List[Dict]]:
     """Returns (gainers, decliners) — top N each by absolute day change %.
 

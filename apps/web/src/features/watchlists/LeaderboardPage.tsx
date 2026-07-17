@@ -31,6 +31,7 @@ function SignalRowItem({ row }: { row: SignalRow }) {
       to={`/tickers/${row.ticker}`}
       className="flex items-center gap-2 px-3 py-2 rounded hover:bg-line/30 transition-colors"
     >
+      <span className="font-medium w-14 shrink-0">{row.ticker}</span>
       <div className="flex gap-1 shrink-0">
         {row.chips.map((chip) => (
           <span
@@ -41,7 +42,6 @@ function SignalRowItem({ row }: { row: SignalRow }) {
           </span>
         ))}
       </div>
-      <span className="font-medium w-14 shrink-0">{row.ticker}</span>
       <span className="text-dim text-sm flex-1 truncate">{row.name}</span>
       <span className={`text-xs shrink-0 ${row.signal ? signalColor(row.signal) : "text-dim"}`}>
         {row.signal ?? "—"}
@@ -56,6 +56,7 @@ function ExitRowItem({ row }: { row: SignalRow }) {
       to={`/tickers/${row.ticker}`}
       className="flex items-center gap-2 px-3 py-2 rounded hover:bg-line/30 transition-colors"
     >
+      <span className="font-medium w-14 shrink-0">{row.ticker}</span>
       <div className="flex gap-1 shrink-0">
         {row.chips.map((chip) => (
           <span
@@ -66,7 +67,6 @@ function ExitRowItem({ row }: { row: SignalRow }) {
           </span>
         ))}
       </div>
-      <span className="font-medium w-14 shrink-0">{row.ticker}</span>
       <span className="text-dim text-sm flex-1 truncate">{row.name}</span>
       <span className={`text-xs shrink-0 ${row.signal ? signalColor(row.signal) : "text-dim"}`}>
         {row.signal ?? "—"}
@@ -126,11 +126,14 @@ function CardHeader({
 
 // ── group label ───────────────────────────────────────────────────────────────
 
-function GroupLabel({ label }: { label: string }) {
+function GroupLabel({ label, description }: { label: string; description: string }) {
   return (
-    <div className="flex items-center gap-3 mb-3">
-      <span className="text-xs font-semibold tracking-widest text-dim uppercase">{label}</span>
-      <div className="flex-1 border-t border-line" />
+    <div className="mb-4">
+      <div className="flex items-center gap-3 mb-1">
+        <span className="text-sm font-bold tracking-widest uppercase">{label}</span>
+        <div className="flex-1 border-t border-line" />
+      </div>
+      <p className="text-dim text-sm">{description}</p>
     </div>
   );
 }
@@ -189,7 +192,7 @@ export default function LeaderboardPage() {
       </p>
 
       {/* ── ACT ───────────────────────────────────────────────────────────── */}
-      <GroupLabel label="Act" />
+      <GroupLabel label="Act" description="Fresh crossovers that warrant a decision today." />
       <div className="grid gap-4 md:grid-cols-2 mb-6">
         {/* Entry Signals */}
         <Card>
@@ -226,7 +229,7 @@ export default function LeaderboardPage() {
       </div>
 
       {/* ── MONITOR ───────────────────────────────────────────────────────── */}
-      <GroupLabel label="Monitor" />
+      <GroupLabel label="Monitor" description="Where things stand — no immediate action needed, but keep an eye on it." />
       <div className="grid gap-4 md:grid-cols-2">
         {/* Best Positioned */}
         <Card>
