@@ -33,7 +33,11 @@ class MetricsOut(BaseModel):
     marketCap: Optional[float] = None
     # Setup-score raw inputs (for the Setup Metrics columns in the table)
     macdHistPct: Optional[float] = None   # MACD histogram as % of price
+    macdBarsOnSide: Optional[int] = None  # bars histogram on current side of zero
     obvTrendPct: Optional[float] = None   # 20-bar OBV % change
+    # SMA crossover signals: +N = above-cross N bars ago, -N = below-cross, None = no recent cross
+    sma50CrossBars: Optional[int] = None
+    sma200CrossBars: Optional[int] = None
 
 
 class TickerRow(BaseModel):
@@ -136,7 +140,9 @@ def row_from_scored(
             "fcfYield": f.fcf_yield, "roe": f.roe,
             "rsi": m.rsi, "vsSma200": m.sma200_pct, "vsSma50": m.sma50_pct,
             "rangePos": m.range_pos, "sector": f.sector, "marketCap": f.market_cap,
-            "macdHistPct": m.macd_hist_pct, "obvTrendPct": m.obv_trend_pct,
+            "macdHistPct": m.macd_hist_pct, "macdBarsOnSide": m.macd_bars_on_side,
+            "obvTrendPct": m.obv_trend_pct,
+            "sma50CrossBars": m.sma50_cross_bars, "sma200CrossBars": m.sma200_cross_bars,
         },
         "lists": lists or [],
         "stale": stale,

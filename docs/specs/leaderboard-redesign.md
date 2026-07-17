@@ -46,22 +46,24 @@ Adding crossover signals (MACD, SMA-50, SMA-200) as more sections would have pus
 **Purpose:** Stocks from your tracked universe where a positive crossover just fired with strong fundamentals behind it.
 
 **Filter criteria (all must be true):**
-- `macd_bars_on_side ≤ 5` AND `macd_hist_pct > 0` AND `macd_hist_rising = True` → label: **MACD↑**
-- OR price crossed above SMA-50 within last 5 bars → label: **SMA50↑**
-- OR price crossed above SMA-200 within last 5 bars → label: **SMA200↑**
+- `macd_bars_on_side ≤ 10` AND `macd_hist_pct > 0` → label: **MACD↑** + age (e.g. "MACD↑ 3d")
+- OR price crossed above SMA-50 within last 10 bars → label: **SMA50↑** + age
+- OR price crossed above SMA-200 within last 10 bars → label: **SMA200↑** + age
 - Fund score ≥ 55 (quality gate — keeps junk out)
 
-**Display:** Group by signal type (MACD↑ first, then SMA50↑, SMA200↑). Within each group, sort by setup score descending.
+Note: `macd_hist_rising = True` is NOT required. The 10-bar cap handles staleness — any cross within 10 bars is still actionable. Requiring `hist_rising` would drop valid entries on consolidation days.
 
-**Ticker row:** event label chip · ticker · name (truncated) · Signal (Buy/Neutral/Trim)
+**Display:** Group by signal type (MACD↑ first, then SMA50↑, SMA200↑). Within each group, sort by setup score descending. Age shown directly on the chip ("MACD↑ 3d") so freshness is visible without additional columns.
+
+**Ticker row:** event label chip(s) · ticker · name (truncated) · Signal (Buy/Neutral/Trim)
 
 No score numbers shown — the event label IS the signal.
 
 **Cap:** None. If 12 stocks match today, show 12. Cards expand vertically. If 0 match, show: *"No fresh entry signals today."*
 
 **Backend:** New `entry_signals` leaderboard key. Requires:
-- Existing: `macd_bars_on_side`, `macd_hist_pct`, `macd_hist_rising` — already in `TechMetrics`
-- New: `sma50_bars_since_cross` and `sma200_bars_since_cross` — days since price crossed above/below each MA (positive = above cross, negative = below cross). Computed in `core/metrics.py`.
+- Existing: `macd_bars_on_side`, `macd_hist_pct` — already in `TechMetrics`
+- New: `sma50_cross_bars` and `sma200_cross_bars` — bars since price crossed above/below each MA (positive = above cross, negative = below cross, None = no cross in 30-bar lookback). Computed in `core/metrics.py`.
 
 ---
 
@@ -130,17 +132,21 @@ The filter backlog item (#4) also simplifies: preset sort buttons on the All Sym
 Two new scalar functions in `core/metrics.py`:
 
 ```python
-def sma_cross_bars(closes: List[float], period: int) -> Optional[int]:
+def sma_cross_bars(closes: List[float], period: int, lookback: int = 30) -> Optional[int]:
     """
-    Returns the number of bars since price last crossed the SMA.
-    Positive = crossed above (upward cross), negative = crossed below.
-    None if no cross in the lookback window (30 bars).
+    Returns bars since price last crossed the SMA, within lookback.
+    Positive = bars since above-cross (price > SMA for this many bars).
+    Negative = bars since below-cross (price < SMA for this many bars).
+    None if no cross found within lookback bars (price hasn't switched sides recently).
     """
 ```
 
 Called for period=50 and period=200 separately. Results stored in `TechMetrics` as:
 - `sma50_cross_bars: Optional[int]`
 - `sma200_cross_bars: Optional[int]`
+
+Entry Signals filter: value in [1, 10] (positive, within 10 bars).
+Exit Warnings filter: value in [-10, -1] (negative, within 10 bars).
 
 Exposed via API in the ticker response and used by the leaderboard endpoint to build `entry_signals` and `exit_warnings` lists.
 
@@ -156,12 +162,13 @@ Exposed via API in the ticker response and used by the leaderboard endpoint to b
 
 ---
 
-## Open questions
+## Resolved decisions
 
-1. **Entry Signals fund threshold**: 55 is the current proposal. Should it be 60 to keep the list focused? Or user-adjustable?
-2. **SMA crossover lookback window**: 5 bars (1 trading week) is proposed. Should it be 3 (tighter, fewer false triggers) or 7 (wider)?
-3. **Exit Warnings scope**: watchlist-only vs. full tracked universe? Watchlist-only feels right — you only need warnings for what you own.
-4. **Entry Signals MACD condition**: currently requires `hist_rising = True` (still climbing post-cross). Drop this requirement and show all fresh positive crosses, or keep the quality gate?
+1. **Entry Signals fund threshold**: 55. ✓
+2. **Signal window**: 10 bars (2 trading weeks). 5 was too tight — a cross that fired Monday is still actionable the following Monday. Age shown on chip. ✓
+3. **Exit Warnings scope**: watchlist-only. Code designed so expansion to full universe is a one-line change. ✓
+4. **Entry Signals MACD condition**: `hist_rising` NOT required. 10-bar window handles staleness; requiring `hist_rising` drops valid entries on consolidation days. ✓
+5. **Gap between Entry Signals and Best Positioned**: Minimal in the current 69-ticker universe (most fund ≥ 55 stocks land in Best Positioned top 15). A "Worth Watching" bridge card is deferred to Phase 4 when the S&P 500 universe makes the gap real.
 
 ---
 
