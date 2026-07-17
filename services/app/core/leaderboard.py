@@ -60,7 +60,7 @@ _EXIT_LABEL_ORDER = {"MACD↓": 0, "SMA50↓": 1, "SMA200↓": 2}
 
 def entry_signals(
     rows: List[Dict],
-    fund_threshold: float = 55.0,
+    fund_threshold: float = 50.0,
     max_bars: int = 10,
 ) -> List[Dict]:
     """Stocks where a positive crossover fired within max_bars and fund ≥ fund_threshold.
@@ -88,15 +88,20 @@ def entry_signals(
 
 def exit_warnings(
     rows: List[Dict],
+    fund_threshold: float = 50.0,
     max_bars: int = 10,
 ) -> List[Dict]:
-    """Stocks where a negative crossover fired within max_bars.
+    """Stocks where a negative crossover fired within max_bars and fund ≥ fund_threshold.
 
-    No fund filter — warnings apply to anything you hold. Within each signal
+    Quality floor keeps speculative names out of the warning list — you care
+    about warnings for stocks with real fundamental backing. Within each signal
     group, sorted by combined score ascending (worst first, so urgent names rise).
     """
     result = []
     for row in rows:
+        fund = (row.get("scores") or {}).get("fund")
+        if fund is None or fund < fund_threshold:
+            continue
         chips = _exit_chips(row, max_bars)
         if not chips:
             continue

@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ArrowLeft, ArrowRight, TrendingUp, Star, ShieldAlert } from "lucide-react";
+import { ArrowLeft, ArrowRight, TrendingUp, Star, ShieldAlert, Zap } from "lucide-react";
 import { Breadcrumb } from "./TickerTable";
 import { useLeaderboard } from "../../api/leaderboard";
 import type { SignalRow, TickerRow } from "../../api/types";
@@ -194,7 +194,7 @@ export default function LeaderboardPage() {
         {/* Entry Signals */}
         <Card>
           <CardHeader
-            icon={<TrendingUp size={18} strokeWidth={1.5} />}
+            icon={<Zap size={18} strokeWidth={1.5} />}
             title="Entry Signals"
             blurb="Fresh positive crossovers with strong fundamentals."
           />

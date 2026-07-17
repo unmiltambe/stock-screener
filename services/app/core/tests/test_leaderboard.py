@@ -114,7 +114,7 @@ class TestEntrySignals:
         assert entry_signals(rows) == []
 
     def test_fund_exactly_at_threshold_included(self):
-        rows = [_row("AAPL", fund=55.0, macd_hist_pct=0.5, macd_bars=3)]
+        rows = [_row("AAPL", fund=50.0, macd_hist_pct=0.5, macd_bars=3)]
         assert len(entry_signals(rows)) == 1
 
     def test_sma50_entry_chip(self):
@@ -157,8 +157,12 @@ class TestExitWarnings:
         assert len(result) == 1
         assert result[0]["chips"] == [{"label": "SMA50↓", "bars": 3}]
 
-    def test_no_fund_filter_applied(self):
-        rows = [_row("JUNK", fund=10.0, macd_hist_pct=-0.5, macd_bars=1)]
+    def test_low_fund_excluded(self):
+        rows = [_row("JUNK", fund=30.0, macd_hist_pct=-0.5, macd_bars=1)]
+        assert exit_warnings(rows) == []
+
+    def test_fund_at_threshold_included(self):
+        rows = [_row("OK", fund=50.0, macd_hist_pct=-0.5, macd_bars=1)]
         assert len(exit_warnings(rows)) == 1
 
     def test_positive_sma_cross_not_an_exit(self):
