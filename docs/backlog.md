@@ -650,13 +650,17 @@ that already looks *insightful* is the temptation loop that converts a visit.
 
 See [spec](specs/leaderboard-redesign.md) and branch `feat/leaderboard-redesign`.
 
-### 21. Signal chips in watchlist row view  🟢
+### 21. Signal chips in watchlist row view  ✅ done
 
-**Intent:** the leaderboard Entry/Exit Signal cards apply a fund ≥ 50 quality gate, which means speculative names (HOOD, SOFI, QBTS, etc.) never appear there even if they have a fresh MACD or SMA crossover. Users who deliberately track these names still want crossover visibility — but within the context of their specific watchlist, where they've chosen to watch those names.
+**Shipped:** chips render in the table's "Crossovers" column (replaced the Signal / Buy/Neutral/Trim column). Built client-side from `macdBarsOnSide`, `sma50CrossBars`, `sma200CrossBars` already on every `TickerRow.metrics`. Window = 5 bars, no quality gate.
 
-**Approach:** add MACD↑/↓ and SMA50/200 crossover chips to each row in `TickerTable.tsx`, rendered inline using the same chip component and logic as the leaderboard. All three wire fields are already on the `Metrics` type (`macdBarsOnSide`, `sma50CrossBars`, `sma200CrossBars`) — this is a frontend-only change, no backend work needed.
+**Tech debt:** chip window (`maxBars`) is duplicated — `lib/chips.ts` default and `leaderboard.py` `entry_signals`/`exit_warnings` defaults are kept in sync manually. Fix: compute chips on the backend for every scored row and include a `chips` field on `TickerRow`, then remove `lib/chips.ts` entirely. Frontend just renders what the API sends, single source of truth.
 
-**Scope:** show chips when a crossover fired within the last 10 bars (same window as the leaderboard), no quality gate — every ticker in the watchlist gets the signal if it fired.
+### 22. Centralise chip computation to backend  🟢
+
+**Intent:** eliminate the duplicate `maxBars = 5` between `lib/chips.ts` (frontend table) and `leaderboard.py` (leaderboard cards). A single backend change would currently require two edits to take effect.
+
+**Approach:** compute chips in `row_from_scored()` in `schemas.py` (or a shared helper) for every row, add `chips: list[SignalChip]` to `TickerRow` API shape, and remove `lib/chips.ts`. The leaderboard backend already sets chips; extending it to all rows is a small loop addition. Frontend `TickerTable` and `LeaderboardPage` both render from the same `row.chips` field.
 
 ### 19. Legal notices and disclaimers  ◑ partial
 

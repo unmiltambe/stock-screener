@@ -1,14 +1,13 @@
 import { Link } from "react-router-dom";
 import { ArrowLeft, ArrowRight, TrendingUp, Star, ShieldAlert, Zap } from "lucide-react";
-import { Breadcrumb } from "./TickerTable";
 import { useLeaderboard } from "../../api/leaderboard";
-import type { SignalRow, TickerRow } from "../../api/types";
-import { fmtNum, fmtPctAdaptive, scoreColor, signalColor, dayChangeColor } from "../../lib/format";
+import type { TickerRow } from "../../api/types";
+import { fmtNum, fmtPctAdaptive, scoreColor, dayChangeColor } from "../../lib/format";
 
 // ── shared row components ─────────────────────────────────────────────────────
 
 function RankedRow({ rank, row }: { rank: number; row: TickerRow }) {
-  const v = row.scores.combined;
+  const combined = row.scores.combined;
   return (
     <Link
       to={`/tickers/${row.ticker}`}
@@ -17,21 +16,20 @@ function RankedRow({ rank, row }: { rank: number; row: TickerRow }) {
       <span className="text-dim text-xs w-4 tabular-nums">{rank}</span>
       <span className="font-medium w-16">{row.ticker}</span>
       <span className="text-dim text-sm flex-1 truncate">{row.name}</span>
-      <span className={`text-xs w-12 text-right ${row.signal ? signalColor(row.signal) : "text-dim"}`}>
-        {row.signal ?? "—"}
-      </span>
-      <span className={`font-mono text-sm w-10 text-right ${scoreColor(v)}`}>{fmtNum(v, 0)}</span>
+      <span className={`font-mono text-sm w-10 text-right ${scoreColor(combined)}`}>{fmtNum(combined, 0)}</span>
     </Link>
   );
 }
 
-function SignalRowItem({ row }: { row: SignalRow }) {
+function SignalRowItem({ row }: { row: TickerRow }) {
+  const fund = row.scores.fund;
   return (
     <Link
       to={`/tickers/${row.ticker}`}
       className="flex items-center gap-2 px-3 py-2 rounded hover:bg-line/30 transition-colors"
     >
       <span className="font-medium w-14 shrink-0">{row.ticker}</span>
+      <span className="text-dim text-sm truncate min-w-0 flex-1">{row.name}</span>
       <div className="flex gap-1 shrink-0">
         {row.chips.map((chip) => (
           <span
@@ -42,21 +40,22 @@ function SignalRowItem({ row }: { row: SignalRow }) {
           </span>
         ))}
       </div>
-      <span className="text-dim text-sm flex-1 truncate">{row.name}</span>
-      <span className={`text-xs shrink-0 ${row.signal ? signalColor(row.signal) : "text-dim"}`}>
-        {row.signal ?? "—"}
+      <span className={`font-mono text-sm w-8 text-right shrink-0 ${scoreColor(fund)}`}>
+        {fmtNum(fund, 0)}
       </span>
     </Link>
   );
 }
 
-function ExitRowItem({ row }: { row: SignalRow }) {
+function ExitRowItem({ row }: { row: TickerRow }) {
+  const fund = row.scores.fund;
   return (
     <Link
       to={`/tickers/${row.ticker}`}
       className="flex items-center gap-2 px-3 py-2 rounded hover:bg-line/30 transition-colors"
     >
       <span className="font-medium w-14 shrink-0">{row.ticker}</span>
+      <span className="text-dim text-sm truncate min-w-0 flex-1">{row.name}</span>
       <div className="flex gap-1 shrink-0">
         {row.chips.map((chip) => (
           <span
@@ -67,9 +66,8 @@ function ExitRowItem({ row }: { row: SignalRow }) {
           </span>
         ))}
       </div>
-      <span className="text-dim text-sm flex-1 truncate">{row.name}</span>
-      <span className={`text-xs shrink-0 ${row.signal ? signalColor(row.signal) : "text-dim"}`}>
-        {row.signal ?? "—"}
+      <span className={`font-mono text-sm w-8 text-right shrink-0 ${scoreColor(fund)}`}>
+        {fmtNum(fund, 0)}
       </span>
     </Link>
   );
@@ -176,9 +174,6 @@ export default function LeaderboardPage() {
 
   return (
     <div className="max-w-5xl mx-auto">
-      <div className="mb-4">
-        <Breadcrumb crumbs={[{ label: "watchlists", to: "/watchlists" }, { label: "Leaderboard", to: "/leaderboard" }]} />
-      </div>
       <div className="flex items-baseline justify-between mb-1">
         <h1 className="text-lg font-semibold">Leaderboard</h1>
         <Link to="/watchlists/_all" className="text-accent text-sm hover:underline inline-flex items-center gap-1">
@@ -199,7 +194,7 @@ export default function LeaderboardPage() {
           <CardHeader
             icon={<Zap size={18} strokeWidth={1.5} />}
             title="Entry Signals"
-            blurb="MACD↑ or SMA crossover within 10 bars · fund score ≥ 50"
+            blurb="MACD↑ or SMA crossover within 5 bars · fundamental score ≥ 50"
           />
           <div className="-mx-1">
             {entrySignals.length === 0 ? (
@@ -216,7 +211,7 @@ export default function LeaderboardPage() {
             icon={<ShieldAlert size={18} strokeWidth={1.5} />}
             accent="neg"
             title="Exit Warnings"
-            blurb="MACD↓ or SMA crossover within 10 bars · fund score ≥ 50"
+            blurb="MACD↓ or SMA crossover within 5 bars · fundamental score ≥ 50"
           />
           <div className="-mx-1">
             {exitWarnings.length === 0 ? (
@@ -236,7 +231,7 @@ export default function LeaderboardPage() {
           <CardHeader
             icon={<Star size={18} strokeWidth={1.5} />}
             title="Best Positioned"
-            blurb="Top 10 by combined score · fund 70% · tech 21% · setup 9%"
+            blurb="Top 10 by overall score"
           />
           <div className="-mx-1">
             {bestPositioned.length === 0 ? (
@@ -252,7 +247,7 @@ export default function LeaderboardPage() {
           <CardHeader
             icon={<TrendingUp size={18} strokeWidth={1.5} />}
             title="Today's Movers"
-            blurb="Moves ≥ 0.5% today · top 10 per direction"
+            blurb="Moves ≥ 0.5% today · up to 10 per direction"
           />
           {moversUp.length === 0 && moversDown.length === 0 ? (
             <p className="text-dim text-sm px-3 py-2">No significant moves today.</p>

@@ -33,6 +33,9 @@ export default function App() {
           <Link to="/watchlists" className="text-sm text-dim hover:text-accent transition-colors">
             Watchlists
           </Link>
+          <Link to="/leaderboard" className="text-sm text-dim hover:text-accent transition-colors">
+            Leaderboard
+          </Link>
         </div>
         <div className="flex items-center gap-3">
           <ThemeToggle />

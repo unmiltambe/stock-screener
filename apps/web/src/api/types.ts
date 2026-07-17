@@ -55,6 +55,11 @@ export interface ChartOut {
   points: ChartPoint[];
 }
 
+export interface SignalChip {
+  label: string;  // "MACD↑" | "SMA50↑" | "SMA200↑" | "MACD↓" | "SMA50↓" | "SMA200↓"
+  bars: number;
+}
+
 export interface TickerRow {
   ticker: string;
   name: string;
@@ -64,6 +69,7 @@ export interface TickerRow {
   scores: Scores;
   signal: string | null;
   metrics: Metrics;
+  chips: SignalChip[];
   lists: string[];
   stale: boolean;
 }
@@ -73,19 +79,10 @@ export interface Profile {
   last_name: string;
 }
 
-export interface SignalChip {
-  label: string;  // "MACD↑" | "SMA50↑" | "SMA200↑" | "MACD↓" | "SMA50↓" | "SMA200↓"
-  bars: number;
-}
-
-export interface SignalRow extends TickerRow {
-  chips: SignalChip[];
-}
-
 // GET /v1/leaderboard — 2-group, 4-card briefing across the user's lists.
 export interface Leaderboard {
-  entry_signals: SignalRow[];
-  exit_warnings: SignalRow[];
+  entry_signals: TickerRow[];
+  exit_warnings: TickerRow[];
   best_positioned: TickerRow[];
   top_movers_up: TickerRow[];
   top_movers_down: TickerRow[];

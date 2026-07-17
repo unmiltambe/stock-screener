@@ -1,8 +1,9 @@
-"""Tests for sma_cross_bars (core/metrics.py) and core/leaderboard.py."""
+"""Tests for sma_cross_bars (core/metrics.py), core/chips.py, and core/leaderboard.py."""
 from __future__ import annotations
 
 import pytest
 
+from core.chips import build_chips
 from core.metrics import sma_cross_bars
 from core.leaderboard import best_positioned, entry_signals, exit_warnings, top_movers
 
@@ -77,21 +78,26 @@ def _row(
     macd_bars: int | None = None,
     sma50_cross: int | None = None,
     sma200_cross: int | None = None,
+    max_bars: int = 5,
 ) -> dict:
-    return {
+    """Build a wire-format row dict the same way row_from_scored() does."""
+    metrics = {
+        "macdHistPct": macd_hist_pct,
+        "macdBarsOnSide": macd_bars,
+        "sma50CrossBars": sma50_cross,
+        "sma200CrossBars": sma200_cross,
+    }
+    row = {
         "ticker": ticker,
         "name": f"{ticker} Corp",
         "dayChangePct": day_change_pct,
         "scores": {"fund": fund, "tech": tech, "combined": combined, "setup": setup},
         "signal": "Neutral",
-        "metrics": {
-            "macdHistPct": macd_hist_pct,
-            "macdBarsOnSide": macd_bars,
-            "sma50CrossBars": sma50_cross,
-            "sma200CrossBars": sma200_cross,
-        },
+        "metrics": metrics,
         "lists": [],
     }
+    row["chips"] = build_chips(row, max_bars=max_bars)
+    return row
 
 
 class TestEntrySignals:
@@ -102,7 +108,7 @@ class TestEntrySignals:
         assert result[0]["chips"] == [{"label": "MACD↑", "bars": 3}]
 
     def test_macd_too_old_excluded(self):
-        rows = [_row("AAPL", macd_hist_pct=0.5, macd_bars=11)]
+        rows = [_row("AAPL", macd_hist_pct=0.5, macd_bars=6)]  # default max_bars=5
         assert entry_signals(rows) == []
 
     def test_macd_negative_excluded(self):
@@ -139,9 +145,11 @@ class TestEntrySignals:
         assert result[0]["ticker"] == "A"  # MACD first
 
     def test_custom_max_bars(self):
-        rows = [_row("AAPL", macd_hist_pct=0.5, macd_bars=6)]
-        assert entry_signals(rows, max_bars=5) == []
-        assert len(entry_signals(rows, max_bars=6)) == 1
+        # max_bars is set at row-construction time via build_chips
+        row_tight = _row("AAPL", macd_hist_pct=0.5, macd_bars=6, max_bars=5)
+        row_wide  = _row("AAPL", macd_hist_pct=0.5, macd_bars=6, max_bars=6)
+        assert entry_signals([row_tight]) == []
+        assert len(entry_signals([row_wide])) == 1
 
 
 class TestExitWarnings:
@@ -195,7 +203,7 @@ class TestTopMovers:
         assert [r["ticker"] for r in decliners] == ["DN1"]
 
     def test_small_moves_filtered(self):
-        rows = [_row("A", day_change_pct=0.5), _row("B", day_change_pct=-0.9)]
+        rows = [_row("A", day_change_pct=0.4), _row("B", day_change_pct=-0.4)]
         gainers, decliners = top_movers(rows)
         assert gainers == [] and decliners == []
 
