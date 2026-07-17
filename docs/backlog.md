@@ -24,7 +24,8 @@ captured.
 | 15 — in-app feedback link | ✅ done | shipped as an embedded Tally popup ([ADR-0010](decisions/0010-feedback-channel.md)) |
 | 12 — today's movers (sort) | ✅ done | sortable Chg % column + top 5 / bottom 5 movers panel on Leaderboard page |
 | 1 — autocomplete + validation | ✅ done | shipped: [ADR-0011](decisions/0011-symbol-universe.md) + [spec](specs/ticker-autocomplete.md); 11.7k US symbols, debounced type-ahead, eager validation |
-| 4 — watchlist column filters | 🟡 medium | client-side view-logic, no backend; UX-shape decision open |
+| 20 — leaderboard redesign | 🔴 in progress | 2-group 4-card layout: Entry Signals, Exit Warnings, Best Positioned, Today's Movers. All crossover events consolidated, no artificial per-card caps. See [spec](specs/leaderboard-redesign.md). Branch: `feat/leaderboard-redesign` |
+| 4 — watchlist column filters | 🟡 descoped | General filter builder deferred; preset sort buttons on All Symbols table cover primary use cases (covered by #20 leaderboard + existing sort columns) |
 | 7 — MACD on graph | ✅ done | MACD(12,26,9) sub-panel with histogram + lines; OBV sub-panel included — see [spec](specs/chart-indicators.md), [ADR-0012](decisions/0012-chart-indicators.md) |
 | 10 — fund/tech weight slider | 🟡 medium | decision made (persist per-user); Signal-table question still open |
 | 11 — day change ($/%) | ◑ partial | % column + chart sidebar shipped ([spec](specs/day-change.md)); $/% toggle deferred (frontend-only) |
