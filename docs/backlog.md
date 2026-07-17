@@ -25,6 +25,7 @@ captured.
 | 12 — today's movers (sort) | ✅ done | sortable Chg % column + top 5 / bottom 5 movers panel on Leaderboard page |
 | 1 — autocomplete + validation | ✅ done | shipped: [ADR-0011](decisions/0011-symbol-universe.md) + [spec](specs/ticker-autocomplete.md); 11.7k US symbols, debounced type-ahead, eager validation |
 | 20 — leaderboard redesign | 🔴 in progress | 2-group 4-card layout: Entry Signals, Exit Warnings, Best Positioned, Today's Movers. All crossover events consolidated, no artificial per-card caps. See [spec](specs/leaderboard-redesign.md). Branch: `feat/leaderboard-redesign` |
+| 21 — signal chips in watchlist row view | 🟢 small | Show MACD↑/↓ and SMA crossover chips inline on individual watchlist rows (same chips as leaderboard), covering speculative stocks that are filtered out of the quality-gated leaderboard. Wire fields already on the API (`macdBarsOnSide`, `sma50CrossBars`, `sma200CrossBars`) — frontend-only change in `TickerTable.tsx`. |
 | 4 — watchlist column filters | 🟡 descoped | General filter builder deferred; preset sort buttons on All Symbols table cover primary use cases (covered by #20 leaderboard + existing sort columns) |
 | 7 — MACD on graph | ✅ done | MACD(12,26,9) sub-panel with histogram + lines; OBV sub-panel included — see [spec](specs/chart-indicators.md), [ADR-0012](decisions/0012-chart-indicators.md) |
 | 10 — fund/tech weight slider | 🟡 medium | decision made (persist per-user); Signal-table question still open |
@@ -644,6 +645,18 @@ user can add/remove freely — it's a starting point, not a lock-in.
 
 **Why it mattered:** directly powers #17's live hero + built-in views — a leaderboard
 that already looks *insightful* is the temptation loop that converts a visit.
+
+### 20. Leaderboard redesign  🔴 in progress
+
+See [spec](specs/leaderboard-redesign.md) and branch `feat/leaderboard-redesign`.
+
+### 21. Signal chips in watchlist row view  🟢
+
+**Intent:** the leaderboard Entry/Exit Signal cards apply a fund ≥ 50 quality gate, which means speculative names (HOOD, SOFI, QBTS, etc.) never appear there even if they have a fresh MACD or SMA crossover. Users who deliberately track these names still want crossover visibility — but within the context of their specific watchlist, where they've chosen to watch those names.
+
+**Approach:** add MACD↑/↓ and SMA50/200 crossover chips to each row in `TickerTable.tsx`, rendered inline using the same chip component and logic as the leaderboard. All three wire fields are already on the `Metrics` type (`macdBarsOnSide`, `sma50CrossBars`, `sma200CrossBars`) — this is a frontend-only change, no backend work needed.
+
+**Scope:** show chips when a crossover fired within the last 10 bars (same window as the leaderboard), no quality gate — every ticker in the watchlist gets the signal if it fired.
 
 ### 19. Legal notices and disclaimers  ◑ partial
 

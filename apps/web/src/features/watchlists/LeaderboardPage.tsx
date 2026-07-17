@@ -199,7 +199,7 @@ export default function LeaderboardPage() {
           <CardHeader
             icon={<Zap size={18} strokeWidth={1.5} />}
             title="Entry Signals"
-            blurb="Fresh positive crossovers with strong fundamentals."
+            blurb="MACD↑ or SMA crossover within 10 bars · fund score ≥ 50"
           />
           <div className="-mx-1">
             {entrySignals.length === 0 ? (
@@ -216,7 +216,7 @@ export default function LeaderboardPage() {
             icon={<ShieldAlert size={18} strokeWidth={1.5} />}
             accent="neg"
             title="Exit Warnings"
-            blurb="Recent negative crossovers in your watchlists."
+            blurb="MACD↓ or SMA crossover within 10 bars · fund score ≥ 50"
           />
           <div className="-mx-1">
             {exitWarnings.length === 0 ? (
@@ -236,7 +236,7 @@ export default function LeaderboardPage() {
           <CardHeader
             icon={<Star size={18} strokeWidth={1.5} />}
             title="Best Positioned"
-            blurb="Highest combined scores across your universe."
+            blurb="Top 10 by combined score · fund 70% · tech 21% · setup 9%"
           />
           <div className="-mx-1">
             {bestPositioned.length === 0 ? (
@@ -252,7 +252,7 @@ export default function LeaderboardPage() {
           <CardHeader
             icon={<TrendingUp size={18} strokeWidth={1.5} />}
             title="Today's Movers"
-            blurb="Biggest moves across your watchlists."
+            blurb="Moves ≥ 0.5% today · top 10 per direction"
           />
           {moversUp.length === 0 && moversDown.length === 0 ? (
             <p className="text-dim text-sm px-3 py-2">No significant moves today.</p>
